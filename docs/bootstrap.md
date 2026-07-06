@@ -81,6 +81,16 @@ python3 scripts/bootstrap_orro.py \
 
 Published ORRO package remains future work.
 
+The wrapper distribution smoke is separate from bootstrap:
+
+```bash
+python3 scripts/check_orro_wrapper_distribution.py --json
+```
+
+It builds and installs a local wheel to verify packaging boundaries. It does not
+prepare engine checkouts, does not verify evidence, does not publish a package,
+and does not shadow the witnessd-hosted `orro` command.
+
 ## Self-Test
 
 The self-test requires no network and no engine checkouts:

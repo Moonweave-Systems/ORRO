@@ -63,7 +63,8 @@ become handoff-complete.
 ## CI
 
 ORRO repo boundary CI runs the repository contract checker, script compilation,
-and `--self-test`. The separate pinned-engine e2e CI checks out the pinned
-witnessd and Depone commits from the e2e lock, then runs the full smoke.
+wrapper install smoke, wrapper distribution smoke, and `--self-test`. The
+separate pinned-engine e2e CI checks out the pinned witnessd and Depone commits
+from the e2e lock, then runs the full smoke.
 
 Published ORRO package e2e remains future work.

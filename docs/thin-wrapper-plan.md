@@ -74,3 +74,14 @@ installed `orro-wrapper` command without publishing a package, calling Depone or
 witnessd, running proofrun, or running proofcheck. The install smoke output is
 setup/test metadata, not proof, not verifier truth, not package publish, not
 approval, and not assurance.
+
+`scripts/check_orro_wrapper_distribution.py` performs the local wheel
+distribution smoke. It builds a local wheel, installs it into a temporary
+virtual environment, verifies that only `orro-wrapper` is exposed, and checks
+that the wheel contains no Depone or witnessd packages and no engine
+implementation files. The distribution smoke is local test metadata, not proof,
+not verifier truth, not package publish, not approval, and not assurance.
+
+The current executable `orro` command remains witnessd-hosted. This repository
+must not shadow `orro` until a separate future migration wave defines
+compatibility and ownership for an ORRO-owned `orro` command.
