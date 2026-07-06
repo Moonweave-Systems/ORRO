@@ -12,6 +12,8 @@ Start here:
 - [ORRO Strategic Review Spec](orro-strategic-review-spec.md)
 - [Security Policy](../SECURITY.md)
 - [Contributing](../CONTRIBUTING.md)
+- [Integration Surface Policy](integrations/integration-surface-policy.md) -
+  explains why ORRO is core-first, plugin-first, and MCP-optional.
 - [Assurance Threat Model](assurance/threat-model.md)
 - [Long-Automation Maturity Gates](assurance/long-automation-maturity.md)
 - [Engine Contract](engine-contract.md)
