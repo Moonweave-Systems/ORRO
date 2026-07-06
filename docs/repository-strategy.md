@@ -50,6 +50,13 @@ The ORRO repository does not own the `orro` command yet, must not shadow `orro`,
 and must not add an `orro` console script until a later compatibility-reviewed
 migration wave.
 
+`scripts/check_orro_command_migration_dry_run.py` is allowed as a command
+migration dry-run harness. It operates on a temporary source copy, simulates
+`orro = orro_wrapper.cli:main`, checks thin wrapper behavior, and performs a
+rollback simulation to the current `orro-wrapper`-only package shape. Dry-run
+metadata is not proof, not verifier truth, not package publish, and not actual
+ORRO-owned `orro` command migration.
+
 ## Deferred Monorepo Conditions
 
 Only consider a monorepo if:

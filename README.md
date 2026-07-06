@@ -173,6 +173,13 @@ semantics. `orro-wrapper` remains the transitional ORRO repo command. The ORRO
 package must not shadow `orro` until a separate migration wave proves
 compatibility, rollback, and pinned-engine e2e through the migrated command.
 
+`scripts/check_orro_command_migration_dry_run.py` is the dry-run harness for
+that future wave. It uses a temporary source copy to simulate
+`orro = orro_wrapper.cli:main`, verifies both `orro` and `orro-wrapper` remain
+thin wrapper surfaces, and runs a rollback simulation by reinstalling the
+current `orro-wrapper`-only package shape. Dry-run metadata is not proof and
+does not make ORRO own `orro`.
+
 ## Development Install
 
 ```bash

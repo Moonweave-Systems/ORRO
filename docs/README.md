@@ -26,4 +26,8 @@ Start here:
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 
+The command migration dry-run harness,
+`scripts/check_orro_command_migration_dry_run.py`, is temporary source copy
+metadata only; dry-run metadata is not proof.
+
 These docs do not define new verifier truth and do not add a third engine.

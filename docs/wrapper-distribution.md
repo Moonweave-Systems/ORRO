@@ -49,6 +49,13 @@ The plan-only migration contract is recorded in
 implemented, distribution smoke must continue to prove that only `orro-wrapper`
 is installed by this package.
 
+The command migration dry-run harness is
+`scripts/check_orro_command_migration_dry_run.py`. It uses a temporary source
+copy to simulate `orro = orro_wrapper.cli:main`, verifies both wrapper command
+surfaces, and runs a rollback simulation that reinstalls the current
+`orro-wrapper`-only shape. Dry-run metadata is not proof and does not publish or
+transfer command ownership.
+
 ## Scope
 
 This is local distribution smoke only. It builds and installs a local wheel, but
