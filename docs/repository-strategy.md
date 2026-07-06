@@ -13,13 +13,19 @@ owns the user-facing workflow, product docs, examples, distribution planning,
 and e2e contracts.
 
 The ORRO repository may contain product checkers, documentation, examples,
-packaging drafts, engine-lock examples, and local e2e smoke harnesses that call
-engine commands through subprocess. It must not contain Depone verifier logic,
+packaging drafts, engine-lock examples, local e2e smoke harnesses that call
+engine commands through subprocess, and bootstrap setup planners that prepare or
+check local engine checkouts. It must not contain Depone verifier logic,
 witnessd runtime logic, proofrun/proofcheck implementations, scheduler,
 observer, fan-in, team-ledger, or worker execution modules.
 
 The e2e runner is a product smoke harness. It orchestrates local engine
 checkouts and records test metadata, but it is not proof and is not an engine.
+
+The bootstrap is setup/distribution orchestration and setup metadata, not proof.
+It may help prepare pinned witnessd and Depone checkouts, but it contains no
+engine code, does not verify evidence, does not approve merge, does not raise
+assurance, and the current executable `orro` command remains witnessd-hosted.
 
 The release manifest and compatibility matrix are product/distribution
 metadata. They record which pinned engine pair has passed ORRO e2e CI, but they

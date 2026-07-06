@@ -24,6 +24,12 @@ ORRO_DEPONE_ROOT
 Resolution order is explicit CLI argument, environment variable, then sibling
 checkout candidates.
 
+Use `scripts/bootstrap_orro.py --check-existing` before local smoke runs when
+you want to confirm that local engine checkout commits match the pinned engine
+lock. The bootstrap is setup/distribution orchestration and setup metadata, not
+proof. It contains no engine code and the current executable `orro` command
+remains witnessd-hosted.
+
 ## Boundary
 
 Depone verifies; witnessd executes; ORRO exposes the workflow.

@@ -17,6 +17,7 @@ Start here:
 - [E2E Smoke Runner](e2e-runner.md)
 - [Engine-Lock Update Process](engine-lock-update-process.md)
 - [Compatibility Matrix](compatibility-matrix.md)
+- [Bootstrap](bootstrap.md)
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 

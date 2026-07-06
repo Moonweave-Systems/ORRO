@@ -14,10 +14,12 @@ jobs:
       - name: Check ORRO release manifest
         run: python3 scripts/check_orro_release_manifest.py
       - name: Compile scripts
-        run: python3 -m py_compile scripts/check_orro_repo_contract.py scripts/check_orro_release_manifest.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py
+        run: python3 -m py_compile scripts/check_orro_repo_contract.py scripts/check_orro_release_manifest.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py scripts/bootstrap_orro.py
       - name: E2E smoke self-test
         run: python3 scripts/orro_e2e_smoke.py --self-test
       - name: Engine-lock update helper self-test
         run: python3 scripts/update_orro_engine_lock.py --self-test
+      - name: Bootstrap helper self-test
+        run: python3 scripts/bootstrap_orro.py --self-test
       - name: Check whitespace
         run: git diff --check

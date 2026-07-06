@@ -201,6 +201,34 @@ def check_release_discipline() -> None:
     require_contains("release docs", lower_text, "package remains future work")
 
 
+def check_bootstrap_discipline() -> None:
+    required_paths = [
+        "scripts/bootstrap_orro.py",
+        "docs/bootstrap.md",
+    ]
+    for path in required_paths:
+        if not (ROOT / path).is_file():
+            fail(f"required bootstrap file missing: {path}")
+
+    text = combined_text(
+        [
+            "README.md",
+            "docs/README.md",
+            "docs/bootstrap.md",
+            "docs/install.md",
+            "docs/repository-strategy.md",
+            "docs/thin-wrapper-plan.md",
+            "docs/e2e-runner.md",
+            "docs/engine-lock-update-process.md",
+        ]
+    )
+    require_contains("bootstrap docs", text, "bootstrap is setup/distribution orchestration")
+    require_contains("bootstrap docs", text, "setup metadata, not proof")
+    require_contains("bootstrap docs", text, "no engine code")
+    require_contains("bootstrap docs", text, "witnessd-hosted")
+    require_contains("bootstrap docs", text, INVARIANT)
+
+
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
         if path.name == ".git":
@@ -219,6 +247,7 @@ def check_no_engine_code() -> None:
         if suffix in {".py", ".sh"} and relative.parts[0] != "scripts":
             fail(f"executable source outside scripts is not allowed: {relative}")
         if relative.parts[0] == "scripts" and path.name not in {
+            "bootstrap_orro.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
             "orro_e2e_smoke.py",
@@ -237,6 +266,7 @@ def main() -> int:
     check_e2e_engine_lock()
     check_e2e_docs()
     check_release_discipline()
+    check_bootstrap_discipline()
     check_no_engine_code()
     print("ORRO repo contract: pass")
     return 0
