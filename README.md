@@ -90,6 +90,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Engine Contract](docs/engine-contract.md)
 - [Product Reality Check](docs/product-reality-check.md)
 - [E2E Smoke Contract](docs/e2e-smoke-contract.md)
+- [E2E Smoke Runner](docs/e2e-runner.md)
 - [Repository Strategy](docs/repository-strategy.md)
 
 ## Compatibility

@@ -1,11 +1,21 @@
 # ORRO E2E Smoke Contract
 
-This directory currently documents the future end-to-end smoke contract. It does not contain a heavy runner yet.
+This directory documents the end-to-end smoke contract. The runnable local
+harness lives at:
 
-Actual engine tests live in witnessd and Depone. This ORRO repository documents
-the smoke contract and product expectations only.
+```text
+scripts/orro_e2e_smoke.py
+```
 
-Future smoke checks should:
+The runner calls the existing witnessd-hosted `orro` command against local
+witnessd and Depone checkouts. It does not import engine internals and does not
+implement proofrun, proofcheck, scheduling, observing, fan-in, team-ledger, or
+verifier logic.
+
+Actual engine tests still live in witnessd and Depone. This ORRO repository
+owns product-level orchestration smoke checks and e2e contract documentation.
+
+Future pinned-engine smoke checks should:
 
 1. Install witnessd and Depone from pinned refs.
 2. Run `orro advise`.

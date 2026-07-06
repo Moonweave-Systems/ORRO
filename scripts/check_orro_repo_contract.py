@@ -142,7 +142,10 @@ def check_no_engine_code() -> None:
         suffix = path.suffix.lower()
         if suffix in {".py", ".sh"} and relative.parts[0] != "scripts":
             fail(f"executable source outside scripts is not allowed: {relative}")
-        if relative.parts[0] == "scripts" and path.name != "check_orro_repo_contract.py":
+        if relative.parts[0] == "scripts" and path.name not in {
+            "check_orro_repo_contract.py",
+            "orro_e2e_smoke.py",
+        }:
             fail(f"unexpected script present: {relative}")
         if suffix in {".py", ".sh"} and any(token in lower_name for token in FORBIDDEN_IMPLEMENTATION_NAMES):
             fail(f"forbidden engine implementation-looking file present: {relative}")
