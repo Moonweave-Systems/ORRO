@@ -1,0 +1,52 @@
+{
+  "kind": "orro-release-manifest",
+  "schema_version": "0.1",
+  "product": {
+    "name": "ORRO",
+    "full_name": "Observed Run & Review Orchestrator",
+    "repository": "Moonweave-Systems/ORRO",
+    "commit": "0000000000000000000000000000000000000000"
+  },
+  "engines": {
+    "witnessd": {
+      "repository": "Moonweave-Systems/witnessd",
+      "commit": "9225986ca60a23633d97b3f7ab43b274eae81043",
+      "role": "execution engine"
+    },
+    "depone": {
+      "repository": "Moonweave-Systems/Depone",
+      "commit": "39c38181e701a3bb5526700dd61f948ca0229b2d",
+      "role": "verifier engine"
+    }
+  },
+  "engine_lock": {
+    "path": "engine-lock/orro-e2e-engine-lock.json",
+    "matched_in_ci": true
+  },
+  "validated_surfaces": [
+    "advise",
+    "init",
+    "flowplan",
+    "proofrun",
+    "next",
+    "auto --until-complete",
+    "proofcheck",
+    "handoff",
+    "report"
+  ],
+  "validation": {
+    "pinned_engine_e2e": "pass",
+    "boundary_checker": "pass"
+  },
+  "boundary": {
+    "depone_verifies": true,
+    "witnessd_executes": true,
+    "orro_exposes_workflow": true,
+    "contains_engine_logic": false,
+    "approves_merge": false,
+    "raises_assurance": false
+  },
+  "not_proof": true,
+  "not_verifier_truth": true,
+  "not_package_publish": true
+}

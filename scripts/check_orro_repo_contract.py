@@ -19,6 +19,7 @@ ALLOWED_TOP_LEVEL_DIRS = {
     "engine-lock",
     "examples",
     "packaging",
+    "release",
     "scripts",
     "tests",
 }
@@ -166,6 +167,39 @@ def check_e2e_docs() -> None:
     require_any_contains("e2e docs", text, ("not proof", "not verifier truth"))
 
 
+def check_release_discipline() -> None:
+    required_paths = [
+        "scripts/check_orro_release_manifest.py",
+        "release/orro-release-manifest.v0.json",
+        "docs/engine-lock-update-process.md",
+        "docs/compatibility-matrix.md",
+        ".github/pull_request_template.md",
+    ]
+    for path in required_paths:
+        if not (ROOT / path).is_file():
+            fail(f"required release discipline file missing: {path}")
+
+    text = combined_text(
+        [
+            "README.md",
+            "docs/repository-strategy.md",
+            "docs/e2e-runner.md",
+            "docs/e2e-smoke-contract.md",
+            "docs/install.md",
+            "docs/engine-contract.md",
+            "docs/engine-lock-update-process.md",
+            "docs/compatibility-matrix.md",
+        ]
+    )
+    lower_text = text.lower()
+    require_contains("release docs", text, "release manifest")
+    require_contains("release docs", lower_text, "engine-lock update")
+    require_contains("release docs", text, "not proof")
+    require_contains("release docs", text, "not verifier truth")
+    require_contains("release docs", lower_text, "published orro")
+    require_contains("release docs", lower_text, "package remains future work")
+
+
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
         if path.name == ".git":
@@ -185,6 +219,7 @@ def check_no_engine_code() -> None:
             fail(f"executable source outside scripts is not allowed: {relative}")
         if relative.parts[0] == "scripts" and path.name not in {
             "check_orro_repo_contract.py",
+            "check_orro_release_manifest.py",
             "orro_e2e_smoke.py",
         }:
             fail(f"unexpected script present: {relative}")
@@ -199,6 +234,7 @@ def main() -> int:
     check_engine_lock_example()
     check_e2e_engine_lock()
     check_e2e_docs()
+    check_release_discipline()
     check_no_engine_code()
     print("ORRO repo contract: pass")
     return 0
