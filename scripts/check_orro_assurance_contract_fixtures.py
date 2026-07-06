@@ -13,28 +13,68 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def ignored_copy_names(_directory: str, names: list[str]) -> set[str]:
-    ignored = {".git", ".omx", "__pycache__"}
-    return {name for name in names if name in ignored or name.endswith(".pyc")}
+DEFAULT_TIMEOUT_SECONDS = 30
 
 
 def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        cwd=cwd,
-        check=False,
-        encoding="utf-8",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        return subprocess.run(
+            command,
+            cwd=cwd,
+            check=False,
+            encoding="utf-8",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout or ""
+        stderr = exc.stderr or ""
+        raise RuntimeError(
+            "infrastructure failure: command timed out after "
+            f"{DEFAULT_TIMEOUT_SECONDS}s in {cwd}: {command!r}\n"
+            f"stdout:\n{stdout}\n"
+            f"stderr:\n{stderr}"
+        ) from exc
+
+
+def tracked_files(root: Path) -> list[Path]:
+    result = run(["git", "ls-files", "-z"], root)
+    if result.returncode != 0:
+        raise RuntimeError(
+            "failed to list tracked files\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
+
+    files: list[Path] = []
+    for raw in result.stdout.split("\0"):
+        if not raw:
+            continue
+        path = Path(raw)
+        if path.is_absolute() or ".." in path.parts:
+            raise RuntimeError(f"unsafe tracked path: {raw}")
+        files.append(path)
+    return files
+
+
+def copy_tracked_repo(root: Path, destination: Path) -> None:
+    destination.mkdir(parents=True, exist_ok=True)
+    for relative in tracked_files(root):
+        source = root / relative
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        if source.is_symlink():
+            raise RuntimeError(f"refusing to copy symlink fixture input: {relative}")
+
+        shutil.copy2(source, target)
 
 
 def fixture_repo() -> tempfile.TemporaryDirectory[str]:
     temp = tempfile.TemporaryDirectory(prefix="orro-assurance-contract-")
     workspace = Path(temp.name) / "repo"
-    shutil.copytree(ROOT, workspace, ignore=ignored_copy_names)
+    copy_tracked_repo(ROOT, workspace)
     init = run(["git", "init"], workspace)
     if init.returncode != 0:
         raise RuntimeError(init.stderr)
