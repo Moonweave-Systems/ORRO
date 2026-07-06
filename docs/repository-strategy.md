@@ -44,6 +44,12 @@ package publish. It confirms `orro-wrapper` is exposed while the current `orro`
 command remains witnessd-hosted. Future migration to an ORRO-owned `orro`
 command requires a separate migration wave.
 
+`docs/orro-command-migration.md` and
+`packaging/command-migration-plan.v0.json` define that migration as plan-only.
+The ORRO repository does not own the `orro` command yet, must not shadow `orro`,
+and must not add an `orro` console script until a later compatibility-reviewed
+migration wave.
+
 ## Deferred Monorepo Conditions
 
 Only consider a monorepo if:

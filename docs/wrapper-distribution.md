@@ -43,6 +43,12 @@ This package must not shadow `orro` yet. A future migration to an ORRO-owned
 explicit checks that the witnessd-hosted command remains available during the
 transition.
 
+The plan-only migration contract is recorded in
+`docs/orro-command-migration.md` and
+`packaging/command-migration-plan.v0.json`. Until that future migration is
+implemented, distribution smoke must continue to prove that only `orro-wrapper`
+is installed by this package.
+
 ## Scope
 
 This is local distribution smoke only. It builds and installs a local wheel, but
