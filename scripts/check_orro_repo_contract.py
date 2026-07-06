@@ -112,6 +112,8 @@ def check_packaging_drafts() -> None:
         require_any_contains(path, rendered, ("boundary", "boundary_warning"))
     if not (ROOT / "packaging/wrapper-package-plan.v0.json").is_file():
         fail("required wrapper package plan missing: packaging/wrapper-package-plan.v0.json")
+    if not (ROOT / "packaging/pinned-engine-fallback-policy.v0.json").is_file():
+        fail("required pinned engine fallback policy missing: packaging/pinned-engine-fallback-policy.v0.json")
 
 
 def check_engine_lock_example() -> None:
@@ -259,6 +261,34 @@ def check_packaging_decision() -> None:
     require_contains("packaging decision docs", text, INVARIANT)
 
 
+def check_fallback_policy() -> None:
+    required_paths = [
+        "scripts/check_orro_fallback_policy.py",
+        "docs/pinned-engine-fallback.md",
+        "packaging/pinned-engine-fallback-policy.v0.json",
+    ]
+    for path in required_paths:
+        if not (ROOT / path).is_file():
+            fail(f"required fallback policy file missing: {path}")
+
+    text = combined_text(
+        [
+            "README.md",
+            "docs/README.md",
+            "docs/pinned-engine-fallback.md",
+            "docs/thin-wrapper-plan.md",
+            "docs/bootstrap.md",
+            "docs/engine-lock-update-process.md",
+        ]
+    )
+    require_contains("fallback policy docs", text, "Fail closed")
+    require_contains("fallback policy docs", text, "pinned engine")
+    require_contains("fallback policy docs", text, "not proof")
+    require_contains("fallback policy docs", text, "not verifier truth")
+    require_contains("fallback policy docs", text, "intentional engine-lock update PR")
+    require_contains("fallback policy docs", text, INVARIANT)
+
+
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
         if path.name == ".git":
@@ -278,6 +308,7 @@ def check_no_engine_code() -> None:
             fail(f"executable source outside scripts is not allowed: {relative}")
         if relative.parts[0] == "scripts" and path.name not in {
             "bootstrap_orro.py",
+            "check_orro_fallback_policy.py",
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
@@ -299,6 +330,7 @@ def main() -> int:
     check_release_discipline()
     check_bootstrap_discipline()
     check_packaging_decision()
+    check_fallback_policy()
     check_no_engine_code()
     print("ORRO repo contract: pass")
     return 0

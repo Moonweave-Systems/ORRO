@@ -53,3 +53,10 @@ The v0 packaging decision is now recorded in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json`. It is product metadata, not package
 publish, and keeps the current command source witnessd-hosted until a future
 thin wrapper is explicitly implemented.
+
+The pinned-engine fallback is now recorded in
+`docs/pinned-engine-fallback.md` and
+`packaging/pinned-engine-fallback-policy.v0.json`. It requires fail-closed
+behavior when pinned engine commits are missing or mismatched. Future wrapper
+work must not silently use latest `main`, auto-select alternate engine commits,
+or rewrite the engine lock outside an intentional engine-lock update PR.
