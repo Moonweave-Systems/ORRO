@@ -6,6 +6,8 @@ The ORRO repository now includes a lightweight local smoke harness:
 python3 scripts/orro_e2e_smoke.py \
   --witnessd-root ../witnessd \
   --depone-root ../Depone \
+  --engine-lock engine-lock/orro-e2e-engine-lock.json \
+  --require-lock-match \
   --workdir /tmp/orro-e2e \
   --json
 ```
@@ -32,9 +34,11 @@ The current runner checks:
 
 The e2e result is test metadata, not proof.
 
-## Future Pinned-Engine CI
+## Pinned-Engine CI
 
-Future e2e CI should install ORRO/witnessd/Depone from pinned refs and assert:
+ORRO e2e CI reads `engine-lock/orro-e2e-engine-lock.json`, checks out the pinned
+witnessd and Depone commits, requires the local checkout commits to match the
+lock, and asserts:
 
 - `orro advise` recommends the smallest safe workflow
 - `orro init` creates readiness metadata
@@ -45,6 +49,10 @@ Future e2e CI should install ORRO/witnessd/Depone from pinned refs and assert:
 - `orro report` does not overclaim
 - scout-only artifacts do not pass proofcheck
 - auto v0 does not run proofrun
+
+The e2e engine lock is distribution and CI metadata, not proof, not verifier
+truth, not approval, and not assurance. Future published-package e2e remains
+future work.
 
 ```text
 Depone verifies; witnessd executes; ORRO exposes the workflow.

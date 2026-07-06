@@ -1,0 +1,20 @@
+{
+  "kind": "orro-engine-lock",
+  "schema_version": "1.0",
+  "witnessd": {
+    "repository": "Moonweave-Systems/witnessd",
+    "commit": "9225986ca60a23633d97b3f7ab43b274eae81043",
+    "ref_name": "main"
+  },
+  "depone": {
+    "repository": "Moonweave-Systems/Depone",
+    "commit": "39c38181e701a3bb5526700dd61f948ca0229b2d",
+    "ref_name": "main"
+  },
+  "boundary": {
+    "approves_merge": false,
+    "raises_assurance": false,
+    "executes_commands": false,
+    "verifies_evidence": false
+  }
+}

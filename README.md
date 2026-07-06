@@ -44,6 +44,16 @@ Current command source: the `orro` command is implemented and hosted by
 Future goal: one user-facing ORRO install that pins compatible Depone and
 witnessd engine versions without merging the engines.
 
+## Pinned Engine E2E
+
+ORRO repo e2e CI uses `engine-lock/orro-e2e-engine-lock.json` to checkout a
+pinned witnessd and Depone engine pair, then runs the local smoke runner against
+those checkouts. The e2e engine lock is distribution and CI metadata, not proof,
+not verifier truth, not approval, and not assurance.
+
+The runner orchestrates engines but does not implement proofrun, proofcheck,
+runtime scheduling, observer, fan-in, team-ledger, or verifier logic.
+
 ## Development Install
 
 ```bash

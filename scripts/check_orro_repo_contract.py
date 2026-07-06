@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
     "docs",
@@ -125,6 +127,45 @@ def check_engine_lock_example() -> None:
             fail(f"engine-lock boundary.{key} must be false")
 
 
+def check_e2e_engine_lock() -> None:
+    data = load_json("engine-lock/orro-e2e-engine-lock.json")
+    if data.get("kind") != "orro-engine-lock":
+        fail("e2e engine lock kind must be orro-engine-lock")
+    if data.get("schema_version") != "1.0":
+        fail("e2e engine lock schema_version must be 1.0")
+    engines = {
+        "witnessd": "Moonweave-Systems/witnessd",
+        "depone": "Moonweave-Systems/Depone",
+    }
+    for key, repository in engines.items():
+        engine = data.get(key, {})
+        if engine.get("repository") != repository:
+            fail(f"e2e engine lock {key}.repository must be {repository}")
+        commit = engine.get("commit")
+        if not isinstance(commit, str) or not COMMIT_RE.fullmatch(commit):
+            fail(f"e2e engine lock {key}.commit must be a 40-hex commit")
+        if commit == "0" * 40:
+            fail(f"e2e engine lock {key}.commit must not be the placeholder zero commit")
+    boundary = data.get("boundary", {})
+    for key in ("approves_merge", "raises_assurance", "executes_commands", "verifies_evidence"):
+        if boundary.get(key) is not False:
+            fail(f"e2e engine lock boundary.{key} must be false")
+
+
+def check_e2e_docs() -> None:
+    text = combined_text(
+        [
+            "README.md",
+            "docs/e2e-runner.md",
+            "docs/e2e-smoke-contract.md",
+            "tests/e2e/README.md",
+        ]
+    )
+    require_contains("e2e docs", text, "pinned")
+    require_contains("e2e docs", text, "engine lock")
+    require_any_contains("e2e docs", text, ("not proof", "not verifier truth"))
+
+
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
         if path.name == ".git":
@@ -156,6 +197,8 @@ def main() -> int:
     check_docs_and_examples()
     check_packaging_drafts()
     check_engine_lock_example()
+    check_e2e_engine_lock()
+    check_e2e_docs()
     check_no_engine_code()
     print("ORRO repo contract: pass")
     return 0

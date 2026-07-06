@@ -23,6 +23,8 @@ cd ../ORRO
 python3 scripts/orro_e2e_smoke.py \
   --witnessd-root ../witnessd \
   --depone-root ../Depone \
+  --engine-lock engine-lock/orro-e2e-engine-lock.json \
+  --require-lock-match \
   --workdir /tmp/orro-e2e \
   --json
 ```
