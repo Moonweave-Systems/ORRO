@@ -1,0 +1,31 @@
+{
+  "kind": "orro-marketplace-manifest-draft",
+  "schema_version": "0.1",
+  "name": "ORRO",
+  "display_name": "Observed Run & Review Orchestrator",
+  "status": "draft",
+  "description": "User-facing workflow surface for observed agent execution, Depone proofcheck, handoff, and report.",
+  "engine_dependencies": [
+    {
+      "name": "witnessd",
+      "repository": "Moonweave-Systems/witnessd",
+      "role": "execution runtime and evidence emitter"
+    },
+    {
+      "name": "Depone",
+      "repository": "Moonweave-Systems/Depone",
+      "role": "non-executing verifier"
+    }
+  ],
+  "version_lock": {
+    "format": "orro-engine-lock",
+    "required_for_distribution": true
+  },
+  "boundary": {
+    "contains_engine_code": false,
+    "creates_third_engine": false,
+    "depone_verifies": true,
+    "witnessd_executes": true,
+    "orro_exposes_workflow": true
+  }
+}

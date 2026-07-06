@@ -1,0 +1,17 @@
+{
+  "kind": "orro-plugin-manifest-draft",
+  "schema_version": "0.1",
+  "name": "orro",
+  "display_name": "ORRO",
+  "status": "draft",
+  "entrypoint_plan": {
+    "current": "witnessd-hosted orro console script",
+    "future": "single user-facing ORRO install that pins witnessd and Depone"
+  },
+  "engine_dependencies": {
+    "witnessd": "Moonweave-Systems/witnessd",
+    "depone": "Moonweave-Systems/Depone"
+  },
+  "version_lock_placeholder": "engine-lock/orro-engine-lock.example.json",
+  "boundary_warning": "This plugin draft must not embed verifier or runtime engine implementation."
+}
