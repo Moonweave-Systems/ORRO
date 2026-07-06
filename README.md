@@ -116,6 +116,22 @@ using latest `main`, rewriting the engine lock during bootstrap, or
 auto-selecting alternate engine commits. Moving to a different engine pair
 requires an intentional engine-lock update PR.
 
+## Thin Wrapper Skeleton
+
+`orro-wrapper` is the first thin wrapper skeleton in this repository. It does
+not replace the witnessd-hosted `orro` command. It can report wrapper boundary
+metadata and explicitly delegate commands to the existing engine command.
+
+```bash
+PYTHONPATH=src python3 -m orro_wrapper boundary
+PYTHONPATH=src python3 -m orro_wrapper self-test
+PYTHONPATH=src python3 -m orro_wrapper delegate -- --help
+```
+
+The wrapper is not proof, not verifier truth, not package publish, not approval,
+and not assurance. It contains no engine code and does not implement proofrun or
+proofcheck.
+
 ## Development Install
 
 ```bash
@@ -168,6 +184,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Bootstrap](docs/bootstrap.md)
 - [Packaging Decision](docs/packaging-decision.md)
 - [Pinned Engine Fallback](docs/pinned-engine-fallback.md)
+- [Thin Wrapper](docs/thin-wrapper.md)
 - [Repository Strategy](docs/repository-strategy.md)
 
 ## Compatibility

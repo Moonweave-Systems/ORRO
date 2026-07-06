@@ -21,6 +21,7 @@ ALLOWED_TOP_LEVEL_DIRS = {
     "packaging",
     "release",
     "scripts",
+    "src",
     "tests",
 }
 FORBIDDEN_TOP_LEVEL_DIRS = {
@@ -289,6 +290,37 @@ def check_fallback_policy() -> None:
     require_contains("fallback policy docs", text, INVARIANT)
 
 
+def check_wrapper() -> None:
+    required_paths = [
+        "pyproject.toml",
+        "scripts/check_orro_wrapper.py",
+        "docs/thin-wrapper.md",
+        "src/orro_wrapper/__init__.py",
+        "src/orro_wrapper/__main__.py",
+        "src/orro_wrapper/cli.py",
+    ]
+    for path in required_paths:
+        if not (ROOT / path).is_file():
+            fail(f"required wrapper file missing: {path}")
+
+    text = combined_text(
+        [
+            "README.md",
+            "docs/README.md",
+            "docs/thin-wrapper.md",
+            "docs/thin-wrapper-plan.md",
+            "docs/packaging-decision.md",
+        ]
+    )
+    require_contains("wrapper docs", text, "orro-wrapper")
+    require_contains("wrapper docs", text, "delegates")
+    require_contains("wrapper docs", text, "does not implement proofrun")
+    require_contains("wrapper docs", text, "does not implement proofcheck")
+    require_contains("wrapper docs", text, "not proof")
+    require_contains("wrapper docs", text, "witnessd-hosted")
+    require_contains("wrapper docs", text, INVARIANT)
+
+
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
         if path.name == ".git":
@@ -304,14 +336,17 @@ def check_no_engine_code() -> None:
         relative = path.relative_to(ROOT)
         lower_name = path.name.lower()
         suffix = path.suffix.lower()
-        if suffix in {".py", ".sh"} and relative.parts[0] != "scripts":
+        if suffix in {".py", ".sh"} and relative.parts[0] not in {"scripts", "src"}:
             fail(f"executable source outside scripts is not allowed: {relative}")
+        if relative.parts[0] == "src" and (len(relative.parts) < 2 or relative.parts[1] != "orro_wrapper"):
+            fail(f"unexpected package source present: {relative}")
         if relative.parts[0] == "scripts" and path.name not in {
             "bootstrap_orro.py",
             "check_orro_fallback_policy.py",
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
+            "check_orro_wrapper.py",
             "orro_e2e_smoke.py",
             "update_orro_engine_lock.py",
         }:
@@ -331,6 +366,7 @@ def main() -> int:
     check_bootstrap_discipline()
     check_packaging_decision()
     check_fallback_policy()
+    check_wrapper()
     check_no_engine_code()
     print("ORRO repo contract: pass")
     return 0

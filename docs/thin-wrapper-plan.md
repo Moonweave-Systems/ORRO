@@ -12,6 +12,8 @@ ORRO feel like one install while keeping the engines separate.
 - The witnessd-hosted `orro` console script is the active command surface.
 - This repository contains docs, examples, packaging drafts, bootstrap setup
   planning, and smoke-contract planning only.
+- This repository now contains an `orro-wrapper` skeleton that reports wrapper
+  boundaries and delegates explicitly to the witnessd-hosted command.
 
 ## Future Wrapper Scope
 
@@ -60,3 +62,8 @@ The pinned-engine fallback is now recorded in
 behavior when pinned engine commits are missing or mismatched. Future wrapper
 work must not silently use latest `main`, auto-select alternate engine commits,
 or rewrite the engine lock outside an intentional engine-lock update PR.
+
+The initial wrapper skeleton is documented in `docs/thin-wrapper.md`. It exposes
+`orro-wrapper`, not `orro`, so the current witnessd-hosted command remains the
+active ORRO command source. The skeleton delegates only when explicitly asked
+and does not implement proofrun or proofcheck.
