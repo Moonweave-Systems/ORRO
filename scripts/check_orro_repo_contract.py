@@ -12,6 +12,14 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
+STRATEGIC_REVIEW_REQUIRED_PHRASES = (
+    "Verified acceleration, not blind automation",
+    INVARIANT,
+    "Humans retain judgment",
+    "handoff is not approval",
+    "report is not proof",
+    "long automation is checkpoint expansion, not trust expansion",
+)
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
@@ -99,6 +107,15 @@ def check_docs_and_examples() -> None:
     require_contains("docs/examples", docs_examples_text, "not approval")
     require_contains("docs/examples", docs_examples_text, "Report is summary, not proof")
     require_contains("docs/examples", docs_examples_text, "Engine-lock is distribution metadata, not proof")
+
+
+def check_strategic_review_spec() -> None:
+    path = "docs/orro-strategic-review-spec.md"
+    if not (ROOT / path).is_file():
+        fail(f"required strategic review spec missing: {path}")
+    text = read_text(path)
+    for phrase in STRATEGIC_REVIEW_REQUIRED_PHRASES:
+        require_contains(path, text, phrase)
 
 
 def check_packaging_drafts() -> None:
@@ -423,6 +440,7 @@ def check_no_engine_code() -> None:
 def main() -> int:
     check_readme()
     check_docs_and_examples()
+    check_strategic_review_spec()
     check_packaging_drafts()
     check_engine_lock_example()
     check_e2e_engine_lock()
