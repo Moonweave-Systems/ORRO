@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,70 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
+STRATEGIC_REVIEW_REQUIRED_PHRASES = (
+    "Verified acceleration, not blind automation",
+    INVARIANT,
+    "Humans retain judgment",
+    "handoff is not approval",
+    "report is not proof",
+    "long automation is checkpoint expansion, not trust expansion",
+)
+STRATEGIC_REVIEW_REQUIRED_SECTIONS = (
+    "## 1. 총평",
+    "## 2. 철학 적합성 점수",
+    "## 3. 가장 잘한 점",
+    "## 4. 가장 위험한 점",
+    "## 5. 작은 설계 리뷰",
+    "## 6. 큰 방향 리뷰",
+    "## 7. 하네스 설계안",
+    "## 8. 품질 하네스",
+    "## 9. 효율 측정안",
+    "## 10. 긴 자동화 maturity ladder",
+    "## 11. 지금 당장 해야 할 P0",
+    "## 12. v0.1 전에 해야 할 P1",
+    "## 13. 장기 P2/P3",
+    "## 14. 문서에 넣을 철학 선언문",
+    "## 15. 최종 판단",
+)
+STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS = {
+    "workflow-plan": ("실행 의도", "proof", "approval", "verifier truth"),
+    "proofrun": ("witnessd", "evidence", "proofcheck 통과", "merge approval"),
+    "proofcheck-verdict": ("Depone", "verdict", "판단을 포기"),
+    "handoff": ("리뷰", "approval", "proof", "release permission"),
+    "report": ("요약", "proof", "verifier truth", "approval"),
+    "engine-lock": ("pinned engine", "distribution metadata", "assurance", "proof"),
+    "release-manifest": ("release candidate metadata", "package publish", "proof", "approval"),
+}
+ASSURANCE_DOC_REQUIRED_PHRASES = {
+    "docs/assurance/threat-model.md": (
+        "Prompt Injection",
+        "Secret Leakage",
+        "Replay or Stale Evidence",
+        "Handoff Approval Confusion",
+        "Report Proof Confusion",
+        "handoff is not approval",
+        "report is not proof",
+        "Humans retain judgment",
+        INVARIANT,
+    ),
+    "docs/assurance/long-automation-maturity.md": (
+        "Long-Automation Maturity Gates",
+        "Entry criteria",
+        "Exit criteria",
+        "Must not mean",
+        "Long automation is checkpoint expansion, not trust expansion.",
+        "Level 6 continuous operation is intentionally not defined",
+        "Humans retain judgment",
+    ),
+    "docs/orro-strategic-review-spec.md": (
+        "로컬 `.omx/` 디렉터리는 agent workflow runtime state다",
+        "tracked `.omx` 파일은 contract violation",
+    ),
+    "docs/README.md": (
+        "[Assurance Threat Model](assurance/threat-model.md)",
+        "[Long-Automation Maturity Gates](assurance/long-automation-maturity.md)",
+    ),
+}
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
@@ -67,6 +132,64 @@ def require_any_contains(label: str, haystack: str, needles: tuple[str, ...]) ->
         fail(f"{label} must contain one of {needles!r}")
 
 
+def normalize_contract_text(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def require_contains_normalized(label: str, haystack: str, needle: str) -> None:
+    normalized_haystack = normalize_contract_text(haystack)
+    normalized_needle = normalize_contract_text(needle)
+    if normalized_needle not in normalized_haystack:
+        fail(f"{label} must contain normalized {needle!r}")
+
+
+def require_artifact_semantics(
+    label: str,
+    artifact_rows: dict[str, str],
+    artifact: str,
+    required_tokens: tuple[str, ...],
+) -> None:
+    if artifact not in artifact_rows:
+        fail(f"{label} must define artifact semantics for {artifact!r}")
+    row_text = artifact_rows[artifact]
+    missing = [token for token in required_tokens if token not in row_text]
+    if missing:
+        fail(f"{label} artifact {artifact!r} missing semantic tokens: {missing}")
+
+
+def strategic_artifact_table_rows(label: str, haystack: str) -> dict[str, str]:
+    start_marker = "Artifact meaning table:"
+    header = "| Artifact | Means | Does not mean |"
+    end_marker = "문서 작성 규칙:"
+    start = haystack.find(start_marker)
+    if start == -1:
+        fail(f"{label} must contain {start_marker!r}")
+    table_start = haystack.find(header, start)
+    if table_start == -1:
+        fail(f"{label} must contain {header!r}")
+    table_end = haystack.find(end_marker, table_start)
+    if table_end == -1:
+        fail(f"{label} must contain {end_marker!r} after artifact table")
+
+    rows: dict[str, str] = {}
+    for raw_line in haystack[table_start:table_end].splitlines():
+        line = raw_line.strip()
+        if not line.startswith("|"):
+            continue
+        if line == header:
+            continue
+        cells = [normalize_contract_text(cell) for cell in line.strip("|").split("|")]
+        if cells and all(re.fullmatch(r":?-+:?", cell) for cell in cells):
+            continue
+        if len(cells) != 3:
+            fail(f"{label} artifact table row must have exactly three cells: {line!r}")
+        artifact = cells[0]
+        if artifact in rows:
+            fail(f"{label} artifact table must define {artifact!r} exactly once")
+        rows[artifact] = " | ".join(cells)
+    return rows
+
+
 def combined_text(paths: list[str]) -> str:
     return "\n".join(read_text(path) for path in paths)
 
@@ -99,6 +222,106 @@ def check_docs_and_examples() -> None:
     require_contains("docs/examples", docs_examples_text, "not approval")
     require_contains("docs/examples", docs_examples_text, "Report is summary, not proof")
     require_contains("docs/examples", docs_examples_text, "Engine-lock is distribution metadata, not proof")
+
+
+def check_strategic_review_spec() -> None:
+    path = "docs/orro-strategic-review-spec.md"
+    if not (ROOT / path).is_file():
+        fail(f"required strategic review spec missing: {path}")
+    text = read_text(path)
+    for phrase in STRATEGIC_REVIEW_REQUIRED_PHRASES:
+        require_contains(path, text, phrase)
+    for section in STRATEGIC_REVIEW_REQUIRED_SECTIONS:
+        require_contains_normalized(path, text, section)
+    artifact_rows = strategic_artifact_table_rows(path, text)
+    unexpected_artifacts = sorted(set(artifact_rows) - set(STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS))
+    if unexpected_artifacts:
+        fail(f"{path} artifact table contains unexpected artifacts: {unexpected_artifacts}")
+    for artifact, required_tokens in STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS.items():
+        require_artifact_semantics(path, artifact_rows, artifact, required_tokens)
+
+
+def check_assurance_docs() -> None:
+    for path, phrases in ASSURANCE_DOC_REQUIRED_PHRASES.items():
+        if not (ROOT / path).is_file():
+            fail(f"required assurance doc missing: {path}")
+        text = read_text(path)
+        for phrase in phrases:
+            require_contains(path, text, phrase)
+
+
+def check_strategic_review_corpus() -> None:
+    path = "docs/assurance/strategic-review-corpus.v0.json"
+    if not (ROOT / path).is_file():
+        fail(f"required strategic review corpus missing: {path}")
+
+    data = load_json(path)
+    if data.get("kind") != "orro-strategic-review-corpus":
+        fail("strategic review corpus kind must be orro-strategic-review-corpus")
+    if data.get("schema_version") != "0.1":
+        fail("strategic review corpus schema_version must be 0.1")
+
+    boundary = data.get("orro_boundary", {})
+    for key in ("approves_merge", "contains_engine_logic", "executes_commands", "raises_assurance", "verifies_evidence"):
+        if boundary.get(key) is not False:
+            fail(f"strategic review corpus orro_boundary.{key} must be false")
+
+    cases = data.get("cases")
+    if not isinstance(cases, list) or len(cases) < 5:
+        fail("strategic review corpus must contain at least five cases")
+
+    allowed_artifacts = {
+        "workflow-plan",
+        "proofrun",
+        "proofcheck-verdict",
+        "handoff",
+        "report",
+        "engine-lock",
+        "release-manifest",
+    }
+    allowed_rejections = {
+        "handoff is not approval",
+        "report is not proof",
+        INVARIANT,
+        "engine-lock is distribution metadata, not proof",
+        "long automation is checkpoint expansion, not trust expansion",
+    }
+    required_risks = {
+        "handoff_approval_confusion",
+        "report_proof_confusion",
+        "verifier_boundary_confusion",
+        "engine_lock_assurance_confusion",
+        "long_automation_trust_confusion",
+    }
+    allowed_risks = set(required_risks)
+    seen_ids: set[str] = set()
+    seen_risks: set[str] = set()
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            fail(f"strategic review corpus case {index} must be an object")
+        for key in ("id", "artifact", "risk", "phrase", "must_reject_as"):
+            if not isinstance(case.get(key), str) or not case[key].strip():
+                fail(f"strategic review corpus case {index}.{key} must be a non-empty string")
+
+        case_id = case["id"]
+        if case_id in seen_ids:
+            fail(f"strategic review corpus duplicate case id: {case_id}")
+        seen_ids.add(case_id)
+
+        if case["artifact"] not in allowed_artifacts:
+            fail(f"strategic review corpus case {index}.artifact is not allowed")
+        if case["risk"] not in allowed_risks:
+            fail(f"strategic review corpus case {index}.risk is not allowed")
+        if case["must_reject_as"] not in allowed_rejections:
+            fail(f"strategic review corpus case {index}.must_reject_as is not an allowed doctrine rejection")
+        if case["phrase"] == case["must_reject_as"]:
+            fail(f"strategic review corpus case {index} phrase must differ from rejection")
+
+        seen_risks.add(case["risk"])
+
+    missing = sorted(required_risks - seen_risks)
+    if missing:
+        fail(f"strategic review corpus missing required risks: {missing}")
 
 
 def check_packaging_drafts() -> None:
@@ -383,8 +606,16 @@ def check_wrapper() -> None:
 
 
 def check_no_engine_code() -> None:
+    tracked_omx = subprocess.check_output(
+        ["git", "ls-files", ".omx"],
+        cwd=ROOT,
+        encoding="utf-8",
+    ).splitlines()
+    if tracked_omx:
+        fail(f".omx is local workflow runtime state and must not be tracked: {tracked_omx}")
+
     for path in ROOT.iterdir():
-        if path.name == ".git":
+        if path.name in {".git", ".omx"}:
             continue
         if path.is_dir() and path.name in FORBIDDEN_TOP_LEVEL_DIRS:
             fail(f"forbidden engine/runtime directory present: {path.name}")
@@ -392,16 +623,20 @@ def check_no_engine_code() -> None:
             fail(f"unexpected top-level directory present: {path.name}")
 
     for path in ROOT.rglob("*"):
-        if ".git" in path.parts or "__pycache__" in path.parts or not path.is_file():
+        if ".git" in path.parts or ".omx" in path.parts or "__pycache__" in path.parts or not path.is_file():
             continue
         relative = path.relative_to(ROOT)
+        parts = relative.parts
+        if not parts:
+            continue
+        top = parts[0]
         lower_name = path.name.lower()
         suffix = path.suffix.lower()
-        if suffix in {".py", ".sh"} and relative.parts[0] not in {"scripts", "src"}:
+        if suffix in {".py", ".sh"} and top not in {"scripts", "src"}:
             fail(f"executable source outside scripts is not allowed: {relative}")
-        if relative.parts[0] == "src" and (len(relative.parts) < 2 or relative.parts[1] != "orro_wrapper"):
+        if top == "src" and (len(parts) < 2 or parts[1] != "orro_wrapper"):
             fail(f"unexpected package source present: {relative}")
-        if relative.parts[0] == "scripts" and path.name not in {
+        if top == "scripts" and path.name not in {
             "bootstrap_orro.py",
             "check_orro_fallback_policy.py",
             "check_orro_command_migration.py",
@@ -423,6 +658,9 @@ def check_no_engine_code() -> None:
 def main() -> int:
     check_readme()
     check_docs_and_examples()
+    check_strategic_review_spec()
+    check_assurance_docs()
+    check_strategic_review_corpus()
     check_packaging_drafts()
     check_engine_lock_example()
     check_e2e_engine_lock()

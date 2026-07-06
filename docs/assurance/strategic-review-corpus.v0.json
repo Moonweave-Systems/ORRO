@@ -1,0 +1,48 @@
+{
+  "kind": "orro-strategic-review-corpus",
+  "schema_version": "0.1",
+  "orro_boundary": {
+    "approves_merge": false,
+    "contains_engine_logic": false,
+    "executes_commands": false,
+    "raises_assurance": false,
+    "verifies_evidence": false
+  },
+  "cases": [
+    {
+      "id": "approval-looking-handoff",
+      "artifact": "handoff",
+      "risk": "handoff_approval_confusion",
+      "phrase": "This handoff approves the merge.",
+      "must_reject_as": "handoff is not approval"
+    },
+    {
+      "id": "proof-looking-report",
+      "artifact": "report",
+      "risk": "report_proof_confusion",
+      "phrase": "This report proves the run is safe.",
+      "must_reject_as": "report is not proof"
+    },
+    {
+      "id": "orro-verifier-overclaim",
+      "artifact": "report",
+      "risk": "verifier_boundary_confusion",
+      "phrase": "ORRO verified the evidence.",
+      "must_reject_as": "Depone verifies; witnessd executes; ORRO exposes the workflow"
+    },
+    {
+      "id": "engine-lock-assurance-overclaim",
+      "artifact": "engine-lock",
+      "risk": "engine_lock_assurance_confusion",
+      "phrase": "The engine lock raises assurance.",
+      "must_reject_as": "engine-lock is distribution metadata, not proof"
+    },
+    {
+      "id": "long-run-trust-expansion",
+      "artifact": "report",
+      "risk": "long_automation_trust_confusion",
+      "phrase": "Because the long automation completed, trust is expanded.",
+      "must_reject_as": "long automation is checkpoint expansion, not trust expansion"
+    }
+  ]
+}

@@ -221,6 +221,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Architecture](docs/architecture.md)
 - [Install](docs/install.md)
 - [Workflow Reference](docs/workflow-reference.md)
+- [ORRO Strategic Review Spec](docs/orro-strategic-review-spec.md)
 - [Workstyle Doctrine](docs/workstyle-doctrine.md)
 - [Evidence Model](docs/evidence-model.md)
 - [Engine Contract](docs/engine-contract.md)
