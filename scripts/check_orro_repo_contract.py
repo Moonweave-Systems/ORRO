@@ -58,8 +58,18 @@ ASSURANCE_DOC_REQUIRED_PHRASES = {
         "Humans retain judgment",
         INVARIANT,
     ),
+    "docs/assurance/long-automation-maturity.md": (
+        "Long-Automation Maturity Gates",
+        "Entry criteria",
+        "Exit criteria",
+        "Must not mean",
+        "Long automation is checkpoint expansion, not trust expansion.",
+        "Level 6 continuous operation is intentionally not defined",
+        "Humans retain judgment",
+    ),
     "docs/README.md": (
         "[Assurance Threat Model](assurance/threat-model.md)",
+        "[Long-Automation Maturity Gates](assurance/long-automation-maturity.md)",
     ),
 }
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
