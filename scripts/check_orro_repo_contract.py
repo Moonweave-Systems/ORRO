@@ -99,6 +99,15 @@ CONTRIBUTING_REQUIRED_PHRASES = (
     "Engine, verifier, runtime, proofrun, proofcheck, scheduler, observer, fan-in, package publish, and command ownership changes are out of scope",
     "No new dependencies",
 )
+INTEGRATION_POLICY_REQUIRED_PHRASES = (
+    "MCP is an integration surface, not ORRO's core architecture.",
+    "Plugin-first, MCP-optional.",
+    "MCP is allowed as an adapter, not as a dependency of ORRO core.",
+    "Prompts/resources before tools.",
+    "On-demand before always-on.",
+    "Long automation is checkpoint expansion, not trust expansion.",
+    "Prompt profile hash does not prove model compliance.",
+)
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
@@ -283,6 +292,15 @@ def check_security_contribution_docs() -> None:
         text = read_text(path)
         for phrase in phrases:
             require_contains_normalized(path, text, phrase)
+
+
+def check_integration_surface_policy() -> None:
+    path = "docs/integrations/integration-surface-policy.md"
+    if not (ROOT / path).is_file():
+        fail(f"required integration surface policy missing: {path}")
+    text = read_text(path)
+    for phrase in INTEGRATION_POLICY_REQUIRED_PHRASES:
+        require_contains_normalized(path, text, phrase)
 
 
 def check_strategic_review_corpus() -> None:
@@ -698,6 +716,7 @@ def main() -> int:
     check_strategic_review_spec()
     check_assurance_docs()
     check_security_contribution_docs()
+    check_integration_surface_policy()
     check_strategic_review_corpus()
     check_packaging_drafts()
     check_engine_lock_example()
