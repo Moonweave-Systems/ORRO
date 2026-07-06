@@ -170,6 +170,7 @@ def check_e2e_docs() -> None:
 def check_release_discipline() -> None:
     required_paths = [
         "scripts/check_orro_release_manifest.py",
+        "scripts/update_orro_engine_lock.py",
         "release/orro-release-manifest.v0.json",
         "docs/engine-lock-update-process.md",
         "docs/compatibility-matrix.md",
@@ -221,6 +222,7 @@ def check_no_engine_code() -> None:
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
             "orro_e2e_smoke.py",
+            "update_orro_engine_lock.py",
         }:
             fail(f"unexpected script present: {relative}")
         if suffix in {".py", ".sh"} and any(token in lower_name for token in FORBIDDEN_IMPLEMENTATION_NAMES):

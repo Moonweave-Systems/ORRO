@@ -67,6 +67,11 @@ validated engine pairs are listed in
 [`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). Published ORRO
 package remains future work.
 
+Use `scripts/update_orro_engine_lock.py` for future pin updates so the e2e
+engine lock, release manifest, and compatibility matrix stay aligned. The
+helper edits metadata only; it does not fetch, execute engines, verify evidence,
+approve merge, or raise assurance.
+
 ## Development Install
 
 ```bash

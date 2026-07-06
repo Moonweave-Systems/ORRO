@@ -17,6 +17,8 @@ not redefine verifier or runtime semantics.
 ## Update Rules
 
 - Update the engine lock only in a reviewable PR.
+- Prefer `scripts/update_orro_engine_lock.py` so the engine lock, release
+  manifest, and compatibility matrix move together.
 - State the witnessd commit and Depone commit in the PR.
 - Do not update one engine pin blindly if cross-engine e2e fails.
 - If witnessd or Depone contract changes, update ORRO engine contract docs and
@@ -25,11 +27,23 @@ not redefine verifier or runtime semantics.
 
 ## Checklist
 
-1. Update `engine-lock/orro-e2e-engine-lock.json`.
-2. Update `release/orro-release-manifest.v0.json`.
-3. Update `docs/compatibility-matrix.md`.
-4. Run `python3 scripts/check_orro_repo_contract.py`.
-5. Run `python3 scripts/check_orro_release_manifest.py`.
+1. Run:
+
+   ```bash
+   python3 scripts/update_orro_engine_lock.py \
+     --witnessd-commit <40-hex-witnessd-commit> \
+     --depone-commit <40-hex-depone-commit>
+   ```
+
+2. Confirm it updated:
+
+   - `engine-lock/orro-e2e-engine-lock.json`
+   - `release/orro-release-manifest.v0.json`
+   - `docs/compatibility-matrix.md`
+
+3. Run `python3 scripts/check_orro_repo_contract.py`.
+4. Run `python3 scripts/check_orro_release_manifest.py`.
+5. Run `python3 scripts/update_orro_engine_lock.py --self-test`.
 6. Run `python3 scripts/orro_e2e_smoke.py --engine-lock engine-lock/orro-e2e-engine-lock.json --require-lock-match`.
 7. Confirm boundary text.
 8. Open a PR with engine commits and test results.
