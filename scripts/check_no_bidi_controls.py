@@ -11,17 +11,18 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BIDI_CONTROL_CHARS = {
-    "\u202a",  # LEFT-TO-RIGHT EMBEDDING
-    "\u202b",  # RIGHT-TO-LEFT EMBEDDING
-    "\u202c",  # POP DIRECTIONAL FORMATTING
-    "\u202d",  # LEFT-TO-RIGHT OVERRIDE
-    "\u202e",  # RIGHT-TO-LEFT OVERRIDE
-    "\u2066",  # LEFT-TO-RIGHT ISOLATE
-    "\u2067",  # RIGHT-TO-LEFT ISOLATE
-    "\u2068",  # FIRST STRONG ISOLATE
-    "\u2069",  # POP DIRECTIONAL ISOLATE
+BIDI_CONTROL_CODEPOINTS = {
+    0x202A,  # LEFT-TO-RIGHT EMBEDDING
+    0x202B,  # RIGHT-TO-LEFT EMBEDDING
+    0x202C,  # POP DIRECTIONAL FORMATTING
+    0x202D,  # LEFT-TO-RIGHT OVERRIDE
+    0x202E,  # RIGHT-TO-LEFT OVERRIDE
+    0x2066,  # LEFT-TO-RIGHT ISOLATE
+    0x2067,  # RIGHT-TO-LEFT ISOLATE
+    0x2068,  # FIRST STRONG ISOLATE
+    0x2069,  # POP DIRECTIONAL ISOLATE
 }
+BIDI_CONTROL_CHARS = {chr(codepoint) for codepoint in BIDI_CONTROL_CODEPOINTS}
 SKIP_DIRS = {
     ".git",
     ".omx",
@@ -102,10 +103,12 @@ def self_test() -> int:
             "safe ASCII, Korean 한글, emoji 😀, and accented é text\n",
             encoding="utf-8",
         )
-        (root / "unsafe.txt").write_text("unsafe \u202e text\n", encoding="utf-8")
+        unsafe = "unsafe " + chr(0x202E) + " text\n"
+        (root / "unsafe.txt").write_text(unsafe, encoding="utf-8")
         (root / ".omx").mkdir()
+        local_state = "local runtime state is not repository hygiene input " + chr(0x202E) + "\n"
         (root / ".omx" / "runtime-state.txt").write_text(
-            "local runtime state is not repository hygiene input \u202e\n",
+            local_state,
             encoding="utf-8",
         )
         (root / "binary.bin").write_bytes(b"\xff\xfe\x00\x00")
