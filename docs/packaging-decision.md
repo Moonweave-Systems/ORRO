@@ -81,3 +81,7 @@ runtime. ORRO exposes the workflow and packaging surface.
 
 Future migration to an ORRO-owned `orro` command requires a separate migration
 wave. Until then, the current executable `orro` command remains witnessd-hosted.
+The plan-only migration contract is recorded in
+`docs/orro-command-migration.md` and
+`packaging/command-migration-plan.v0.json`. This phase does not add an `orro`
+console script and must not shadow `orro`.

@@ -161,6 +161,18 @@ The distribution smoke is local test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance. Future migration to an
 ORRO-owned `orro` command requires a separate migration wave.
 
+## ORRO Command Migration
+
+The current executable `orro` command remains witnessd-hosted. ORRO-owned `orro`
+command migration is plan-only and documented in
+[`docs/orro-command-migration.md`](docs/orro-command-migration.md).
+
+The migration plan does not add an `orro` console script, does not publish a
+package, does not move engine code, and does not change verifier or runtime
+semantics. `orro-wrapper` remains the transitional ORRO repo command. The ORRO
+package must not shadow `orro` until a separate migration wave proves
+compatibility, rollback, and pinned-engine e2e through the migrated command.
+
 ## Development Install
 
 ```bash
@@ -213,6 +225,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Bootstrap](docs/bootstrap.md)
 - [Packaging Decision](docs/packaging-decision.md)
 - [Pinned Engine Fallback](docs/pinned-engine-fallback.md)
+- [ORRO Command Migration](docs/orro-command-migration.md)
 - [Thin Wrapper](docs/thin-wrapper.md)
 - [Wrapper Distribution Smoke](docs/wrapper-distribution.md)
 - [Repository Strategy](docs/repository-strategy.md)

@@ -20,6 +20,7 @@ Start here:
 - [Bootstrap](bootstrap.md)
 - [Packaging Decision](packaging-decision.md)
 - [Pinned Engine Fallback](pinned-engine-fallback.md)
+- [ORRO Command Migration](orro-command-migration.md)
 - [Thin Wrapper](thin-wrapper.md)
 - [Wrapper Distribution Smoke](wrapper-distribution.md)
 - [Repository Strategy](repository-strategy.md)

@@ -237,8 +237,11 @@ def check_bootstrap_discipline() -> None:
 def check_packaging_decision() -> None:
     required_paths = [
         "scripts/check_orro_packaging_decision.py",
+        "scripts/check_orro_command_migration.py",
         "docs/packaging-decision.md",
+        "docs/orro-command-migration.md",
         "packaging/wrapper-package-plan.v0.json",
+        "packaging/command-migration-plan.v0.json",
     ]
     for path in required_paths:
         if not (ROOT / path).is_file():
@@ -260,6 +263,35 @@ def check_packaging_decision() -> None:
     require_contains("packaging decision docs", text, "no engine code")
     require_contains("packaging decision docs", text, "witnessd-hosted")
     require_contains("packaging decision docs", text, INVARIANT)
+
+
+def check_command_migration() -> None:
+    text = combined_text(
+        [
+            "README.md",
+            "docs/README.md",
+            "docs/orro-command-migration.md",
+            "docs/wrapper-distribution.md",
+            "docs/packaging-decision.md",
+            "docs/repository-strategy.md",
+        ]
+    )
+    require_contains("command migration docs", text, "ORRO-owned `orro` command")
+    require_contains("command migration docs", text, "plan-only")
+    require_contains("command migration docs", text, "separate migration wave")
+    require_contains("command migration docs", text, "must not shadow `orro`")
+    require_contains("command migration docs", text, "witnessd-hosted")
+    require_contains("command migration docs", text, "not proof")
+    require_contains("command migration docs", text, "not package publish")
+    require_contains("command migration docs", text, INVARIANT)
+
+    plan = load_json("packaging/command-migration-plan.v0.json")
+    if plan.get("kind") != "orro-command-migration-plan":
+        fail("command migration plan kind must be orro-command-migration-plan")
+    if plan.get("owns_orro_command_now") is not False:
+        fail("command migration plan must not claim ORRO owns orro now")
+    if plan.get("adds_orro_console_script") is not False:
+        fail("command migration plan must not add orro console script now")
 
 
 def check_fallback_policy() -> None:
@@ -297,8 +329,10 @@ def check_wrapper() -> None:
         "scripts/check_orro_wrapper.py",
         "scripts/check_orro_wrapper_install.py",
         "scripts/check_orro_wrapper_distribution.py",
+        "scripts/check_orro_command_migration.py",
         "docs/thin-wrapper.md",
         "docs/wrapper-distribution.md",
+        "docs/orro-command-migration.md",
         "src/orro_wrapper/__init__.py",
         "src/orro_wrapper/__main__.py",
         "src/orro_wrapper/cli.py",
@@ -356,6 +390,7 @@ def check_no_engine_code() -> None:
         if relative.parts[0] == "scripts" and path.name not in {
             "bootstrap_orro.py",
             "check_orro_fallback_policy.py",
+            "check_orro_command_migration.py",
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
@@ -380,6 +415,7 @@ def main() -> int:
     check_release_discipline()
     check_bootstrap_discipline()
     check_packaging_decision()
+    check_command_migration()
     check_fallback_policy()
     check_wrapper()
     check_no_engine_code()

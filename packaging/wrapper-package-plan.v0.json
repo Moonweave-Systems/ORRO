@@ -19,6 +19,12 @@
       "contains_engine_logic": false
     },
     {
+      "phase": "command-migration",
+      "status": "plan-only",
+      "description": "Define the future ORRO-owned orro command migration without adding or shadowing the orro console script in this phase.",
+      "contains_engine_logic": false
+    },
+    {
       "phase": "published-package",
       "status": "future",
       "description": "Publish a user-facing install only after pinned-engine e2e, bootstrap, and wrapper contracts remain green.",
@@ -38,7 +44,8 @@
   "required_metadata": [
     "engine-lock/orro-e2e-engine-lock.json",
     "release/orro-release-manifest.v0.json",
-    "docs/compatibility-matrix.md"
+    "docs/compatibility-matrix.md",
+    "packaging/command-migration-plan.v0.json"
   ],
   "forbidden_scope": [
     "Depone verifier implementation",
