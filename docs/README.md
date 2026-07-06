@@ -10,6 +10,7 @@ Start here:
 - [Install](install.md)
 - [Workflow Reference](workflow-reference.md)
 - [ORRO Strategic Review Spec](orro-strategic-review-spec.md)
+- [Assurance Threat Model](assurance/threat-model.md)
 - [Engine Contract](engine-contract.md)
 - [Workstyle Doctrine](workstyle-doctrine.md)
 - [Evidence Model](evidence-model.md)

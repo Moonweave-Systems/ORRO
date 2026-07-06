@@ -46,6 +46,22 @@ STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS = {
     "engine-lock": ("pinned engine", "distribution metadata", "assurance", "proof"),
     "release-manifest": ("release candidate metadata", "package publish", "proof", "approval"),
 }
+ASSURANCE_DOC_REQUIRED_PHRASES = {
+    "docs/assurance/threat-model.md": (
+        "Prompt Injection",
+        "Secret Leakage",
+        "Replay or Stale Evidence",
+        "Handoff Approval Confusion",
+        "Report Proof Confusion",
+        "handoff is not approval",
+        "report is not proof",
+        "Humans retain judgment",
+        INVARIANT,
+    ),
+    "docs/README.md": (
+        "[Assurance Threat Model](assurance/threat-model.md)",
+    ),
+}
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
@@ -177,6 +193,15 @@ def check_strategic_review_spec() -> None:
     require_contains(path, text, "| Artifact | Means | Does not mean |")
     for artifact, required_tokens in STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS.items():
         require_artifact_semantics(path, text, artifact, required_tokens)
+
+
+def check_assurance_docs() -> None:
+    for path, phrases in ASSURANCE_DOC_REQUIRED_PHRASES.items():
+        if not (ROOT / path).is_file():
+            fail(f"required assurance doc missing: {path}")
+        text = read_text(path)
+        for phrase in phrases:
+            require_contains(path, text, phrase)
 
 
 def check_packaging_drafts() -> None:
@@ -502,6 +527,7 @@ def main() -> int:
     check_readme()
     check_docs_and_examples()
     check_strategic_review_spec()
+    check_assurance_docs()
     check_packaging_drafts()
     check_engine_lock_example()
     check_e2e_engine_lock()
