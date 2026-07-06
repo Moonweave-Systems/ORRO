@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check ORRO repository contract
+        run: python3 scripts/check_orro_repo_contract.py
+      - name: Check whitespace
+        run: git diff --check
