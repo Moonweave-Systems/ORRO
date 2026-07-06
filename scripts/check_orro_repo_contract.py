@@ -638,6 +638,7 @@ def check_no_engine_code() -> None:
             fail(f"unexpected package source present: {relative}")
         if top == "scripts" and path.name not in {
             "bootstrap_orro.py",
+            "check_no_bidi_controls.py",
             "check_orro_assurance_contract_fixtures.py",
             "check_orro_fallback_policy.py",
             "check_orro_command_migration.py",
