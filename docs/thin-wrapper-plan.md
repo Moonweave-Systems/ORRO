@@ -10,13 +10,15 @@ ORRO feel like one install while keeping the engines separate.
 - witnessd executes.
 - ORRO exposes the workflow.
 - The witnessd-hosted `orro` console script is the active command surface.
-- This repository contains docs, examples, packaging drafts, and smoke-contract planning only.
+- This repository contains docs, examples, packaging drafts, bootstrap setup
+  planning, and smoke-contract planning only.
 
 ## Future Wrapper Scope
 
 A future wrapper may:
 
 - install or pin compatible witnessd and Depone versions;
+- reuse bootstrap setup/distribution orchestration for pinned engine checkouts;
 - generate and check `orro-engine-lock.json`;
 - expose one user-facing command surface;
 - run e2e smoke checks against pinned engines;
@@ -29,6 +31,10 @@ It must not:
 - duplicate proofcheck;
 - duplicate proofrun, scheduler, observer, or team-lane execution;
 - become a third engine.
+
+The current bootstrap is setup/distribution orchestration and setup metadata,
+not proof. It contains no engine code, does not implement proofrun or
+proofcheck, and the executable `orro` command remains witnessd-hosted.
 
 ## Release Gate
 

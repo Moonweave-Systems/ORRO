@@ -72,6 +72,25 @@ engine lock, release manifest, and compatibility matrix stay aligned. The
 helper edits metadata only; it does not fetch, execute engines, verify evidence,
 approve merge, or raise assurance.
 
+## Bootstrap Setup Planner
+
+`scripts/bootstrap_orro.py` reads the pinned e2e engine lock and can produce a
+local setup plan, check existing witnessd and Depone checkouts, or explicitly
+prepare pinned checkouts when `--execute --allow-network` is supplied.
+
+The bootstrap is setup/distribution orchestration. Bootstrap output is setup
+metadata, not proof, not verifier truth, not approval, and not assurance. It
+contains no engine code, does not implement proofrun or proofcheck, and does not
+run proofrun/proofcheck/handoff by default. The current executable `orro`
+command remains witnessd-hosted.
+
+```bash
+python3 scripts/bootstrap_orro.py \
+  --dry-run \
+  --workspace /tmp/orro-workspace \
+  --json
+```
+
 ## Development Install
 
 ```bash
@@ -121,6 +140,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [E2E Smoke Runner](docs/e2e-runner.md)
 - [Engine-Lock Update Process](docs/engine-lock-update-process.md)
 - [Compatibility Matrix](docs/compatibility-matrix.md)
+- [Bootstrap](docs/bootstrap.md)
 - [Repository Strategy](docs/repository-strategy.md)
 
 ## Compatibility

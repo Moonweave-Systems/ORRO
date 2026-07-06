@@ -13,6 +13,34 @@ orro init --home .witnessd --depone-root ../Depone
 The `orro` command is currently implemented by witnessd. This repository is a
 product/distribution skeleton and does not publish a standalone package yet.
 
+## Bootstrap Planner
+
+The ORRO repo can plan or check the local engine checkout setup from the pinned
+engine lock:
+
+```bash
+python3 scripts/bootstrap_orro.py \
+  --dry-run \
+  --workspace /tmp/orro-workspace \
+  --json
+```
+
+To inspect existing checkouts without mutation:
+
+```bash
+python3 scripts/bootstrap_orro.py \
+  --check-existing \
+  --witnessd-root ../witnessd \
+  --depone-root ../Depone \
+  --engine-lock engine-lock/orro-e2e-engine-lock.json \
+  --json
+```
+
+The bootstrap is setup/distribution orchestration and setup metadata, not proof.
+It contains no engine code, does not verify evidence, does not approve merge,
+does not raise assurance, and the executable `orro` command remains
+witnessd-hosted.
+
 ## Local E2E Smoke
 
 After installing the witnessd-hosted command, the ORRO repository can run a

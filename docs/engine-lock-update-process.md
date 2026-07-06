@@ -14,6 +14,12 @@ Depone proofcheck remains verifier truth. witnessd remains runtime truth for
 execution artifacts. The ORRO repository does not contain engine code and must
 not redefine verifier or runtime semantics.
 
+`scripts/bootstrap_orro.py` can use the same engine lock to plan, check, or
+explicitly prepare local engine checkouts. The bootstrap is setup/distribution
+orchestration and setup metadata, not proof. It contains no engine code, does
+not verify evidence, and the current executable `orro` command remains
+witnessd-hosted.
+
 ## Update Rules
 
 - Update the engine lock only in a reviewable PR.
