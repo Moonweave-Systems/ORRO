@@ -132,6 +132,17 @@ The wrapper is not proof, not verifier truth, not package publish, not approval,
 and not assurance. It contains no engine code and does not implement proofrun or
 proofcheck.
 
+The wrapper install smoke verifies the editable package and installed
+`orro-wrapper` console script without publishing a package or calling engine
+repos:
+
+```bash
+python3 scripts/check_orro_wrapper_install.py --json
+```
+
+The install smoke is setup/test metadata, not proof, not verifier truth, not
+package publish, not approval, and not assurance.
+
 ## Development Install
 
 ```bash

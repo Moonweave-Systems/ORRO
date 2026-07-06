@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT = ROOT / "pyproject.toml"
+SETUP_CFG = ROOT / "setup.cfg"
 PACKAGE_DIR = ROOT / "src/orro_wrapper"
 DOC_PATH = ROOT / "docs/thin-wrapper.md"
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
@@ -31,6 +32,14 @@ def check_pyproject() -> None:
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
     if '\norro = "' in text:
         fail("wrapper package must not shadow witnessd-hosted orro command")
+
+
+def check_setup_cfg() -> None:
+    text = SETUP_CFG.read_text(encoding="utf-8")
+    require_contains("setup.cfg", text, "name = orro-product-wrapper")
+    require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
+    if "\n    orro =" in text or "\norro =" in text:
+        fail("setup.cfg must not shadow witnessd-hosted orro command")
 
 
 def check_package_files() -> None:
@@ -74,11 +83,14 @@ def check_docs() -> None:
 def main() -> int:
     if not PYPROJECT.is_file():
         fail("missing pyproject.toml")
+    if not SETUP_CFG.is_file():
+        fail("missing setup.cfg")
     if not PACKAGE_DIR.is_dir():
         fail("missing src/orro_wrapper package")
     if not DOC_PATH.is_file():
         fail("missing docs/thin-wrapper.md")
     check_pyproject()
+    check_setup_cfg()
     check_package_files()
     check_docs()
     print("ORRO wrapper: pass")
