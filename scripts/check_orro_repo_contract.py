@@ -77,6 +77,28 @@ ASSURANCE_DOC_REQUIRED_PHRASES = {
         "[Long-Automation Maturity Gates](assurance/long-automation-maturity.md)",
     ),
 }
+SECURITY_REQUIRED_PHRASES = (
+    INVARIANT,
+    "ORRO does not execute commands",
+    "ORRO does not verify evidence",
+    "ORRO does not approve merges",
+    "ORRO does not raise assurance",
+    "ORRO does not implement proofrun or proofcheck",
+    "ORRO does not own Depone verifier semantics or witnessd runtime semantics",
+    "Do not paste secrets",
+    "Prefer evidence paths and redacted excerpts",
+    "Secret-looking material is not proof",
+    "Replay or stale evidence is an unresolved risk",
+)
+CONTRIBUTING_REQUIRED_PHRASES = (
+    INVARIANT,
+    "Humans retain judgment",
+    "handoff is not approval",
+    "report is not proof",
+    "Docs, schemas, contract checks, wrapper/distribution metadata, and harness-surface changes are in scope",
+    "Engine, verifier, runtime, proofrun, proofcheck, scheduler, observer, fan-in, package publish, and command ownership changes are out of scope",
+    "No new dependencies",
+)
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
@@ -248,6 +270,19 @@ def check_assurance_docs() -> None:
         text = read_text(path)
         for phrase in phrases:
             require_contains(path, text, phrase)
+
+
+def check_security_contribution_docs() -> None:
+    required_docs = {
+        "SECURITY.md": SECURITY_REQUIRED_PHRASES,
+        "CONTRIBUTING.md": CONTRIBUTING_REQUIRED_PHRASES,
+    }
+    for path, phrases in required_docs.items():
+        if not (ROOT / path).is_file():
+            fail(f"required boundary doc missing: {path}")
+        text = read_text(path)
+        for phrase in phrases:
+            require_contains_normalized(path, text, phrase)
 
 
 def check_strategic_review_corpus() -> None:
@@ -662,6 +697,7 @@ def main() -> int:
     check_docs_and_examples()
     check_strategic_review_spec()
     check_assurance_docs()
+    check_security_contribution_docs()
     check_strategic_review_corpus()
     check_packaging_drafts()
     check_engine_lock_example()
