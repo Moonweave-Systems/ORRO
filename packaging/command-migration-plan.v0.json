@@ -32,6 +32,18 @@
     "implement proofcheck in ORRO",
     "create a third engine"
   ],
+  "dry_run_harness": {
+    "script": "scripts/check_orro_command_migration_dry_run.py",
+    "simulated_entry_point": "orro = orro_wrapper.cli:main",
+    "temporary_source_copy_only": true,
+    "checks_current_package_first": true,
+    "checks_simulated_migration": true,
+    "checks_rollback": true,
+    "requires_wrapper_thinness": true,
+    "changes_committed_package_metadata": false,
+    "publishes_package": false,
+    "proves_command_ownership": false
+  },
   "boundary": {
     "contains_engine_logic": false,
     "implements_proofrun": false,

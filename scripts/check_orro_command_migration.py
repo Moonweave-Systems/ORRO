@@ -12,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 PLAN_PATH = ROOT / "packaging/command-migration-plan.v0.json"
 DOC_PATH = ROOT / "docs/orro-command-migration.md"
+DRY_RUN_PATH = ROOT / "scripts/check_orro_command_migration_dry_run.py"
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
 
 
@@ -107,6 +108,24 @@ def check_plan() -> None:
     for key in ("not_proof", "not_verifier_truth", "not_package_publish"):
         require_true(key, plan.get(key))
 
+    dry_run = plan.get("dry_run_harness")
+    if not isinstance(dry_run, dict):
+        fail("dry_run_harness must be an object")
+    if dry_run.get("script") != "scripts/check_orro_command_migration_dry_run.py":
+        fail("dry_run_harness.script must point at the dry-run checker")
+    if dry_run.get("simulated_entry_point") != "orro = orro_wrapper.cli:main":
+        fail("dry_run_harness.simulated_entry_point must document the temporary orro entry point")
+    for key in (
+        "temporary_source_copy_only",
+        "checks_current_package_first",
+        "checks_simulated_migration",
+        "checks_rollback",
+        "requires_wrapper_thinness",
+    ):
+        require_true(f"dry_run_harness.{key}", dry_run.get(key))
+    for key in ("changes_committed_package_metadata", "publishes_package", "proves_command_ownership"):
+        require_false(f"dry_run_harness.{key}", dry_run.get(key))
+
 
 def check_docs() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
@@ -122,6 +141,11 @@ def check_docs() -> None:
     require_contains("command migration doc", text, "not package publish")
     require_contains("command migration doc", text, "does not verify evidence")
     require_contains("command migration doc", text, "Superflow")
+    require_contains("command migration doc", text, "dry-run harness")
+    require_contains("command migration doc", text, "temporary source copy")
+    require_contains("command migration doc", text, "rollback simulation")
+    require_contains("command migration doc", text, "dry-run metadata is not proof")
+    require_contains("command migration doc", text, "scripts/check_orro_command_migration_dry_run.py")
 
 
 def main() -> int:
@@ -129,6 +153,8 @@ def main() -> int:
         fail(f"missing command migration plan: {PLAN_PATH.relative_to(ROOT)}")
     if not DOC_PATH.is_file():
         fail(f"missing command migration doc: {DOC_PATH.relative_to(ROOT)}")
+    if not DRY_RUN_PATH.is_file():
+        fail(f"missing command migration dry-run harness: {DRY_RUN_PATH.relative_to(ROOT)}")
     check_plan()
     check_docs()
     check_no_orro_console_script()

@@ -56,6 +56,13 @@ The ORRO repository must not contain:
    pinned-engine e2e, boundary checks, bootstrap checks, and release metadata
    remain green.
 
+4. Command migration dry-run: compatibility rehearsal only.
+   `scripts/check_orro_command_migration_dry_run.py` may create a temporary
+   source copy that adds `orro = orro_wrapper.cli:main`, verify that both
+   command surfaces stay thin, and run a rollback simulation back to the current
+   `orro-wrapper`-only package shape. Dry-run metadata is not proof and does
+   not publish a package or make ORRO own `orro`.
+
 ## Release Gate
 
 Before executable wrapper code is added, a PR must show:
@@ -84,4 +91,6 @@ wave. Until then, the current executable `orro` command remains witnessd-hosted.
 The plan-only migration contract is recorded in
 `docs/orro-command-migration.md` and
 `packaging/command-migration-plan.v0.json`. This phase does not add an `orro`
-console script and must not shadow `orro`.
+console script and must not shadow `orro`. The dry-run harness is temporary
+source copy metadata only; actual ORRO-owned `orro` migration remains a separate
+future wave.

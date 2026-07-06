@@ -238,6 +238,7 @@ def check_packaging_decision() -> None:
     required_paths = [
         "scripts/check_orro_packaging_decision.py",
         "scripts/check_orro_command_migration.py",
+        "scripts/check_orro_command_migration_dry_run.py",
         "docs/packaging-decision.md",
         "docs/orro-command-migration.md",
         "packaging/wrapper-package-plan.v0.json",
@@ -283,6 +284,10 @@ def check_command_migration() -> None:
     require_contains("command migration docs", text, "witnessd-hosted")
     require_contains("command migration docs", text, "not proof")
     require_contains("command migration docs", text, "not package publish")
+    require_contains("command migration docs", text, "dry-run harness")
+    require_contains("command migration docs", text, "temporary source copy")
+    require_contains("command migration docs", text, "rollback simulation")
+    require_contains("command migration docs", text, "dry-run metadata is not proof")
     require_contains("command migration docs", text, INVARIANT)
 
     plan = load_json("packaging/command-migration-plan.v0.json")
@@ -292,6 +297,15 @@ def check_command_migration() -> None:
         fail("command migration plan must not claim ORRO owns orro now")
     if plan.get("adds_orro_console_script") is not False:
         fail("command migration plan must not add orro console script now")
+    dry_run = plan.get("dry_run_harness")
+    if not isinstance(dry_run, dict):
+        fail("command migration plan must describe the dry-run harness")
+    if dry_run.get("script") != "scripts/check_orro_command_migration_dry_run.py":
+        fail("command migration dry-run harness script metadata is wrong")
+    if dry_run.get("changes_committed_package_metadata") is not False:
+        fail("command migration dry-run must not change committed package metadata")
+    if dry_run.get("proves_command_ownership") is not False:
+        fail("command migration dry-run metadata must not claim proof of ownership")
 
 
 def check_fallback_policy() -> None:
@@ -391,6 +405,7 @@ def check_no_engine_code() -> None:
             "bootstrap_orro.py",
             "check_orro_fallback_policy.py",
             "check_orro_command_migration.py",
+            "check_orro_command_migration_dry_run.py",
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",

@@ -78,6 +78,22 @@ A future migration wave must add explicit tests that prove:
 - no command output turns reports, handoff, engine-lock, or release metadata into
   proof.
 
+## Dry-Run Harness
+
+`scripts/check_orro_command_migration_dry_run.py` is a dry-run harness for the
+next compatibility wave. It builds the current package shape from a temporary
+source copy and confirms that `orro-wrapper` exists while `orro` is absent.
+
+The same harness then creates another temporary source copy, adds only the
+simulated entry point `orro = orro_wrapper.cli:main`, and verifies that both
+`orro` and `orro-wrapper` are thin wrapper surfaces. Both commands must emit
+non-engine boundary metadata and pass a harmless delegation smoke.
+
+The dry-run harness finishes with a rollback simulation: it reinstalls the
+current package shape and confirms that `orro` is absent again. This is
+compatibility metadata only: dry-run metadata is not proof, not verifier truth,
+not package publish, and not command ownership.
+
 ## Rollback
 
 Rollback must be possible without changing Depone verifier semantics or
