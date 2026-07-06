@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -140,21 +141,49 @@ def require_contains_normalized(label: str, haystack: str, needle: str) -> None:
 
 def require_artifact_semantics(
     label: str,
-    haystack: str,
+    artifact_rows: dict[str, str],
     artifact: str,
     required_tokens: tuple[str, ...],
 ) -> None:
-    rows = [
-        normalize_contract_text(line)
-        for line in haystack.splitlines()
-        if line.lstrip().startswith("|") and artifact in line
-    ]
-    if not rows:
+    if artifact not in artifact_rows:
         fail(f"{label} must define artifact semantics for {artifact!r}")
-    row_text = " ".join(rows)
+    row_text = artifact_rows[artifact]
     missing = [token for token in required_tokens if token not in row_text]
     if missing:
         fail(f"{label} artifact {artifact!r} missing semantic tokens: {missing}")
+
+
+def strategic_artifact_table_rows(label: str, haystack: str) -> dict[str, str]:
+    start_marker = "Artifact meaning table:"
+    header = "| Artifact | Means | Does not mean |"
+    end_marker = "문서 작성 규칙:"
+    start = haystack.find(start_marker)
+    if start == -1:
+        fail(f"{label} must contain {start_marker!r}")
+    table_start = haystack.find(header, start)
+    if table_start == -1:
+        fail(f"{label} must contain {header!r}")
+    table_end = haystack.find(end_marker, table_start)
+    if table_end == -1:
+        fail(f"{label} must contain {end_marker!r} after artifact table")
+
+    rows: dict[str, str] = {}
+    for raw_line in haystack[table_start:table_end].splitlines():
+        line = raw_line.strip()
+        if not line.startswith("|"):
+            continue
+        if line == header:
+            continue
+        cells = [normalize_contract_text(cell) for cell in line.strip("|").split("|")]
+        if cells and all(re.fullmatch(r":?-+:?", cell) for cell in cells):
+            continue
+        if len(cells) != 3:
+            fail(f"{label} artifact table row must have exactly three cells: {line!r}")
+        artifact = cells[0]
+        if artifact in rows:
+            fail(f"{label} artifact table must define {artifact!r} exactly once")
+        rows[artifact] = " | ".join(cells)
+    return rows
 
 
 def combined_text(paths: list[str]) -> str:
@@ -200,9 +229,12 @@ def check_strategic_review_spec() -> None:
         require_contains(path, text, phrase)
     for section in STRATEGIC_REVIEW_REQUIRED_SECTIONS:
         require_contains_normalized(path, text, section)
-    require_contains(path, text, "| Artifact | Means | Does not mean |")
+    artifact_rows = strategic_artifact_table_rows(path, text)
+    unexpected_artifacts = sorted(set(artifact_rows) - set(STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS))
+    if unexpected_artifacts:
+        fail(f"{path} artifact table contains unexpected artifacts: {unexpected_artifacts}")
     for artifact, required_tokens in STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS.items():
-        require_artifact_semantics(path, text, artifact, required_tokens)
+        require_artifact_semantics(path, artifact_rows, artifact, required_tokens)
 
 
 def check_assurance_docs() -> None:
@@ -570,6 +602,14 @@ def check_wrapper() -> None:
 
 
 def check_no_engine_code() -> None:
+    tracked_omx = subprocess.check_output(
+        ["git", "ls-files", ".omx"],
+        cwd=ROOT,
+        encoding="utf-8",
+    ).splitlines()
+    if tracked_omx:
+        fail(f".omx is local workflow runtime state and must not be tracked: {tracked_omx}")
+
     for path in ROOT.iterdir():
         if path.name in {".git", ".omx"}:
             continue
