@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -21,6 +22,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "0.1"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+LOCK_BOUNDARY_FALSE_KEYS = ("approves_merge", "raises_assurance", "executes_commands", "verifies_evidence")
 
 
 class OrroE2EError(RuntimeError):
@@ -31,7 +34,13 @@ class OrroE2EError(RuntimeError):
         self.details = details or {}
 
 
-def _json_result(decision: str, checks: list[dict[str, Any]], *, error: dict[str, Any] | None = None) -> dict[str, Any]:
+def _json_result(
+    decision: str,
+    checks: list[dict[str, Any]],
+    *,
+    engine_lock: dict[str, Any] | None = None,
+    error: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     return {
         "kind": "orro-e2e-smoke-result",
         "schema_version": SCHEMA_VERSION,
@@ -50,6 +59,7 @@ def _json_result(decision: str, checks: list[dict[str, Any]], *, error: dict[str
             "approves_merge": False,
             "raises_assurance": False,
         },
+        **({"engine_lock": engine_lock} if engine_lock else {}),
         **({"error": error} if error else {}),
     }
 
@@ -60,11 +70,99 @@ def _self_test() -> int:
         {"name": "boundary_non_engine", "status": "pass"},
         {"name": "error_codes_defined", "status": "pass"},
     ]
+    with tempfile.TemporaryDirectory(prefix="orro-e2e-self-test-") as raw_tmp:
+        tmp = Path(raw_tmp)
+        _expect_error(
+            "missing_engine_lock_path",
+            "ERR_ORRO_E2E_ENGINE_LOCK_LOAD_FAILED",
+            lambda: _validate_engine_lock(tmp / "missing.json"),
+            checks,
+        )
+        malformed = tmp / "malformed.json"
+        malformed.write_text("{not-json", encoding="utf-8")
+        _expect_error(
+            "malformed_engine_lock",
+            "ERR_ORRO_E2E_ENGINE_LOCK_LOAD_FAILED",
+            lambda: _validate_engine_lock(malformed),
+            checks,
+        )
+        invalid_repo = _write_lock(tmp / "invalid-repo.json", witnessd_repo="Moonweave-Systems/not-witnessd")
+        _expect_error(
+            "invalid_engine_lock_repository",
+            "ERR_ORRO_E2E_ENGINE_LOCK_INVALID",
+            lambda: _validate_engine_lock(invalid_repo),
+            checks,
+        )
+        overclaim = _write_lock(tmp / "overclaim.json", boundary_overrides={"approves_merge": True})
+        _expect_error(
+            "engine_lock_boundary_overclaim",
+            "ERR_ORRO_E2E_ENGINE_LOCK_INVALID",
+            lambda: _validate_engine_lock(overclaim),
+            checks,
+        )
+        witnessd_repo = tmp / "witnessd"
+        depone_repo = tmp / "Depone"
+        _seed_repo(witnessd_repo)
+        _seed_repo(depone_repo)
+        mismatch = _write_lock(tmp / "mismatch.json", witnessd_commit="1" * 40, depone_commit="2" * 40)
+        _expect_error(
+            "engine_lock_mismatch",
+            "ERR_ORRO_E2E_ENGINE_LOCK_MISMATCH",
+            lambda: _engine_lock_status(mismatch, True, witnessd_repo, depone_repo),
+            checks,
+        )
     result = _json_result("pass", checks)
     assert result["kind"] == "orro-e2e-smoke-result"
     assert result["boundary"]["contains_engine_logic"] is False
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
+
+
+def _expect_error(name: str, code: str, fn: Any, checks: list[dict[str, Any]]) -> None:
+    try:
+        fn()
+    except OrroE2EError as exc:
+        if exc.code != code:
+            raise AssertionError(f"{name} raised {exc.code}, expected {code}") from exc
+        checks.append({"name": name, "status": "pass", "code": code})
+        return
+    raise AssertionError(f"{name} did not raise {code}")
+
+
+def _write_lock(
+    path: Path,
+    *,
+    witnessd_repo: str = "Moonweave-Systems/witnessd",
+    depone_repo: str = "Moonweave-Systems/Depone",
+    witnessd_commit: str = "0" * 39 + "1",
+    depone_commit: str = "0" * 39 + "2",
+    boundary_overrides: dict[str, Any] | None = None,
+) -> Path:
+    boundary: dict[str, Any] = {
+        "approves_merge": False,
+        "raises_assurance": False,
+        "executes_commands": False,
+        "verifies_evidence": False,
+    }
+    if boundary_overrides:
+        boundary.update(boundary_overrides)
+    payload = {
+        "kind": "orro-engine-lock",
+        "schema_version": "1.0",
+        "witnessd": {
+            "repository": witnessd_repo,
+            "commit": witnessd_commit,
+            "ref_name": "main",
+        },
+        "depone": {
+            "repository": depone_repo,
+            "commit": depone_commit,
+            "ref_name": "main",
+        },
+        "boundary": boundary,
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
 
 
 def _resolve_root(label: str, explicit: str | None, env_name: str, candidates: list[Path], error_code: str) -> Path:
@@ -76,6 +174,112 @@ def _resolve_root(label: str, explicit: str | None, env_name: str, candidates: l
             return resolved
     searched = [str(path) for path in paths]
     raise OrroE2EError(error_code, f"{label} root is missing", {"searched": searched})
+
+
+def _load_json_file(path: Path, code: str) -> dict[str, Any]:
+    try:
+        with path.open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except OSError as exc:
+        raise OrroE2EError(code, f"could not read engine lock: {path}", {"path": str(path), "error": str(exc)}) from exc
+    except json.JSONDecodeError as exc:
+        raise OrroE2EError(code, f"engine lock is malformed JSON: {path}", {"path": str(path), "error": str(exc)}) from exc
+    if not isinstance(payload, dict):
+        raise OrroE2EError("ERR_ORRO_E2E_ENGINE_LOCK_INVALID", "engine lock must be a JSON object", {"path": str(path)})
+    return payload
+
+
+def _validate_engine_lock(path: Path) -> dict[str, Any]:
+    payload = _load_json_file(path, "ERR_ORRO_E2E_ENGINE_LOCK_LOAD_FAILED")
+    if payload.get("kind") != "orro-engine-lock":
+        raise OrroE2EError("ERR_ORRO_E2E_ENGINE_LOCK_INVALID", "engine lock kind must be orro-engine-lock", {"path": str(path)})
+    if payload.get("schema_version") != "1.0":
+        raise OrroE2EError("ERR_ORRO_E2E_ENGINE_LOCK_INVALID", "engine lock schema_version must be 1.0", {"path": str(path)})
+
+    engines = {
+        "witnessd": "Moonweave-Systems/witnessd",
+        "depone": "Moonweave-Systems/Depone",
+    }
+    for key, repository in engines.items():
+        engine = payload.get(key)
+        if not isinstance(engine, dict):
+            raise OrroE2EError("ERR_ORRO_E2E_ENGINE_LOCK_INVALID", f"engine lock {key} entry must be an object", {"path": str(path)})
+        if engine.get("repository") != repository:
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_ENGINE_LOCK_INVALID",
+                f"engine lock {key}.repository must be {repository}",
+                {"path": str(path), "actual": engine.get("repository")},
+            )
+        commit = engine.get("commit")
+        if not isinstance(commit, str) or not COMMIT_RE.fullmatch(commit):
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_ENGINE_LOCK_INVALID",
+                f"engine lock {key}.commit must be a 40-hex commit",
+                {"path": str(path), "actual": commit},
+            )
+
+    boundary = payload.get("boundary")
+    if not isinstance(boundary, dict):
+        raise OrroE2EError("ERR_ORRO_E2E_ENGINE_LOCK_INVALID", "engine lock boundary must be an object", {"path": str(path)})
+    for key in LOCK_BOUNDARY_FALSE_KEYS:
+        if boundary.get(key) is not False:
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_ENGINE_LOCK_INVALID",
+                f"engine lock boundary.{key} must be false",
+                {"path": str(path), "actual": boundary.get(key)},
+            )
+    return payload
+
+
+def _git_head(root: Path, label: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise OrroE2EError(
+            "ERR_ORRO_E2E_COMMAND_FAILED",
+            f"could not read {label} git HEAD",
+            {"returncode": completed.returncode, "stdout": completed.stdout, "stderr": completed.stderr},
+        )
+    commit = completed.stdout.strip()
+    if not COMMIT_RE.fullmatch(commit):
+        raise OrroE2EError("ERR_ORRO_E2E_COMMAND_FAILED", f"{label} git HEAD was not a 40-hex commit", {"stdout": completed.stdout})
+    return commit
+
+
+def _engine_lock_status(
+    lock_path: Path | None,
+    require_match: bool,
+    witnessd_root: Path,
+    depone_root: Path,
+) -> dict[str, Any] | None:
+    if lock_path is None:
+        return None
+    lock = _validate_engine_lock(lock_path)
+    witnessd_commit = _git_head(witnessd_root, "witnessd")
+    depone_commit = _git_head(depone_root, "Depone")
+    expected_witnessd = lock["witnessd"]["commit"]
+    expected_depone = lock["depone"]["commit"]
+    matched = witnessd_commit == expected_witnessd and depone_commit == expected_depone
+    status = {
+        "path": str(lock_path),
+        "matched": matched,
+        "witnessd_commit": witnessd_commit,
+        "depone_commit": depone_commit,
+        "expected_witnessd_commit": expected_witnessd,
+        "expected_depone_commit": expected_depone,
+    }
+    if require_match and not matched:
+        mismatches = []
+        if witnessd_commit != expected_witnessd:
+            mismatches.append({"engine": "witnessd", "expected": expected_witnessd, "actual": witnessd_commit})
+        if depone_commit != expected_depone:
+            mismatches.append({"engine": "depone", "expected": expected_depone, "actual": depone_commit})
+        raise OrroE2EError("ERR_ORRO_E2E_ENGINE_LOCK_MISMATCH", "engine checkout does not match e2e lock", {"mismatches": mismatches})
+    return status
 
 
 def _seed_repo(repo: Path) -> None:
@@ -105,10 +309,17 @@ def _run_raw(args: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
 
 
 class SmokeRunner:
-    def __init__(self, witnessd_root: Path, depone_root: Path, workdir: Path) -> None:
+    def __init__(
+        self,
+        witnessd_root: Path,
+        depone_root: Path,
+        workdir: Path,
+        engine_lock: dict[str, Any] | None = None,
+    ) -> None:
         self.witnessd_root = witnessd_root
         self.depone_root = depone_root
         self.workdir = workdir
+        self.engine_lock = engine_lock
         self.checks: list[dict[str, Any]] = []
 
     def _record(self, name: str, status: str = "pass", **details: Any) -> None:
@@ -168,7 +379,7 @@ class SmokeRunner:
         return self.result("pass")
 
     def result(self, decision: str, error: dict[str, Any] | None = None) -> dict[str, Any]:
-        result = _json_result(decision, self.checks, error=error)
+        result = _json_result(decision, self.checks, engine_lock=self.engine_lock, error=error)
         result["engine_roots"] = {
             "witnessd": str(self.witnessd_root),
             "depone": str(self.depone_root),
@@ -287,6 +498,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run ORRO e2e smoke against local engine checkouts.")
     parser.add_argument("--witnessd-root")
     parser.add_argument("--depone-root")
+    parser.add_argument("--engine-lock", help="Optional ORRO engine lock to validate before running smoke.")
+    parser.add_argument("--require-lock-match", action="store_true", help="Require local engine HEADs to match --engine-lock commits.")
     parser.add_argument("--workdir")
     parser.add_argument("--json", action="store_true", help="Emit JSON result. JSON is the default output format.")
     parser.add_argument("--self-test", action="store_true", help="Validate output shape without engine checkouts.")
@@ -313,8 +526,10 @@ def main(argv: list[str] | None = None) -> int:
             [ROOT.parent / "Depone", ROOT.parent / "depone"],
             "ERR_ORRO_E2E_DEPONE_ROOT_MISSING",
         )
+        lock_path = Path(args.engine_lock).resolve() if args.engine_lock else None
+        engine_lock = _engine_lock_status(lock_path, args.require_lock_match, witnessd_root, depone_root)
         workdir = Path(args.workdir).resolve() if args.workdir else Path(tempfile.mkdtemp(prefix="orro-e2e-"))
-        runner = SmokeRunner(witnessd_root, depone_root, workdir)
+        runner = SmokeRunner(witnessd_root, depone_root, workdir, engine_lock=engine_lock)
         result = runner.run()
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0

@@ -15,7 +15,12 @@ verifier logic.
 Actual engine tests still live in witnessd and Depone. This ORRO repository
 owns product-level orchestration smoke checks and e2e contract documentation.
 
-Future pinned-engine smoke checks should:
+Pinned-engine CI reads `engine-lock/orro-e2e-engine-lock.json`, checks out the
+pinned witnessd and Depone commits, and runs the local smoke with
+`--require-lock-match`. The engine lock is distribution and CI metadata, not
+proof, not verifier truth, not approval, and not assurance.
+
+Pinned-engine smoke checks should:
 
 1. Install witnessd and Depone from pinned refs.
 2. Run `orro advise`.

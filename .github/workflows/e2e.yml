@@ -1,0 +1,67 @@
+name: E2E smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pinned-engine-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ORRO
+        uses: actions/checkout@v4
+        with:
+          path: ORRO
+
+      - name: Read pinned engine lock
+        id: lock
+        working-directory: ORRO
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          with open("engine-lock/orro-e2e-engine-lock.json", encoding="utf-8") as handle:
+              lock = json.load(handle)
+          print(f"witnessd_commit={lock['witnessd']['commit']}")
+          print(f"depone_commit={lock['depone']['commit']}")
+          PY
+
+      - name: Checkout pinned witnessd
+        uses: actions/checkout@v4
+        with:
+          repository: Moonweave-Systems/witnessd
+          ref: ${{ steps.lock.outputs.witnessd_commit }}
+          path: witnessd
+
+      - name: Checkout pinned Depone
+        uses: actions/checkout@v4
+        with:
+          repository: Moonweave-Systems/Depone
+          ref: ${{ steps.lock.outputs.depone_commit }}
+          path: Depone
+
+      - name: Check ORRO repository contract
+        working-directory: ORRO
+        run: python3 scripts/check_orro_repo_contract.py
+
+      - name: Compile e2e smoke runner
+        working-directory: ORRO
+        run: python3 -m py_compile scripts/orro_e2e_smoke.py
+
+      - name: E2E smoke self-test
+        working-directory: ORRO
+        run: python3 scripts/orro_e2e_smoke.py --self-test
+
+      - name: Run pinned-engine e2e smoke
+        working-directory: ORRO
+        run: |
+          python3 scripts/orro_e2e_smoke.py \
+            --witnessd-root ../witnessd \
+            --depone-root ../Depone \
+            --engine-lock engine-lock/orro-e2e-engine-lock.json \
+            --require-lock-match \
+            --workdir /tmp/orro-e2e \
+            --json
+
+      - name: Check whitespace
+        working-directory: ORRO
+        run: git diff --check
