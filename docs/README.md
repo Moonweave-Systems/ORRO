@@ -14,6 +14,7 @@ Start here:
 - [Evidence Model](evidence-model.md)
 - [Product Reality Check](product-reality-check.md)
 - [E2E Smoke Contract](e2e-smoke-contract.md)
+- [E2E Smoke Runner](e2e-runner.md)
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 

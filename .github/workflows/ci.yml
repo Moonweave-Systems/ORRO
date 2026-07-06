@@ -11,5 +11,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check ORRO repository contract
         run: python3 scripts/check_orro_repo_contract.py
+      - name: Compile scripts
+        run: python3 -m py_compile scripts/check_orro_repo_contract.py scripts/orro_e2e_smoke.py
+      - name: E2E smoke self-test
+        run: python3 scripts/orro_e2e_smoke.py --self-test
       - name: Check whitespace
         run: git diff --check
