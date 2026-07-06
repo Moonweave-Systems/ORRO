@@ -214,6 +214,80 @@ def check_assurance_docs() -> None:
             require_contains(path, text, phrase)
 
 
+def check_strategic_review_corpus() -> None:
+    path = "docs/assurance/strategic-review-corpus.v0.json"
+    if not (ROOT / path).is_file():
+        fail(f"required strategic review corpus missing: {path}")
+
+    data = load_json(path)
+    if data.get("kind") != "orro-strategic-review-corpus":
+        fail("strategic review corpus kind must be orro-strategic-review-corpus")
+    if data.get("schema_version") != "0.1":
+        fail("strategic review corpus schema_version must be 0.1")
+
+    boundary = data.get("orro_boundary", {})
+    for key in ("approves_merge", "contains_engine_logic", "executes_commands", "raises_assurance", "verifies_evidence"):
+        if boundary.get(key) is not False:
+            fail(f"strategic review corpus orro_boundary.{key} must be false")
+
+    cases = data.get("cases")
+    if not isinstance(cases, list) or len(cases) < 5:
+        fail("strategic review corpus must contain at least five cases")
+
+    allowed_artifacts = {
+        "workflow-plan",
+        "proofrun",
+        "proofcheck-verdict",
+        "handoff",
+        "report",
+        "engine-lock",
+        "release-manifest",
+    }
+    allowed_rejections = {
+        "handoff is not approval",
+        "report is not proof",
+        INVARIANT,
+        "engine-lock is distribution metadata, not proof",
+        "long automation is checkpoint expansion, not trust expansion",
+    }
+    required_risks = {
+        "handoff_approval_confusion",
+        "report_proof_confusion",
+        "verifier_boundary_confusion",
+        "engine_lock_assurance_confusion",
+        "long_automation_trust_confusion",
+    }
+    allowed_risks = set(required_risks)
+    seen_ids: set[str] = set()
+    seen_risks: set[str] = set()
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            fail(f"strategic review corpus case {index} must be an object")
+        for key in ("id", "artifact", "risk", "phrase", "must_reject_as"):
+            if not isinstance(case.get(key), str) or not case[key].strip():
+                fail(f"strategic review corpus case {index}.{key} must be a non-empty string")
+
+        case_id = case["id"]
+        if case_id in seen_ids:
+            fail(f"strategic review corpus duplicate case id: {case_id}")
+        seen_ids.add(case_id)
+
+        if case["artifact"] not in allowed_artifacts:
+            fail(f"strategic review corpus case {index}.artifact is not allowed")
+        if case["risk"] not in allowed_risks:
+            fail(f"strategic review corpus case {index}.risk is not allowed")
+        if case["must_reject_as"] not in allowed_rejections:
+            fail(f"strategic review corpus case {index}.must_reject_as is not an allowed doctrine rejection")
+        if case["phrase"] == case["must_reject_as"]:
+            fail(f"strategic review corpus case {index} phrase must differ from rejection")
+
+        seen_risks.add(case["risk"])
+
+    missing = sorted(required_risks - seen_risks)
+    if missing:
+        fail(f"strategic review corpus missing required risks: {missing}")
+
+
 def check_packaging_drafts() -> None:
     for path in (
         "packaging/marketplace-manifest.draft.json",
@@ -538,6 +612,7 @@ def main() -> int:
     check_docs_and_examples()
     check_strategic_review_spec()
     check_assurance_docs()
+    check_strategic_review_corpus()
     check_packaging_drafts()
     check_engine_lock_example()
     check_e2e_engine_lock()
