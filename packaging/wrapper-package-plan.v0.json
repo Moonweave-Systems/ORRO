@@ -14,8 +14,8 @@
     },
     {
       "phase": "thin-wrapper",
-      "status": "install-smoke",
-      "description": "Expose orro-wrapper as a product wrapper skeleton that delegates explicitly to witnessd-hosted ORRO commands and passes local editable install smoke.",
+      "status": "distribution-smoke",
+      "description": "Expose orro-wrapper as a product wrapper skeleton that delegates explicitly to witnessd-hosted ORRO commands and passes local editable install plus wheel distribution smoke.",
       "contains_engine_logic": false
     },
     {

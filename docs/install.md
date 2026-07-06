@@ -72,3 +72,16 @@ verifier truth, and not package publish.
 Current installs still use the witnessd-hosted `orro` command. Published ORRO
 package remains future work, and future wrapper work must contain no engine
 code.
+
+## Wrapper Distribution Smoke
+
+The local wrapper package can be checked without publishing anything:
+
+```bash
+python3 scripts/check_orro_wrapper_distribution.py --json
+```
+
+This builds and installs a local wheel, verifies `orro-wrapper`, and confirms
+the package does not shadow `orro`. The current `orro` command remains
+witnessd-hosted. Future migration to an ORRO-owned `orro` command requires a
+separate migration wave.

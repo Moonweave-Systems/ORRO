@@ -84,3 +84,21 @@ publish a package.
 
 The install smoke result is setup/test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance.
+
+## Distribution Smoke
+
+The wrapper distribution smoke builds and installs a local wheel:
+
+```bash
+python3 scripts/check_orro_wrapper_distribution.py --json
+```
+
+It verifies that the wheel contains wrapper modules only, exposes
+`orro-wrapper`, does not expose or shadow `orro`, and contains no Depone,
+witnessd, proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, or
+verifier implementation files.
+
+The distribution smoke is local test metadata, not proof, not verifier truth,
+not package publish, not approval, and not assurance. The current executable
+`orro` command remains witnessd-hosted. Future migration to an ORRO-owned
+`orro` command requires a separate migration wave.

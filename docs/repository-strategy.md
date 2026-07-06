@@ -38,6 +38,12 @@ The packaging decision in `docs/packaging-decision.md` and
 publish. It keeps the current command source witnessd-hosted and requires any
 future wrapper to contain no engine code.
 
+The wrapper distribution smoke builds and installs a local wheel to verify
+package boundaries before publish. It is local test metadata, not proof, and not
+package publish. It confirms `orro-wrapper` is exposed while the current `orro`
+command remains witnessd-hosted. Future migration to an ORRO-owned `orro`
+command requires a separate migration wave.
+
 ## Deferred Monorepo Conditions
 
 Only consider a monorepo if:

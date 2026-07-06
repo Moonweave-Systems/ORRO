@@ -21,6 +21,7 @@ Start here:
 - [Packaging Decision](packaging-decision.md)
 - [Pinned Engine Fallback](pinned-engine-fallback.md)
 - [Thin Wrapper](thin-wrapper.md)
+- [Wrapper Distribution Smoke](wrapper-distribution.md)
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 

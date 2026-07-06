@@ -296,7 +296,9 @@ def check_wrapper() -> None:
         "setup.cfg",
         "scripts/check_orro_wrapper.py",
         "scripts/check_orro_wrapper_install.py",
+        "scripts/check_orro_wrapper_distribution.py",
         "docs/thin-wrapper.md",
+        "docs/wrapper-distribution.md",
         "src/orro_wrapper/__init__.py",
         "src/orro_wrapper/__main__.py",
         "src/orro_wrapper/cli.py",
@@ -312,6 +314,9 @@ def check_wrapper() -> None:
             "docs/thin-wrapper.md",
             "docs/thin-wrapper-plan.md",
             "docs/packaging-decision.md",
+            "docs/wrapper-distribution.md",
+            "docs/install.md",
+            "docs/repository-strategy.md",
         ]
     )
     require_contains("wrapper docs", text, "orro-wrapper")
@@ -319,8 +324,12 @@ def check_wrapper() -> None:
     require_contains("wrapper docs", text, "does not implement proofrun")
     require_contains("wrapper docs", text, "does not implement proofcheck")
     require_contains("wrapper docs", text, "install smoke")
+    require_contains("wrapper docs", text, "distribution smoke")
+    require_contains("wrapper docs", text, "wheel")
     require_contains("wrapper docs", text, "not proof")
     require_contains("wrapper docs", text, "not package publish")
+    require_contains("wrapper docs", text, "does not shadow `orro`")
+    require_contains("wrapper docs", text, "future migration")
     require_contains("wrapper docs", text, "witnessd-hosted")
     require_contains("wrapper docs", text, INVARIANT)
 
@@ -352,6 +361,7 @@ def check_no_engine_code() -> None:
             "check_orro_release_manifest.py",
             "check_orro_wrapper.py",
             "check_orro_wrapper_install.py",
+            "check_orro_wrapper_distribution.py",
             "orro_e2e_smoke.py",
             "update_orro_engine_lock.py",
         }:

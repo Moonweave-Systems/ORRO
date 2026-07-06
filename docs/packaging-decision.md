@@ -49,6 +49,9 @@ The ORRO repository must not contain:
    the editable install and installed console script. It must not implement
    proofrun or proofcheck, must not shadow the witnessd-hosted `orro` command,
    and must not imply package publish.
+   The local wheel distribution smoke verifies that the built wheel exposes
+   `orro-wrapper`, does not expose or shadow `orro`, and contains no engine
+   packages or engine implementation files.
 3. Published package: future phase. A package may be published only after
    pinned-engine e2e, boundary checks, bootstrap checks, and release metadata
    remain green.
@@ -64,6 +67,7 @@ Before executable wrapper code is added, a PR must show:
 - `scripts/check_orro_packaging_decision.py` passes;
 - pinned-engine e2e remains green;
 - wrapper install smoke remains green;
+- wrapper distribution smoke remains green;
 - no engine code is added.
 
 ## Trust Boundary
@@ -74,3 +78,6 @@ metadata, not verifier truth.
 
 Depone proofcheck remains the verifier path. witnessd remains the execution
 runtime. ORRO exposes the workflow and packaging surface.
+
+Future migration to an ORRO-owned `orro` command requires a separate migration
+wave. Until then, the current executable `orro` command remains witnessd-hosted.
