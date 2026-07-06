@@ -1,5 +1,7 @@
 # ORRO
 
+ORRO = Observed Run & Review Orchestrator.
+
 ORRO is the **Observed Run & Review Orchestrator**.
 
 ORRO is the user-facing workflow surface for observed agent execution and

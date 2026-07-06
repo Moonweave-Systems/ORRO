@@ -19,6 +19,8 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 ORRO exposes the user workflow, docs, examples, packaging plan, marketplace
 drafts, engine locks, and e2e contracts.
 
+ORRO is not a verifier engine, not an execution engine, and not a third engine.
+
 witnessd executes `proofrun`, team lanes, adapters, observers, and evidence
 emission.
 

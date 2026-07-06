@@ -2,11 +2,14 @@
 
 This directory currently documents the future end-to-end smoke contract. It does not contain a heavy runner yet.
 
+Actual engine tests live in witnessd and Depone. This ORRO repository documents
+the smoke contract and product expectations only.
+
 Future smoke checks should:
 
 1. Install witnessd and Depone from pinned refs.
-2. Run `orro init`.
-3. Run `orro advise`.
+2. Run `orro advise`.
+3. Run `orro init`.
 4. Run `orro flowplan`.
 5. Run `orro proofrun`.
 6. Run `orro proofcheck`.
