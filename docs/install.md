@@ -62,3 +62,13 @@ commands and does not implement proofrun, proofcheck, or runtime logic.
 
 Future packaging should provide one user-facing ORRO install with pinned Depone
 and witnessd engine versions.
+
+## Packaging Decision
+
+The v0 packaging decision is documented in `docs/packaging-decision.md` and
+`packaging/wrapper-package-plan.v0.json`. It is product metadata, not proof, not
+verifier truth, and not package publish.
+
+Current installs still use the witnessd-hosted `orro` command. Published ORRO
+package remains future work, and future wrapper work must contain no engine
+code.

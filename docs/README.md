@@ -18,6 +18,7 @@ Start here:
 - [Engine-Lock Update Process](engine-lock-update-process.md)
 - [Compatibility Matrix](compatibility-matrix.md)
 - [Bootstrap](bootstrap.md)
+- [Packaging Decision](packaging-decision.md)
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 

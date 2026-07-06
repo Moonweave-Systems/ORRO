@@ -91,6 +91,18 @@ python3 scripts/bootstrap_orro.py \
   --json
 ```
 
+## Packaging Decision
+
+`docs/packaging-decision.md` and `packaging/wrapper-package-plan.v0.json`
+record the v0 wrapper packaging decision. The packaging decision is product
+metadata, not proof, not verifier truth, not package publish, not approval, and
+not assurance.
+
+The current command source remains the witnessd-hosted `orro` console script.
+Published ORRO package remains future work. Future wrapper work must contain no
+engine code and must not implement proofrun, proofcheck, scheduler, observer,
+fan-in, team-ledger, or verifier logic.
+
 ## Development Install
 
 ```bash
@@ -141,6 +153,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Engine-Lock Update Process](docs/engine-lock-update-process.md)
 - [Compatibility Matrix](docs/compatibility-matrix.md)
 - [Bootstrap](docs/bootstrap.md)
+- [Packaging Decision](docs/packaging-decision.md)
 - [Repository Strategy](docs/repository-strategy.md)
 
 ## Compatibility

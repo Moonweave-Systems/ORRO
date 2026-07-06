@@ -33,6 +33,11 @@ are not proof, not verifier truth, not approval, and not assurance. Engine-lock
 update process is intentional and PR-reviewed. Published ORRO package remains
 future work.
 
+The packaging decision in `docs/packaging-decision.md` and
+`packaging/wrapper-package-plan.v0.json` is also product metadata, not package
+publish. It keeps the current command source witnessd-hosted and requires any
+future wrapper to contain no engine code.
+
 ## Deferred Monorepo Conditions
 
 Only consider a monorepo if:

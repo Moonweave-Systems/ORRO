@@ -110,6 +110,8 @@ def check_packaging_drafts() -> None:
         require_contains(path, rendered, "Moonweave-Systems/witnessd")
         require_contains(path, rendered, "Moonweave-Systems/Depone")
         require_any_contains(path, rendered, ("boundary", "boundary_warning"))
+    if not (ROOT / "packaging/wrapper-package-plan.v0.json").is_file():
+        fail("required wrapper package plan missing: packaging/wrapper-package-plan.v0.json")
 
 
 def check_engine_lock_example() -> None:
@@ -229,6 +231,34 @@ def check_bootstrap_discipline() -> None:
     require_contains("bootstrap docs", text, INVARIANT)
 
 
+def check_packaging_decision() -> None:
+    required_paths = [
+        "scripts/check_orro_packaging_decision.py",
+        "docs/packaging-decision.md",
+        "packaging/wrapper-package-plan.v0.json",
+    ]
+    for path in required_paths:
+        if not (ROOT / path).is_file():
+            fail(f"required packaging decision file missing: {path}")
+
+    text = combined_text(
+        [
+            "README.md",
+            "docs/README.md",
+            "docs/packaging-decision.md",
+            "docs/repository-strategy.md",
+            "docs/thin-wrapper-plan.md",
+            "docs/install.md",
+        ]
+    )
+    require_contains("packaging decision docs", text, "packaging decision")
+    require_contains("packaging decision docs", text, "not package publish")
+    require_contains("packaging decision docs", text, "published ORRO package remains future work")
+    require_contains("packaging decision docs", text, "no engine code")
+    require_contains("packaging decision docs", text, "witnessd-hosted")
+    require_contains("packaging decision docs", text, INVARIANT)
+
+
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
         if path.name == ".git":
@@ -248,6 +278,7 @@ def check_no_engine_code() -> None:
             fail(f"executable source outside scripts is not allowed: {relative}")
         if relative.parts[0] == "scripts" and path.name not in {
             "bootstrap_orro.py",
+            "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
             "orro_e2e_smoke.py",
@@ -267,6 +298,7 @@ def main() -> int:
     check_e2e_docs()
     check_release_discipline()
     check_bootstrap_discipline()
+    check_packaging_decision()
     check_no_engine_code()
     print("ORRO repo contract: pass")
     return 0

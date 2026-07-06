@@ -1,0 +1,68 @@
+{
+  "kind": "orro-wrapper-package-plan",
+  "schema_version": "0.1",
+  "status": "planning",
+  "package_goal": "single user-facing ORRO install that prepares and invokes pinned Depone and witnessd engines",
+  "current_command_source": "witnessd-hosted orro console script",
+  "published_package": false,
+  "phases": [
+    {
+      "phase": "bootstrap",
+      "status": "current",
+      "description": "Use ORRO repo metadata and bootstrap planner to prepare or check pinned local engine checkouts.",
+      "contains_engine_logic": false
+    },
+    {
+      "phase": "thin-wrapper",
+      "status": "future",
+      "description": "Expose a product wrapper that delegates to witnessd-hosted ORRO commands and pinned Depone verification paths.",
+      "contains_engine_logic": false
+    },
+    {
+      "phase": "published-package",
+      "status": "future",
+      "description": "Publish a user-facing install only after pinned-engine e2e, bootstrap, and wrapper contracts remain green.",
+      "contains_engine_logic": false
+    }
+  ],
+  "engine_dependencies": {
+    "witnessd": {
+      "repository": "Moonweave-Systems/witnessd",
+      "role": "execution engine"
+    },
+    "depone": {
+      "repository": "Moonweave-Systems/Depone",
+      "role": "verifier engine"
+    }
+  },
+  "required_metadata": [
+    "engine-lock/orro-e2e-engine-lock.json",
+    "release/orro-release-manifest.v0.json",
+    "docs/compatibility-matrix.md"
+  ],
+  "forbidden_scope": [
+    "Depone verifier implementation",
+    "witnessd runtime implementation",
+    "proofcheck implementation",
+    "proofrun implementation",
+    "scheduler implementation",
+    "observer implementation",
+    "fan-in implementation",
+    "team-ledger verifier implementation"
+  ],
+  "boundary": {
+    "contains_engine_logic": false,
+    "implements_proofrun": false,
+    "implements_proofcheck": false,
+    "creates_third_engine": false,
+    "published_package": false,
+    "approves_merge": false,
+    "raises_assurance": false,
+    "depone_verifies": true,
+    "witnessd_executes": true,
+    "orro_exposes_workflow": true
+  },
+  "not_proof": true,
+  "not_verifier_truth": true,
+  "not_package_publish": true
+}

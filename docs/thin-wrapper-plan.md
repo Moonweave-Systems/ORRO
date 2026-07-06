@@ -48,3 +48,8 @@ Before adding executable wrapper code here, ORRO needs:
 Any wrapper code must preserve the engine boundary:
 
 Depone verifies; witnessd executes; ORRO exposes the workflow.
+
+The v0 packaging decision is now recorded in `docs/packaging-decision.md` and
+`packaging/wrapper-package-plan.v0.json`. It is product metadata, not package
+publish, and keeps the current command source witnessd-hosted until a future
+thin wrapper is explicitly implemented.
