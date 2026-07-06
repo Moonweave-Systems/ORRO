@@ -20,7 +20,7 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 | intent | `workflow-plan.json`, `role-lane-plan.json`, `verification-recipe.json` |
 | wrapper context | `workflow-plan-binding.json`, `role-lane-plan-binding.json`, `workflow-role-dispatch.json`, `orro-continuation-decision.json`, `orro-auto-plan.json`, `orro-auto-receipt.json`, `orro-auto-session.json`, `orro-report.json` |
 | review package | `orro-handoff.json` |
-| distribution metadata | `orro-engine-lock.json` |
+| distribution metadata | `orro-engine-lock.json`, `orro-e2e-engine-lock.json`, `orro-release-manifest.v0.json` |
 
 ## Trust Rules
 
@@ -31,4 +31,5 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 - Report is summary, not proof.
 - Handoff is review package, not approval.
 - Engine-lock is distribution metadata, not proof.
+- Release manifest is product/distribution metadata, not proof and not verifier truth.
 - Existing proofcheck verdict is verifier output, not an input trust root.

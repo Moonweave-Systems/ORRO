@@ -21,6 +21,12 @@ observer, fan-in, team-ledger, or worker execution modules.
 The e2e runner is a product smoke harness. It orchestrates local engine
 checkouts and records test metadata, but it is not proof and is not an engine.
 
+The release manifest and compatibility matrix are product/distribution
+metadata. They record which pinned engine pair has passed ORRO e2e CI, but they
+are not proof, not verifier truth, not approval, and not assurance. Engine-lock
+update process is intentional and PR-reviewed. Published ORRO package remains
+future work.
+
 ## Deferred Monorepo Conditions
 
 Only consider a monorepo if:

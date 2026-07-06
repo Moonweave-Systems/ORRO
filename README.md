@@ -54,6 +54,19 @@ not verifier truth, not approval, and not assurance.
 The runner orchestrates engines but does not implement proofrun, proofcheck,
 runtime scheduling, observer, fan-in, team-ledger, or verifier logic.
 
+## Release Metadata
+
+`release/orro-release-manifest.v0.json` records the current ORRO product release
+candidate metadata and the pinned engine pair validated by e2e CI. The release
+manifest is product/distribution metadata, not proof, not verifier truth, not
+approval, and not assurance. No ORRO package is published by this manifest.
+
+Engine-lock update discipline is documented in
+[`docs/engine-lock-update-process.md`](docs/engine-lock-update-process.md), and
+validated engine pairs are listed in
+[`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). Published ORRO
+package remains future work.
+
 ## Development Install
 
 ```bash
@@ -101,6 +114,8 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Product Reality Check](docs/product-reality-check.md)
 - [E2E Smoke Contract](docs/e2e-smoke-contract.md)
 - [E2E Smoke Runner](docs/e2e-runner.md)
+- [Engine-Lock Update Process](docs/engine-lock-update-process.md)
+- [Compatibility Matrix](docs/compatibility-matrix.md)
 - [Repository Strategy](docs/repository-strategy.md)
 
 ## Compatibility
