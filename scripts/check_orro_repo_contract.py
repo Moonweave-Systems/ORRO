@@ -68,6 +68,10 @@ ASSURANCE_DOC_REQUIRED_PHRASES = {
         "Level 6 continuous operation is intentionally not defined",
         "Humans retain judgment",
     ),
+    "docs/orro-strategic-review-spec.md": (
+        "로컬 `.omx/` 디렉터리는 agent workflow runtime state다",
+        "tracked `.omx` 파일은 contract violation",
+    ),
     "docs/README.md": (
         "[Assurance Threat Model](assurance/threat-model.md)",
         "[Long-Automation Maturity Gates](assurance/long-automation-maturity.md)",
@@ -622,13 +626,17 @@ def check_no_engine_code() -> None:
         if ".git" in path.parts or ".omx" in path.parts or "__pycache__" in path.parts or not path.is_file():
             continue
         relative = path.relative_to(ROOT)
+        parts = relative.parts
+        if not parts:
+            continue
+        top = parts[0]
         lower_name = path.name.lower()
         suffix = path.suffix.lower()
-        if suffix in {".py", ".sh"} and relative.parts[0] not in {"scripts", "src"}:
+        if suffix in {".py", ".sh"} and top not in {"scripts", "src"}:
             fail(f"executable source outside scripts is not allowed: {relative}")
-        if relative.parts[0] == "src" and (len(relative.parts) < 2 or relative.parts[1] != "orro_wrapper"):
+        if top == "src" and (len(parts) < 2 or parts[1] != "orro_wrapper"):
             fail(f"unexpected package source present: {relative}")
-        if relative.parts[0] == "scripts" and path.name not in {
+        if top == "scripts" and path.name not in {
             "bootstrap_orro.py",
             "check_orro_fallback_policy.py",
             "check_orro_command_migration.py",
