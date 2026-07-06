@@ -10,6 +10,8 @@ Start here:
 - [Install](install.md)
 - [Workflow Reference](workflow-reference.md)
 - [ORRO Strategic Review Spec](orro-strategic-review-spec.md)
+- [Security Policy](../SECURITY.md)
+- [Contributing](../CONTRIBUTING.md)
 - [Assurance Threat Model](assurance/threat-model.md)
 - [Long-Automation Maturity Gates](assurance/long-automation-maturity.md)
 - [Engine Contract](engine-contract.md)
