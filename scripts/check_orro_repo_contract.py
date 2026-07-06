@@ -20,6 +20,32 @@ STRATEGIC_REVIEW_REQUIRED_PHRASES = (
     "report is not proof",
     "long automation is checkpoint expansion, not trust expansion",
 )
+STRATEGIC_REVIEW_REQUIRED_SECTIONS = (
+    "## 1. 총평",
+    "## 2. 철학 적합성 점수",
+    "## 3. 가장 잘한 점",
+    "## 4. 가장 위험한 점",
+    "## 5. 작은 설계 리뷰",
+    "## 6. 큰 방향 리뷰",
+    "## 7. 하네스 설계안",
+    "## 8. 품질 하네스",
+    "## 9. 효율 측정안",
+    "## 10. 긴 자동화 maturity ladder",
+    "## 11. 지금 당장 해야 할 P0",
+    "## 12. v0.1 전에 해야 할 P1",
+    "## 13. 장기 P2/P3",
+    "## 14. 문서에 넣을 철학 선언문",
+    "## 15. 최종 판단",
+)
+STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS = {
+    "workflow-plan": ("실행 의도", "proof", "approval", "verifier truth"),
+    "proofrun": ("witnessd", "evidence", "proofcheck 통과", "merge approval"),
+    "proofcheck-verdict": ("Depone", "verdict", "판단을 포기"),
+    "handoff": ("리뷰", "approval", "proof", "release permission"),
+    "report": ("요약", "proof", "verifier truth", "approval"),
+    "engine-lock": ("pinned engine", "distribution metadata", "assurance", "proof"),
+    "release-manifest": ("release candidate metadata", "package publish", "proof", "approval"),
+}
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
@@ -75,6 +101,36 @@ def require_any_contains(label: str, haystack: str, needles: tuple[str, ...]) ->
         fail(f"{label} must contain one of {needles!r}")
 
 
+def normalize_contract_text(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def require_contains_normalized(label: str, haystack: str, needle: str) -> None:
+    normalized_haystack = normalize_contract_text(haystack)
+    normalized_needle = normalize_contract_text(needle)
+    if normalized_needle not in normalized_haystack:
+        fail(f"{label} must contain normalized {needle!r}")
+
+
+def require_artifact_semantics(
+    label: str,
+    haystack: str,
+    artifact: str,
+    required_tokens: tuple[str, ...],
+) -> None:
+    rows = [
+        normalize_contract_text(line)
+        for line in haystack.splitlines()
+        if line.lstrip().startswith("|") and artifact in line
+    ]
+    if not rows:
+        fail(f"{label} must define artifact semantics for {artifact!r}")
+    row_text = " ".join(rows)
+    missing = [token for token in required_tokens if token not in row_text]
+    if missing:
+        fail(f"{label} artifact {artifact!r} missing semantic tokens: {missing}")
+
+
 def combined_text(paths: list[str]) -> str:
     return "\n".join(read_text(path) for path in paths)
 
@@ -116,6 +172,11 @@ def check_strategic_review_spec() -> None:
     text = read_text(path)
     for phrase in STRATEGIC_REVIEW_REQUIRED_PHRASES:
         require_contains(path, text, phrase)
+    for section in STRATEGIC_REVIEW_REQUIRED_SECTIONS:
+        require_contains_normalized(path, text, section)
+    require_contains(path, text, "| Artifact | Means | Does not mean |")
+    for artifact, required_tokens in STRATEGIC_REVIEW_ARTIFACT_REQUIREMENTS.items():
+        require_artifact_semantics(path, text, artifact, required_tokens)
 
 
 def check_packaging_drafts() -> None:
@@ -401,7 +462,7 @@ def check_wrapper() -> None:
 
 def check_no_engine_code() -> None:
     for path in ROOT.iterdir():
-        if path.name == ".git":
+        if path.name in {".git", ".omx"}:
             continue
         if path.is_dir() and path.name in FORBIDDEN_TOP_LEVEL_DIRS:
             fail(f"forbidden engine/runtime directory present: {path.name}")
@@ -409,7 +470,7 @@ def check_no_engine_code() -> None:
             fail(f"unexpected top-level directory present: {path.name}")
 
     for path in ROOT.rglob("*"):
-        if ".git" in path.parts or "__pycache__" in path.parts or not path.is_file():
+        if ".git" in path.parts or ".omx" in path.parts or "__pycache__" in path.parts or not path.is_file():
             continue
         relative = path.relative_to(ROOT)
         lower_name = path.name.lower()
