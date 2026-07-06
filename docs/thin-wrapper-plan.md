@@ -67,3 +67,10 @@ The initial wrapper skeleton is documented in `docs/thin-wrapper.md`. It exposes
 `orro-wrapper`, not `orro`, so the current witnessd-hosted command remains the
 active ORRO command source. The skeleton delegates only when explicitly asked
 and does not implement proofrun or proofcheck.
+
+`scripts/check_orro_wrapper_install.py` performs the local wrapper install smoke.
+It installs the wrapper into a temporary virtual environment and verifies the
+installed `orro-wrapper` command without publishing a package, calling Depone or
+witnessd, running proofrun, or running proofcheck. The install smoke output is
+setup/test metadata, not proof, not verifier truth, not package publish, not
+approval, and not assurance.

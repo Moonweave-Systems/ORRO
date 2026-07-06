@@ -65,3 +65,22 @@ PYTHONPATH=src python3 -m orro_wrapper self-test
 
 It verifies the wrapper boundary, default delegation command parsing, and that
 empty delegate invocations fail closed.
+
+## Install Smoke
+
+The local install smoke creates a temporary virtual environment, installs this
+repository in editable mode, and verifies the installed `orro-wrapper` console
+script:
+
+```bash
+python3 scripts/check_orro_wrapper_install.py --json
+```
+
+The install smoke checks that `orro-wrapper` is installed, that the package does
+not install or shadow `orro`, that boundary and self-test commands pass, and
+that explicit delegation works with a harmless Python command. It does not call
+Depone or witnessd, does not run proofrun, does not run proofcheck, and does not
+publish a package.
+
+The install smoke result is setup/test metadata, not proof, not verifier truth,
+not package publish, not approval, and not assurance.

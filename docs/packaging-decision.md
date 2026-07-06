@@ -44,9 +44,11 @@ The ORRO repository must not contain:
 
 1. Bootstrap: current phase. `scripts/bootstrap_orro.py` prepares or checks
    local pinned engine checkouts. Bootstrap output is setup metadata, not proof.
-2. Thin wrapper: skeleton phase. `orro-wrapper` may expose product onboarding
-   and invoke witnessd-hosted ORRO commands, but it must not implement proofrun
-   or proofcheck and must not shadow the witnessd-hosted `orro` command.
+2. Thin wrapper: install-smoke phase. `orro-wrapper` may expose product
+   onboarding and invoke witnessd-hosted ORRO commands, and local CI verifies
+   the editable install and installed console script. It must not implement
+   proofrun or proofcheck, must not shadow the witnessd-hosted `orro` command,
+   and must not imply package publish.
 3. Published package: future phase. A package may be published only after
    pinned-engine e2e, boundary checks, bootstrap checks, and release metadata
    remain green.
@@ -61,6 +63,7 @@ Before executable wrapper code is added, a PR must show:
 - `scripts/check_orro_repo_contract.py` passes;
 - `scripts/check_orro_packaging_decision.py` passes;
 - pinned-engine e2e remains green;
+- wrapper install smoke remains green;
 - no engine code is added.
 
 ## Trust Boundary
