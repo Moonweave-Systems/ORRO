@@ -44,9 +44,9 @@ The ORRO repository must not contain:
 
 1. Bootstrap: current phase. `scripts/bootstrap_orro.py` prepares or checks
    local pinned engine checkouts. Bootstrap output is setup metadata, not proof.
-2. Thin wrapper: future phase. A wrapper may expose product onboarding and invoke
-   witnessd-hosted ORRO commands, but it must not implement proofrun or
-   proofcheck.
+2. Thin wrapper: skeleton phase. `orro-wrapper` may expose product onboarding
+   and invoke witnessd-hosted ORRO commands, but it must not implement proofrun
+   or proofcheck and must not shadow the witnessd-hosted `orro` command.
 3. Published package: future phase. A package may be published only after
    pinned-engine e2e, boundary checks, bootstrap checks, and release metadata
    remain green.

@@ -20,6 +20,7 @@ Start here:
 - [Bootstrap](bootstrap.md)
 - [Packaging Decision](packaging-decision.md)
 - [Pinned Engine Fallback](pinned-engine-fallback.md)
+- [Thin Wrapper](thin-wrapper.md)
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 
