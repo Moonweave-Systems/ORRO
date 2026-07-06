@@ -7,7 +7,7 @@ Verified acceleration, not blind automation.
 Depone verifies; witnessd executes; ORRO exposes the workflow.
 ```
 
-ORRO의 역할은 verifier나 execution engine이 되는 것이 아니다. ORRO는 사용자가 긴 자동화를 더 빨리 시작하고 더 안전하게 검토하도록 workflow surface, harness surface, 문서, schema, contract check, report를 제공해야 한다. 신뢰 상승은 Depone proofcheck와 witnessd가 남긴 evidence에서만 온다. Humans retain judgment.
+ORRO의 역할은 verifier나 execution engine이 되는 것이 아니다. ORRO는 사용자가 긴 자동화를 더 빨리 시작하고 더 안전하게 검토하도록 workflow surface, harness surface, 문서, schema, contract check, report를 제공해야 한다. 판단 근거는 witnessd가 남긴 evidence이고, verifier truth는 Depone proofcheck에서만 온다. Humans retain judgment.
 
 ## 1. 총평
 
