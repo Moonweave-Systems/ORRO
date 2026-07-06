@@ -46,6 +46,11 @@ python3 scripts/bootstrap_orro.py \
 This mode does not mutate the engine repositories. A match is distribution
 readiness metadata only; it is not proof and does not verify evidence.
 
+If a checkout is missing or mismatched, bootstrap follows the fail-closed policy
+in `docs/pinned-engine-fallback.md`. It reports the blocker and does not silently
+use latest `main`, auto-select alternate engine commits, or rewrite the engine
+lock during setup.
+
 ## Execute
 
 `--execute` is bounded setup. It may prepare local engine checkouts only when

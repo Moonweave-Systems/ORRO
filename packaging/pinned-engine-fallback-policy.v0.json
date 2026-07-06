@@ -1,0 +1,55 @@
+{
+  "kind": "orro-pinned-engine-fallback-policy",
+  "schema_version": "0.1",
+  "status": "active",
+  "purpose": "define what ORRO product tooling may do when pinned witnessd or Depone engines are unavailable or mismatched",
+  "default_behavior": "fail-closed",
+  "allowed_responses": [
+    {
+      "condition": "engine root missing",
+      "response": "report missing root and suggest bootstrap dry-run or explicit execute with allow-network",
+      "automatic_unpin": false
+    },
+    {
+      "condition": "engine commit mismatch",
+      "response": "report expected and actual commits; require intentional engine-lock update PR or checkout correction",
+      "automatic_unpin": false
+    },
+    {
+      "condition": "pinned checkout unavailable from network",
+      "response": "stop with clear setup blocker; do not silently use main or a nearby commit",
+      "automatic_unpin": false
+    }
+  ],
+  "forbidden_responses": [
+    "silently use latest main",
+    "silently use a nearby tag",
+    "rewrite engine lock during bootstrap",
+    "downgrade e2e lock matching",
+    "run proofrun to test availability",
+    "run proofcheck to test availability",
+    "treat fallback as proof",
+    "treat fallback as verifier truth"
+  ],
+  "human_actions": [
+    "correct local checkout to the pinned commit",
+    "run bootstrap dry-run to inspect setup steps",
+    "run bootstrap execute with explicit allow-network when network checkout is intended",
+    "open an engine-lock update PR if the product candidate should move to newer engine commits"
+  ],
+  "boundary": {
+    "contains_engine_logic": false,
+    "auto_selects_engine_commits": false,
+    "rewrites_engine_lock": false,
+    "executes_proofrun": false,
+    "verifies_evidence": false,
+    "approves_merge": false,
+    "raises_assurance": false,
+    "depone_verifies": true,
+    "witnessd_executes": true,
+    "orro_exposes_workflow": true
+  },
+  "not_proof": true,
+  "not_verifier_truth": true,
+  "not_package_publish": true
+}

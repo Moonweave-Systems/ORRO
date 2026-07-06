@@ -20,6 +20,10 @@ orchestration and setup metadata, not proof. It contains no engine code, does
 not verify evidence, and the current executable `orro` command remains
 witnessd-hosted.
 
+Pinned engine fallback is fail-closed. If a pinned engine is unavailable or
+mismatched, do not silently use latest `main` or a nearby commit. Correct the
+checkout or open an intentional engine-lock update PR.
+
 ## Update Rules
 
 - Update the engine lock only in a reviewable PR.

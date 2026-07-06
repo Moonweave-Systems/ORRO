@@ -103,6 +103,19 @@ Published ORRO package remains future work. Future wrapper work must contain no
 engine code and must not implement proofrun, proofcheck, scheduler, observer,
 fan-in, team-ledger, or verifier logic.
 
+## Pinned Engine Fallback
+
+`docs/pinned-engine-fallback.md` and
+`packaging/pinned-engine-fallback-policy.v0.json` define the fail-closed
+fallback when pinned witnessd or Depone engines are missing, mismatched, or
+unavailable.
+
+The fallback policy is product/distribution metadata, not proof, not verifier
+truth, not package publish, not approval, and not assurance. It forbids silently
+using latest `main`, rewriting the engine lock during bootstrap, or
+auto-selecting alternate engine commits. Moving to a different engine pair
+requires an intentional engine-lock update PR.
+
 ## Development Install
 
 ```bash
@@ -154,6 +167,7 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - [Compatibility Matrix](docs/compatibility-matrix.md)
 - [Bootstrap](docs/bootstrap.md)
 - [Packaging Decision](docs/packaging-decision.md)
+- [Pinned Engine Fallback](docs/pinned-engine-fallback.md)
 - [Repository Strategy](docs/repository-strategy.md)
 
 ## Compatibility

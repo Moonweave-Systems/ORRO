@@ -19,6 +19,7 @@ Start here:
 - [Compatibility Matrix](compatibility-matrix.md)
 - [Bootstrap](bootstrap.md)
 - [Packaging Decision](packaging-decision.md)
+- [Pinned Engine Fallback](pinned-engine-fallback.md)
 - [Repository Strategy](repository-strategy.md)
 - [Thin Wrapper Plan](thin-wrapper-plan.md)
 

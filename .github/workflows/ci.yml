@@ -15,8 +15,10 @@ jobs:
         run: python3 scripts/check_orro_release_manifest.py
       - name: Check ORRO packaging decision
         run: python3 scripts/check_orro_packaging_decision.py
+      - name: Check ORRO fallback policy
+        run: python3 scripts/check_orro_fallback_policy.py
       - name: Compile scripts
-        run: python3 -m py_compile scripts/check_orro_repo_contract.py scripts/check_orro_release_manifest.py scripts/check_orro_packaging_decision.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py scripts/bootstrap_orro.py
+        run: python3 -m py_compile scripts/check_orro_repo_contract.py scripts/check_orro_release_manifest.py scripts/check_orro_packaging_decision.py scripts/check_orro_fallback_policy.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py scripts/bootstrap_orro.py
       - name: E2E smoke self-test
         run: python3 scripts/orro_e2e_smoke.py --self-test
       - name: Engine-lock update helper self-test
