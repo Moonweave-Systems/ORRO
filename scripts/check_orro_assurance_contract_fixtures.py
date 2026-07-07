@@ -135,6 +135,18 @@ def remove_corpus_required_risk(workspace: Path) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+def relabel_language_boundary_reject_case_as_pass(workspace: Path) -> None:
+    path = workspace / "tests/fixtures/language-boundaries/cases.v0.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for case in data["cases"]:
+        if case["id"] == "report-proves-completion-overclaim":
+            case["expect"] = "pass"
+            break
+    else:
+        raise RuntimeError("report proof overclaim language boundary case not found")
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
 def track_local_omx_state(workspace: Path) -> None:
     path = workspace / ".omx/runtime-state.txt"
     path.parent.mkdir()
@@ -191,6 +203,11 @@ def main() -> int:
         "missing strategic corpus risk",
         remove_corpus_required_risk,
         "strategic review corpus missing required risks",
+    )
+    expect_contract_failure(
+        "language boundary overclaim relabeled as pass",
+        relabel_language_boundary_reject_case_as_pass,
+        "language boundary lint must pass bundled fixtures",
     )
     expect_contract_failure(
         "tracked local .omx state",
