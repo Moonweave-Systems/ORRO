@@ -1,5 +1,9 @@
 # Install
 
+Standalone ORRO package publish remains future work. Current dogfood and
+development use installs witnessd and Depone directly. This repository's local
+wrapper exposes `orro-wrapper`, not `orro`.
+
 Current development layout uses the engine repositories directly:
 
 ```bash
