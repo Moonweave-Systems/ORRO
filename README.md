@@ -11,6 +11,34 @@ review.
 Depone verifies; witnessd executes; ORRO exposes the workflow.
 ```
 
+## Current Status
+
+Today:
+- ORRO is the product and workflow surface for observed run and review.
+- This repository keeps ORRO docs, product boundary, locks, wrapper skeleton, assurance contract checks, and integration-surface policy.
+- The runnable `orro` command is still witnessd-hosted.
+- No standalone ORRO package has been published.
+- The local wrapper skeleton exposes `orro-wrapper`, not `orro`.
+
+Current focus:
+- Make AI-assisted work reviewable.
+- Prevent handoff/report/proof/approval confusion.
+- Grow automation only through checkpointed workflows.
+- Keep integration surfaces plugin-first and MCP-optional.
+
+## Can I use ORRO today?
+
+Yes for development dogfood through Depone and witnessd. No as a standalone
+published ORRO package.
+
+Current split:
+
+- witnessd hosts the runnable `orro` workflow command.
+- This ORRO repository owns the product boundary, documentation, locks, wrapper
+  skeleton, and assurance contracts.
+- `orro-wrapper` is the transitional wrapper boundary exposed by this
+  repository.
+
 ## What ORRO Is
 
 ORRO turns a goal into an evidence-governed workflow:
@@ -180,7 +208,7 @@ thin wrapper surfaces, and runs a rollback simulation by reinstalling the
 current `orro-wrapper`-only package shape. Dry-run metadata is not proof and
 does not make ORRO own `orro`.
 
-## Development Install
+## Install Reality
 
 ```bash
 git clone https://github.com/Moonweave-Systems/Depone.git
@@ -189,6 +217,21 @@ cd witnessd
 python3 -m pip install -e .
 orro init --home .witnessd --depone-root ../Depone
 ```
+
+The orro command above is currently witnessd-hosted.
+
+For the local ORRO wrapper skeleton:
+
+```bash
+cd ORRO
+python3 -m pip install -e .
+orro-wrapper boundary
+orro-wrapper self-test
+```
+
+The wrapper is product/distribution metadata and a thin delegation surface. It
+does not replace the witnessd-hosted `orro` command and is not proof, not
+verifier truth, not package publish, not approval, and not assurance.
 
 ## Normal ORRO Loop
 
