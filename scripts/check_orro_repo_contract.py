@@ -393,6 +393,31 @@ def check_strategic_review_corpus() -> None:
         fail(f"strategic review corpus missing required risks: {missing}")
 
 
+def check_language_boundary_lint() -> None:
+    required_paths = [
+        "scripts/check_orro_language_boundaries.py",
+        "tests/fixtures/language-boundaries/cases.v0.json",
+    ]
+    for path in required_paths:
+        if not (ROOT / path).is_file():
+            fail(f"required language boundary lint file missing: {path}")
+
+    result = subprocess.run(
+        [sys.executable, "scripts/check_orro_language_boundaries.py"],
+        cwd=ROOT,
+        check=False,
+        encoding="utf-8",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        fail(
+            "language boundary lint must pass bundled fixtures\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
+
+
 def check_packaging_drafts() -> None:
     for path in (
         "packaging/marketplace-manifest.draft.json",
@@ -707,6 +732,7 @@ def check_no_engine_code() -> None:
             fail(f"unexpected package source present: {relative}")
         if top == "scripts" and path.name not in {
             "bootstrap_orro.py",
+            "check_orro_language_boundaries.py",
             "check_no_bidi_controls.py",
             "check_orro_assurance_contract_fixtures.py",
             "check_orro_fallback_policy.py",
@@ -734,6 +760,7 @@ def main() -> int:
     check_security_contribution_docs()
     check_integration_surface_policy()
     check_strategic_review_corpus()
+    check_language_boundary_lint()
     check_packaging_drafts()
     check_engine_lock_example()
     check_e2e_engine_lock()
