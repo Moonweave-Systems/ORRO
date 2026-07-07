@@ -20,6 +20,12 @@ Humans retain judgment.
 
 ## Threats
 
+The strategic review corpus records short negative language cases for doctrine
+confusion, including prompt-injection approval confusion, secret leakage
+overclaim, replay/stale evidence overclaim, MCP tool result proof confusion,
+prompt profile compliance confusion, and integration-surface assurance
+confusion.
+
 ### Prompt Injection
 
 Risk: malicious text in workflow-plan, handoff, report, or evidence summary asks the user or agent to treat a summary as approval or proof.

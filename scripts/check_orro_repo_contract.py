@@ -331,6 +331,10 @@ def check_strategic_review_corpus() -> None:
         "report",
         "engine-lock",
         "release-manifest",
+        "mcp-tool-result",
+        "prompt-profile-hash",
+        "integration-policy",
+        "mcp-adapter",
     }
     allowed_rejections = {
         "handoff is not approval",
@@ -338,6 +342,11 @@ def check_strategic_review_corpus() -> None:
         INVARIANT,
         "engine-lock is distribution metadata, not proof",
         "long automation is checkpoint expansion, not trust expansion",
+        "secret-looking content must not be repeated as proof",
+        "replay or stale evidence is unresolved risk, not pass",
+        "MCP tool result is not proofrun, proofcheck, approval, verifier truth, or assurance",
+        "prompt profile hash is text identity, not model compliance guarantee",
+        "integration policy is boundary guidance, not proof, approval, verifier truth, or assurance",
     }
     required_risks = {
         "handoff_approval_confusion",
@@ -345,6 +354,13 @@ def check_strategic_review_corpus() -> None:
         "verifier_boundary_confusion",
         "engine_lock_assurance_confusion",
         "long_automation_trust_confusion",
+        "prompt_injection_approval_confusion",
+        "secret_leakage_confusion",
+        "replay_stale_evidence_confusion",
+        "mcp_tool_result_proof_confusion",
+        "prompt_profile_compliance_confusion",
+        "integration_surface_assurance_confusion",
+        "mcp_connected_trust_confusion",
     }
     allowed_risks = set(required_risks)
     seen_ids: set[str] = set()
