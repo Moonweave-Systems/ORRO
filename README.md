@@ -13,14 +13,18 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 
 ## Current Status
 
-- Today: ORRO is the product and workflow surface for observed run and review,
-  with product boundaries, documentation, locks, wrapper skeleton, and assurance
-  contracts kept in this repository.
-- Current use: development dogfood uses Depone and witnessd directly, with the
-  runnable `orro` command still witnessd-hosted.
-- Current focus: make the ORRO boundary installable and auditable without
-  moving engine code, publishing a standalone ORRO package, or changing verifier
-  or runtime ownership.
+Today:
+- ORRO is the product and workflow surface for observed run and review.
+- This repository keeps ORRO docs, product boundary, locks, wrapper skeleton, assurance contract checks, and integration-surface policy.
+- The runnable `orro` command is still witnessd-hosted.
+- No standalone ORRO package has been published.
+- The local wrapper skeleton exposes `orro-wrapper`, not `orro`.
+
+Current focus:
+- Make AI-assisted work reviewable.
+- Prevent handoff/report/proof/approval confusion.
+- Grow automation only through checkpointed workflows.
+- Keep integration surfaces plugin-first and MCP-optional.
 
 ## Can I use ORRO today?
 
