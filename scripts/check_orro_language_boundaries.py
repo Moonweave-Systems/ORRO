@@ -18,7 +18,22 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_FIXTURE = ROOT / "tests/fixtures/language-boundaries/cases.v0.json"
-ALLOWED_ARTIFACTS = {"report", "handoff"}
+# Mirrors the strategic-review-corpus artifact vocabulary
+# (docs/assurance/strategic-review-corpus.v0.json). Kept in lockstep by
+# check_orro_repo_contract.py::check_corpus_lint_coverage.
+ALLOWED_ARTIFACTS = {
+    "workflow-plan",
+    "proofrun",
+    "proofcheck-verdict",
+    "handoff",
+    "report",
+    "engine-lock",
+    "release-manifest",
+    "mcp-tool-result",
+    "prompt-profile-hash",
+    "integration-policy",
+    "mcp-adapter",
+}
 ALLOWED_EXPECTATIONS = {"pass", "reject"}
 
 
@@ -36,9 +51,9 @@ class Rule:
 RULES = (
     Rule(
         id="prompt_injection_approval",
-        artifacts=frozenset({"report", "handoff"}),
+        artifacts=frozenset({"report", "handoff", "workflow-plan"}),
         pattern=re.compile(r"\bignore\s+previous\s+rules\b", re.IGNORECASE),
-        reason="prompt injection must not turn report or handoff into approval",
+        reason="prompt injection must not turn a report, handoff, or plan into approval",
     ),
     Rule(
         id="report_proof_overclaim",
@@ -54,6 +69,12 @@ RULES = (
         artifacts=frozenset({"report"}),
         pattern=re.compile(r"\breport\s+is\s+verifier\s+truth\b|\borro\s+report\s+is\s+verifier\s+truth\b", re.IGNORECASE),
         reason="report is not verifier truth",
+    ),
+    Rule(
+        id="orro_verifier_overclaim",
+        artifacts=frozenset({"report", "handoff"}),
+        pattern=re.compile(r"\borro\s+verif(?:ies|ied)\b", re.IGNORECASE),
+        reason="Depone verifies; witnessd executes; ORRO exposes the workflow",
     ),
     Rule(
         id="handoff_approval_overclaim",
@@ -81,6 +102,51 @@ RULES = (
         artifacts=frozenset({"report", "handoff"}),
         pattern=re.compile(r"\b(?:report|handoff|orro)\s+raises\s+assurance\b", re.IGNORECASE),
         reason="report and handoff do not raise assurance",
+    ),
+    Rule(
+        id="engine_lock_assurance_overclaim",
+        artifacts=frozenset({"report", "handoff", "engine-lock"}),
+        pattern=re.compile(r"\bengine[\s-]lock\s+raises\s+assurance\b", re.IGNORECASE),
+        reason="engine-lock is distribution metadata, not proof",
+    ),
+    Rule(
+        id="long_automation_trust_overclaim",
+        artifacts=frozenset({"report", "handoff"}),
+        pattern=re.compile(r"\blong\s+automation\b.{0,40}\btrust\s+is\s+expanded\b", re.IGNORECASE),
+        reason="long automation is checkpoint expansion, not trust expansion",
+    ),
+    Rule(
+        id="mcp_tool_result_proof_overclaim",
+        artifacts=frozenset({"report", "handoff", "mcp-tool-result"}),
+        pattern=re.compile(
+            r"\bmcp\s+tool\s+result\b\s+(?:is\s+(?:a\s+)?(?:proofcheck|proofrun|proof|approval|verifier\s+truth|assurance)\b|proves?\b|approves?\b|raises\s+assurance\b)",
+            re.IGNORECASE,
+        ),
+        reason="MCP tool result is not proofrun, proofcheck, approval, verifier truth, or assurance",
+    ),
+    Rule(
+        id="prompt_profile_compliance_overclaim",
+        artifacts=frozenset({"report", "handoff", "prompt-profile-hash"}),
+        pattern=re.compile(r"\bprompt\s+profile(?:\s+hash)?\b\s+(?:proves?|guarantees?)\b", re.IGNORECASE),
+        reason="prompt profile hash is text identity, not model compliance guarantee",
+    ),
+    Rule(
+        id="integration_surface_assurance_overclaim",
+        artifacts=frozenset({"report", "handoff", "integration-policy"}),
+        pattern=re.compile(
+            r"\bintegration\s+(?:policy|surface)\b\s+(?:raises\s+assurance|proves?\b|guarantees?\s+(?:trust|safety|assurance))",
+            re.IGNORECASE,
+        ),
+        reason="integration policy is boundary guidance, not proof, approval, verifier truth, or assurance",
+    ),
+    Rule(
+        id="mcp_connected_trust_overclaim",
+        artifacts=frozenset({"report", "handoff", "mcp-adapter"}),
+        pattern=re.compile(
+            r"\bmcp\b.{0,40}\b(?:adapter|connected|connection|server)\b.{0,60}\b(?:long\s+automation\s+is\s+safer|makes\s+long\s+automation\s+safe|expands\s+trust|trust\s+is\s+expanded)\b",
+            re.IGNORECASE,
+        ),
+        reason="long automation is checkpoint expansion, not trust expansion",
     ),
 )
 
@@ -167,16 +233,33 @@ def check_paths(paths: list[Path], artifact: str | None) -> list[dict[str, str]]
 
 
 def run_self_test() -> None:
-    expected_report_violation = lint_text("report", "This report proves completion.")
-    if not expected_report_violation:
+    # Existing report/handoff overclaims must reject.
+    if not lint_text("report", "This report proves completion."):
         fail("self-test expected report proof overclaim violation")
-    expected_handoff_violation = lint_text("handoff", "This handoff approves the merge.")
-    if not expected_handoff_violation:
+    if not lint_text("handoff", "This handoff approves the merge."):
         fail("self-test expected handoff approval overclaim violation")
+    # Strategic-corpus overclaims must reject.
+    if not lint_text("report", "ORRO verified the evidence."):
+        fail("self-test expected ORRO verifier overclaim violation")
+    if not lint_text("engine-lock", "The engine lock raises assurance."):
+        fail("self-test expected engine-lock assurance overclaim violation")
+    if not lint_text("mcp-tool-result", "The MCP tool result is proofcheck."):
+        fail("self-test expected MCP tool result proof overclaim violation")
+    if not lint_text("prompt-profile-hash", "The prompt profile hash proves the model followed the rules."):
+        fail("self-test expected prompt profile hash compliance overclaim violation")
+    if not lint_text("integration-policy", "Using the ORRO integration surface raises assurance."):
+        fail("self-test expected integration surface assurance overclaim violation")
+    if not lint_text("mcp-adapter", "Because the MCP adapter was connected, long automation is safer."):
+        fail("self-test expected MCP-connected trust overclaim violation")
+    # Bounded language must pass.
     if lint_text("report", "Report summary with proofcheck path; report is not proof."):
         fail("self-test expected bounded report language to pass")
     if lint_text("handoff", "Handoff is not approval and is for human review."):
         fail("self-test expected bounded handoff language to pass")
+    if lint_text("mcp-tool-result", "MCP tool result is bounded adapter output, not proofrun, proofcheck, approval, verifier truth, or assurance."):
+        fail("self-test expected bounded MCP tool result language to pass")
+    if lint_text("integration-policy", "Integration policy is boundary guidance, not runtime enforcement by itself."):
+        fail("self-test expected bounded integration policy language to pass")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
