@@ -6,8 +6,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +72,20 @@ def check_product_commit_reachable(commit: str, repo_root: Path) -> None:
     if commit == ZERO_COMMIT:
         return
     if not (repo_root / ".git").exists():
+        return
+    try:
+        shallow = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--is-shallow-repository"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return
+    # A shallow clone (e.g. CI actions/checkout default depth 1) cannot resolve
+    # historical commits; skip rather than false-reject a legitimate commit.
+    if shallow.returncode != 0 or shallow.stdout.strip() == "true":
         return
     try:
         completed = subprocess.run(
@@ -247,6 +263,51 @@ def self_test() -> int:
             continue
         print(f"self-test failed: forged manifest ({name}) was accepted", file=sys.stderr)
         return 1
+
+    if shutil.which("git") is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+
+            def _git(*args: str, cwd: Path) -> str:
+                done = subprocess.run(
+                    ["git", *args],
+                    cwd=str(cwd),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=True,
+                )
+                return done.stdout.strip()
+
+            _git("init", "-q", cwd=repo)
+            _git("config", "user.email", "selftest@example.invalid", cwd=repo)
+            _git("config", "user.name", "selftest", cwd=repo)
+            (repo / "a.txt").write_text("1\n")
+            _git("add", "a.txt", cwd=repo)
+            _git("commit", "-qm", "one", cwd=repo)
+            first_commit = _git("rev-parse", "HEAD", cwd=repo)
+            (repo / "a.txt").write_text("2\n")
+            _git("add", "a.txt", cwd=repo)
+            _git("commit", "-qm", "two", cwd=repo)
+            head_commit = _git("rev-parse", "HEAD", cwd=repo)
+
+            # Reachable commits pass; a well-formed but absent commit is rejected.
+            check_product_commit_reachable(head_commit, repo)
+            check_product_commit_reachable(first_commit, repo)
+            try:
+                check_product_commit_reachable("d" * 40, repo)
+            except SystemExit:
+                pass
+            else:
+                print("self-test failed: fabricated product.commit was accepted", file=sys.stderr)
+                return 1
+
+            # A non-git dir and a shallow clone both skip rather than false-reject.
+            check_product_commit_reachable(head_commit, Path(tmp))
+            shallow = Path(tmp) / "shallow"
+            _git("clone", "--depth", "1", "-q", repo.as_uri(), str(shallow), cwd=Path(tmp))
+            check_product_commit_reachable(first_commit, shallow)
 
     print("ORRO release manifest self-test: pass")
     return 0
