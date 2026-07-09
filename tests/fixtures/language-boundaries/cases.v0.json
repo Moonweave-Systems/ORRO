@@ -133,6 +133,30 @@
       "artifact": "report",
       "expect": "pass",
       "text": "Depone verifies the evidence; ORRO only exposes the workflow and does not verify."
+    },
+    {
+      "id": "long-automation-negated-bounded",
+      "artifact": "report",
+      "expect": "pass",
+      "text": "Long automation does not mean trust is expanded; it is checkpoint expansion."
+    },
+    {
+      "id": "mcp-connected-negated-bounded",
+      "artifact": "mcp-adapter",
+      "expect": "pass",
+      "text": "Connecting the MCP server does not mean long automation is safer."
+    },
+    {
+      "id": "prompt-profile-hyphen-overclaim",
+      "artifact": "prompt-profile-hash",
+      "expect": "reject",
+      "text": "The prompt-profile hash proves compliance."
+    },
+    {
+      "id": "report-orro-verifying-overclaim",
+      "artifact": "report",
+      "expect": "reject",
+      "text": "ORRO verifying the evidence is part of the run."
     }
   ]
 }

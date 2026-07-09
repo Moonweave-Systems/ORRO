@@ -73,7 +73,7 @@ RULES = (
     Rule(
         id="orro_verifier_overclaim",
         artifacts=frozenset({"report", "handoff"}),
-        pattern=re.compile(r"\borro\s+verif(?:ies|ied)\b", re.IGNORECASE),
+        pattern=re.compile(r"\borro\s+verif(?:ies|ied|y|ying)\b", re.IGNORECASE),
         reason="Depone verifies; witnessd executes; ORRO exposes the workflow",
     ),
     Rule(
@@ -112,7 +112,7 @@ RULES = (
     Rule(
         id="long_automation_trust_overclaim",
         artifacts=frozenset({"report", "handoff"}),
-        pattern=re.compile(r"\blong\s+automation\b.{0,40}\btrust\s+is\s+expanded\b", re.IGNORECASE),
+        pattern=re.compile(r"\blong\s+automation\b(?:(?!\b(?:not|never|no|nor)\b|n't).){0,40}\btrust\s+is\s+expanded\b", re.IGNORECASE),
         reason="long automation is checkpoint expansion, not trust expansion",
     ),
     Rule(
@@ -127,7 +127,7 @@ RULES = (
     Rule(
         id="prompt_profile_compliance_overclaim",
         artifacts=frozenset({"report", "handoff", "prompt-profile-hash"}),
-        pattern=re.compile(r"\bprompt\s+profile(?:\s+hash)?\b\s+(?:proves?|guarantees?)\b", re.IGNORECASE),
+        pattern=re.compile(r"\bprompt[\s-]+profile(?:[\s-]+hash)?\b\s+(?:proves?|guarantees?)\b", re.IGNORECASE),
         reason="prompt profile hash is text identity, not model compliance guarantee",
     ),
     Rule(
@@ -143,7 +143,7 @@ RULES = (
         id="mcp_connected_trust_overclaim",
         artifacts=frozenset({"report", "handoff", "mcp-adapter"}),
         pattern=re.compile(
-            r"\bmcp\b.{0,40}\b(?:adapter|connected|connection|server)\b.{0,60}\b(?:long\s+automation\s+is\s+safer|makes\s+long\s+automation\s+safe|expands\s+trust|trust\s+is\s+expanded)\b",
+            r"\bmcp\b(?:(?!\b(?:not|never|no|nor)\b|n't).){0,40}\b(?:adapter|connected|connection|server)\b(?:(?!\b(?:not|never|no|nor)\b|n't).){0,60}\b(?:long\s+automation\s+is\s+safer|makes\s+long\s+automation\s+safe|expands\s+trust|trust\s+is\s+expanded)\b",
             re.IGNORECASE,
         ),
         reason="long automation is checkpoint expansion, not trust expansion",
@@ -260,6 +260,10 @@ def run_self_test() -> None:
         fail("self-test expected bounded MCP tool result language to pass")
     if lint_text("integration-policy", "Integration policy is boundary guidance, not runtime enforcement by itself."):
         fail("self-test expected bounded integration policy language to pass")
+    if lint_text("report", "Long automation does not mean trust is expanded."):
+        fail("self-test expected negated long-automation wording to pass")
+    if lint_text("mcp-adapter", "Connecting the MCP server does not mean long automation is safer."):
+        fail("self-test expected negated mcp-connected wording to pass")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
