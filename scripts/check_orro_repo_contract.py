@@ -418,6 +418,36 @@ def check_language_boundary_lint() -> None:
         )
 
 
+def check_corpus_lint_coverage() -> None:
+    """Couple the strategic-review corpus to the executable language-boundary lint.
+
+    Every corpus negative-case phrase must be rejected by at least one lint rule,
+    and every corpus artifact must be recognized by the lint. This stops the wording
+    gate from silently falling behind the corpus as new risk classes are added.
+    """
+    import importlib
+
+    scripts_dir = str(ROOT / "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    lint = importlib.import_module("check_orro_language_boundaries")
+
+    corpus = load_json("docs/assurance/strategic-review-corpus.v0.json")
+    for case in corpus["cases"]:
+        artifact = case["artifact"]
+        phrase = case["phrase"]
+        if artifact not in lint.ALLOWED_ARTIFACTS:
+            fail(
+                f"strategic review corpus artifact {artifact!r} (case {case['id']}) "
+                "is not a recognized language-boundary lint artifact"
+            )
+        if not lint.lint_text(artifact, phrase):
+            fail(
+                f"strategic review corpus case {case['id']} phrase is not rejected by "
+                f"any language-boundary lint rule: {phrase!r}"
+            )
+
+
 def check_packaging_drafts() -> None:
     for path in (
         "packaging/marketplace-manifest.draft.json",
@@ -761,6 +791,7 @@ def main() -> int:
     check_integration_surface_policy()
     check_strategic_review_corpus()
     check_language_boundary_lint()
+    check_corpus_lint_coverage()
     check_packaging_drafts()
     check_engine_lock_example()
     check_e2e_engine_lock()
