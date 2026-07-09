@@ -4,12 +4,15 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   pinned-engine-smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ORRO
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           path: ORRO
 
@@ -26,14 +29,14 @@ jobs:
           PY
 
       - name: Checkout pinned witnessd
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: Moonweave-Systems/witnessd
           ref: ${{ steps.lock.outputs.witnessd_commit }}
           path: witnessd
 
       - name: Checkout pinned Depone
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: Moonweave-Systems/Depone
           ref: ${{ steps.lock.outputs.depone_commit }}
