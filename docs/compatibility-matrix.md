@@ -11,7 +11,7 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 
 | ORRO repo commit | witnessd commit | Depone commit | e2e status | notes |
 | --- | --- | --- | --- | --- |
-| pending release manifest | `9225986ca60a23633d97b3f7ab43b274eae81043` | `39c38181e701a3bb5526700dd61f948ca0229b2d` | pass | Matches `engine-lock/orro-e2e-engine-lock.json` and `release/orro-release-manifest.v0.json`. |
+| `560b63f5b7189fa6bb93d76fb382b25bb33e89f3` | `4679ce1833d00fd1812b8ba7e2bc83ac67bd1cc2` | `74cf276c7c85b54b906f1b93755ee705a8f6640a` | pass | Matches `engine-lock/orro-e2e-engine-lock.json` and `release/orro-release-manifest.v0.json`. |
 
 Related files:
 
