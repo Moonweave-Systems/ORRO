@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -64,10 +66,26 @@ def require_commit(label: str, value: Any, *, allow_zero: bool = False) -> str:
     return value
 
 
-def main() -> int:
-    manifest = require_object("release manifest", load_json(MANIFEST_PATH))
-    engine_lock = require_object("engine lock", load_json(ENGINE_LOCK_PATH))
+def check_product_commit_reachable(commit: str, repo_root: Path) -> None:
+    if commit == ZERO_COMMIT:
+        return
+    if not (repo_root / ".git").exists():
+        return
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return
+    if completed.returncode != 0:
+        fail(f"product.commit {commit} is not a reachable commit in the ORRO repo")
 
+
+def validate(manifest: dict[str, Any], engine_lock: dict[str, Any], *, repo_root: Path | None) -> None:
     if manifest.get("kind") != "orro-release-manifest":
         fail("kind must be orro-release-manifest")
     if manifest.get("schema_version") != "0.1":
@@ -80,7 +98,10 @@ def main() -> int:
         fail("product.full_name must be Observed Run & Review Orchestrator")
     if product.get("repository") != "Moonweave-Systems/ORRO":
         fail("product.repository must be Moonweave-Systems/ORRO")
-    require_commit("product.commit", product.get("commit"), allow_zero=True)
+    product_commit = require_commit("product.commit", product.get("commit"), allow_zero=True)
+
+    if repo_root is not None:
+        check_product_commit_reachable(product_commit, repo_root)
 
     engines = require_object("engines", manifest.get("engines"))
     expected_repos = {
@@ -125,6 +146,123 @@ def main() -> int:
     require_bool_true("not_proof", manifest.get("not_proof"))
     require_bool_true("not_verifier_truth", manifest.get("not_verifier_truth"))
     require_bool_true("not_package_publish", manifest.get("not_package_publish"))
+
+
+def _build_fixtures() -> tuple[dict[str, Any], dict[str, Any]]:
+    witnessd_commit = "1" * 40
+    depone_commit = "2" * 40
+    manifest = {
+        "kind": "orro-release-manifest",
+        "schema_version": "0.1",
+        "product": {
+            "name": "ORRO",
+            "full_name": "Observed Run & Review Orchestrator",
+            "repository": "Moonweave-Systems/ORRO",
+            "commit": ZERO_COMMIT,
+        },
+        "engines": {
+            "witnessd": {
+                "repository": "Moonweave-Systems/witnessd",
+                "commit": witnessd_commit,
+                "role": "execution engine",
+            },
+            "depone": {
+                "repository": "Moonweave-Systems/Depone",
+                "commit": depone_commit,
+                "role": "verifier engine",
+            },
+        },
+        "engine_lock": {
+            "path": "engine-lock/orro-e2e-engine-lock.json",
+            "matched_in_ci": True,
+        },
+        "validated_surfaces": sorted(REQUIRED_SURFACES),
+        "validation": {
+            "pinned_engine_e2e": "pass",
+            "boundary_checker": "pass",
+        },
+        "boundary": {
+            "depone_verifies": True,
+            "witnessd_executes": True,
+            "orro_exposes_workflow": True,
+            "contains_engine_logic": False,
+            "approves_merge": False,
+            "raises_assurance": False,
+        },
+        "not_proof": True,
+        "not_verifier_truth": True,
+        "not_package_publish": True,
+    }
+    engine_lock = {
+        "kind": "orro-engine-lock",
+        "schema_version": "1.0",
+        "witnessd": {
+            "repository": "Moonweave-Systems/witnessd",
+            "commit": witnessd_commit,
+            "ref_name": "main",
+        },
+        "depone": {
+            "repository": "Moonweave-Systems/Depone",
+            "commit": depone_commit,
+            "ref_name": "main",
+        },
+        "boundary": {
+            "approves_merge": False,
+            "raises_assurance": False,
+            "executes_commands": False,
+            "verifies_evidence": False,
+        },
+    }
+    return manifest, engine_lock
+
+
+def _deep_copy(value: Any) -> Any:
+    return json.loads(json.dumps(value))
+
+
+def self_test() -> int:
+    base_manifest, base_lock = _build_fixtures()
+    try:
+        validate(base_manifest, base_lock, repo_root=None)
+    except SystemExit:
+        print("self-test failed: base manifest was rejected", file=sys.stderr)
+        return 1
+
+    forgeries: list[tuple[str, Any]] = [
+        ("engines.witnessd.commit mismatch", lambda m: m["engines"]["witnessd"].__setitem__("commit", "3" * 40)),
+        ("validated_surfaces missing proofrun", lambda m: m["validated_surfaces"].remove("proofrun")),
+        ("boundary.approves_merge true", lambda m: m["boundary"].__setitem__("approves_merge", True)),
+        ("not_proof false", lambda m: m.__setitem__("not_proof", False)),
+        ("product.commit non-hex", lambda m: m["product"].__setitem__("commit", "not-a-commit")),
+        ("validation.pinned_engine_e2e fail", lambda m: m["validation"].__setitem__("pinned_engine_e2e", "fail")),
+        ("engines.depone.role wrong", lambda m: m["engines"]["depone"].__setitem__("role", "not a real role")),
+    ]
+
+    for name, mutate in forgeries:
+        forged_manifest = _deep_copy(base_manifest)
+        mutate(forged_manifest)
+        try:
+            validate(forged_manifest, base_lock, repo_root=None)
+        except SystemExit:
+            continue
+        print(f"self-test failed: forged manifest ({name}) was accepted", file=sys.stderr)
+        return 1
+
+    print("ORRO release manifest self-test: pass")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--self-test", action="store_true", help="run built-in forgery-rejection checks")
+    args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
+
+    manifest = require_object("release manifest", load_json(MANIFEST_PATH))
+    engine_lock = require_object("engine lock", load_json(ENGINE_LOCK_PATH))
+    validate(manifest, engine_lock, repo_root=ROOT)
 
     print("ORRO release manifest: pass")
     return 0
