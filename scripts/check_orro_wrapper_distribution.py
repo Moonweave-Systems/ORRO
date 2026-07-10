@@ -257,7 +257,7 @@ def self_test() -> dict[str, Any]:
     fake_names = [
         "orro_wrapper/__init__.py",
         "orro_wrapper/cli.py",
-        "orro_product_wrapper-0.0.0.dist-info/entry_points.txt",
+        "orro_product_wrapper-0.1.0rc1.dist-info/entry_points.txt",
     ]
     forbidden_packages = [name for name in fake_names if name.startswith(FORBIDDEN_PACKAGE_PREFIXES)]
     if forbidden_packages:

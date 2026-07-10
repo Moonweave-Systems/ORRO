@@ -17,6 +17,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "0.1"
+DIST_NAME = "orro-product-wrapper"
 
 
 class InstallSmokeError(RuntimeError):
@@ -148,6 +149,16 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
         boundary_payload = load_json_stdout("orro-wrapper boundary", run_command([str(wrapper), "boundary"]))
         self_test_payload = load_json_stdout("orro-wrapper self-test", run_command([str(wrapper), "self-test"]))
         version = run_command([str(wrapper), "--version"]).stdout.strip()
+        expected_version = run_command(
+            [
+                str(python),
+                "-c",
+                (
+                    "import importlib.metadata; "
+                    f"print(importlib.metadata.version({DIST_NAME!r}))"
+                ),
+            ]
+        ).stdout.strip()
         delegated = run_command([str(wrapper), "--engine-command", str(python), "delegate", "--", "-c", "print('delegated')"]).stdout.strip()
 
         check_boundary_payload("boundary", boundary_payload)
@@ -156,8 +167,12 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
             fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "boundary payload kind mismatch", {"kind": boundary_payload.get("kind")})
         if self_test_payload.get("decision") != "pass":
             fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "self-test did not pass", {"payload": self_test_payload})
-        if version != "0.0.0":
-            fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "unexpected wrapper version", {"version": version})
+        if version != expected_version:
+            fail(
+                "ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED",
+                "wrapper version must match package metadata",
+                {"version": version, "metadata_version": expected_version},
+            )
         if delegated != "delegated":
             fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "delegate smoke did not return expected output", {"stdout": delegated})
 

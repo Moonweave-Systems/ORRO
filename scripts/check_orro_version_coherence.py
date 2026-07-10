@@ -34,12 +34,7 @@ def _metadata_version() -> str:
         ) from exc
 
 
-def check_version_coherence() -> dict[str, Any]:
-    sys.path.insert(0, str(SRC))
-    import orro_wrapper
-
-    runtime_version = getattr(orro_wrapper, "__version__", None)
-    metadata_version = _metadata_version()
+def _check_version_values(runtime_version: object, metadata_version: str) -> None:
     if runtime_version != metadata_version:
         raise VersionCoherenceError(
             "ERR_ORRO_VERSION_MISMATCH",
@@ -49,6 +44,15 @@ def check_version_coherence() -> dict[str, Any]:
                 "metadata_version": metadata_version,
             },
         )
+
+
+def check_version_coherence() -> dict[str, Any]:
+    sys.path.insert(0, str(SRC))
+    import orro_wrapper
+
+    runtime_version = getattr(orro_wrapper, "__version__", None)
+    metadata_version = _metadata_version()
+    _check_version_values(runtime_version, metadata_version)
     return {
         "kind": "orro-version-coherence-result",
         "decision": "pass",
@@ -58,9 +62,27 @@ def check_version_coherence() -> dict[str, Any]:
     }
 
 
+def self_test() -> dict[str, Any]:
+    try:
+        _check_version_values("0.0.0", "0.1.0rc1")
+    except VersionCoherenceError as exc:
+        if exc.code != "ERR_ORRO_VERSION_MISMATCH":
+            raise
+    else:
+        raise VersionCoherenceError(
+            "ERR_ORRO_VERSION_SELF_TEST_FAILED",
+            "mismatch fixture did not fail closed",
+        )
+    return {
+        "kind": "orro-version-coherence-self-test-result",
+        "decision": "pass",
+        "checks": [{"name": "mismatch_fixture_fails_closed", "status": "pass"}],
+    }
+
+
 def main() -> int:
     try:
-        payload = check_version_coherence()
+        payload = self_test() if "--self-test" in sys.argv[1:] else check_version_coherence()
     except VersionCoherenceError as exc:
         print(
             json.dumps(
