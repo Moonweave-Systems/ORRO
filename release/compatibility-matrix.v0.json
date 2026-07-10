@@ -9,33 +9,33 @@
     {
       "id": "depone-n-witnessd-n",
       "type": "engine-pair",
-      "depone_commit": "b203130b5720c6ef6fc9b7492f085ac5ee733786",
-      "witnessd_commit": "d601fa86fd8b658e8f4a2cf7fa4b35bde26c554d",
+      "depone_commit": "0e86a55ad10c464d35308a7b6315860a47bcf8a5",
+      "witnessd_commit": "90d4bc77b71cecf464f1f8a820d9fe17b308211f",
       "status": "pass",
       "notes": "Phase 2 current engine pair."
     },
     {
       "id": "depone-n-witnessd-n-1",
       "type": "engine-pair",
-      "depone_commit": "b203130b5720c6ef6fc9b7492f085ac5ee733786",
-      "witnessd_commit": "04740e4e37b621163313e11b35e37addea42f576",
+      "depone_commit": "0e86a55ad10c464d35308a7b6315860a47bcf8a5",
+      "witnessd_commit": "d601fa86fd8b658e8f4a2cf7fa4b35bde26c554d",
       "status": "warn",
       "notes": "Compatibility row declared for downgrade testing; not a release lock."
     },
     {
       "id": "depone-n-1-witnessd-n",
       "type": "engine-pair",
-      "depone_commit": "068a664490cc481eeb65947c10b4ef1b0372d410",
-      "witnessd_commit": "d601fa86fd8b658e8f4a2cf7fa4b35bde26c554d",
+      "depone_commit": "b203130b5720c6ef6fc9b7492f085ac5ee733786",
+      "witnessd_commit": "90d4bc77b71cecf464f1f8a820d9fe17b308211f",
       "status": "warn",
       "notes": "Compatibility row declared for downgrade testing; not a release lock."
     },
     {
       "id": "orro-rc-locked-triplet",
       "type": "product-triplet",
-      "orro_commit": "5e96038311622f612109b78a17b2008509093e92",
-      "depone_commit": "b203130b5720c6ef6fc9b7492f085ac5ee733786",
-      "witnessd_commit": "d601fa86fd8b658e8f4a2cf7fa4b35bde26c554d",
+      "orro_commit": "da32134aa89cb9440408202b76f97dc11ec98ed8",
+      "depone_commit": "0e86a55ad10c464d35308a7b6315860a47bcf8a5",
+      "witnessd_commit": "90d4bc77b71cecf464f1f8a820d9fe17b308211f",
       "status": "pass",
       "engine_lock": "engine-lock/orro-e2e-engine-lock.json",
       "release_manifest": "release/orro-release-manifest.v0.json",
