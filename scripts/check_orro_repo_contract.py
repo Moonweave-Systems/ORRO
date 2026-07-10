@@ -261,6 +261,8 @@ def check_docs_and_examples() -> None:
     workflow_reference = read_text("docs/workflow-reference.md")
     require_contains("docs/workflow-reference.md", workflow_reference, "review-only")
     require_contains("docs/workflow-reference.md", workflow_reference, "Gemini")
+    require_contains("docs/workflow-reference.md", workflow_reference, "Antigravity")
+    require_contains("docs/workflow-reference.md", workflow_reference, "--lane-adapter agy")
     require_contains("docs/workflow-reference.md", workflow_reference, "read-only review lane")
     require_contains("docs/workflow-reference.md", workflow_reference, "review-receipt")
     require_contains("docs/workflow-reference.md", workflow_reference, "not proofcheck")
