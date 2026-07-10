@@ -11,8 +11,9 @@ publish, not merge approval, and not assurance. In short: not package publish.
 ORRO will remain product/distribution/wrapper only while Depone and witnessd
 stay separate engine repositories.
 
-Current command source remains the witnessd-hosted `orro` console script.
-Published ORRO package remains future work. The canonical packaging rule is:
+Current command source is the ORRO-owned `orro` console script, which delegates
+to witnessd. Published ORRO package remains future work. The canonical
+packaging rule is:
 published ORRO package remains future work.
 
 The next package shape, when implemented, should be a thin wrapper that prepares
@@ -29,7 +30,7 @@ The ORRO repository may contain:
 - bootstrap setup planner;
 - e2e smoke runner that calls local engine checkouts;
 - marketplace and plugin manifest drafts;
-- future thin wrapper code that delegates to engine commands.
+- thin wrapper code that delegates to engine commands.
 
 The ORRO repository must not contain:
 
@@ -44,24 +45,21 @@ The ORRO repository must not contain:
 
 1. Bootstrap: current phase. `scripts/bootstrap_orro.py` prepares or checks
    local pinned engine checkouts. Bootstrap output is setup metadata, not proof.
-2. Thin wrapper: install-smoke phase. `orro-wrapper` may expose product
-   onboarding and invoke witnessd-hosted ORRO commands, and local CI verifies
-   the editable install and installed console script. It must not implement
-   proofrun or proofcheck, must not shadow the witnessd-hosted `orro` command,
-   and must not imply package publish.
+2. Thin wrapper: install-smoke phase. `orro` and `orro-wrapper` may expose
+   product onboarding and invoke witnessd-hosted ORRO commands, and local CI
+   verifies the editable install and installed console scripts. They must not
+   implement proofrun or proofcheck and must not imply package publish.
    The local wheel distribution smoke verifies that the built wheel exposes
-   `orro-wrapper`, does not expose or shadow `orro`, and contains no engine
-   packages or engine implementation files.
+   `orro` and `orro-wrapper`, and contains no engine packages or engine
+   implementation files.
 3. Published package: future phase. A package may be published only after
    pinned-engine e2e, boundary checks, bootstrap checks, and release metadata
    remain green.
 
-4. Command migration dry-run: compatibility rehearsal only.
-   `scripts/check_orro_command_migration_dry_run.py` may create a temporary
-   source copy that adds `orro = orro_wrapper.cli:main`, verify that both
-   command surfaces stay thin, and run a rollback simulation back to the current
-   `orro-wrapper`-only package shape. Dry-run metadata is not proof and does
-   not publish a package or make ORRO own `orro`.
+4. Command ownership: current phase. `orro = orro_wrapper.cli:main` and
+   `orro-wrapper = orro_wrapper.cli:main` are committed package metadata. Both
+   command surfaces stay thin. Dry-run harness metadata is historical
+   compatibility coverage only; it is not proof and does not publish a package.
 
 ## Release Gate
 
@@ -86,11 +84,7 @@ metadata, not verifier truth.
 Depone proofcheck remains the verifier path. witnessd remains the execution
 runtime. ORRO exposes the workflow and packaging surface.
 
-Future migration to an ORRO-owned `orro` command requires a separate migration
-wave. Until then, the current executable `orro` command remains witnessd-hosted.
-The plan-only migration contract is recorded in
+The ORRO-owned `orro` command migration contract is recorded in
 `docs/orro-command-migration.md` and
-`packaging/command-migration-plan.v0.json`. This phase does not add an `orro`
-console script and must not shadow `orro`. The dry-run harness is temporary
-source copy metadata only; actual ORRO-owned `orro` migration remains a separate
-future wave.
+`packaging/command-migration-plan.v0.json`. The dry-run harness is compatibility
+metadata only.

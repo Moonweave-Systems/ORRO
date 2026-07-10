@@ -29,17 +29,15 @@ def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
     require_contains("pyproject.toml", text, 'name = "orro-product-wrapper"')
     require_contains("pyproject.toml", text, "dependencies = []")
+    require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
-    if '\norro = "' in text:
-        fail("wrapper package must not shadow witnessd-hosted orro command")
 
 
 def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
     require_contains("setup.cfg", text, "name = orro-product-wrapper")
+    require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
-    if "\n    orro =" in text or "\norro =" in text:
-        fail("setup.cfg must not shadow witnessd-hosted orro command")
 
 
 def check_package_files() -> None:
@@ -77,7 +75,7 @@ def check_docs() -> None:
     require_contains("thin wrapper doc", text, "not verifier truth")
     require_contains("thin wrapper doc", text, "does not implement proofrun")
     require_contains("thin wrapper doc", text, "does not implement proofcheck")
-    require_contains("thin wrapper doc", text, "does not shadow the witnessd-hosted `orro` command")
+    require_contains("thin wrapper doc", text, "ORRO-owned `orro` command")
 
 
 def main() -> int:

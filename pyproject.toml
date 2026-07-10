@@ -11,6 +11,7 @@ requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
+orro = "orro_wrapper.cli:main"
 orro-wrapper = "orro_wrapper.cli:main"
 
 [tool.setuptools]

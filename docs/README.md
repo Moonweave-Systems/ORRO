@@ -24,6 +24,7 @@ Start here:
 - [E2E Smoke Runner](e2e-runner.md)
 - [Engine-Lock Update Process](engine-lock-update-process.md)
 - [Compatibility Matrix](compatibility-matrix.md)
+- [OS Support Matrix](os-support.md)
 - [Bootstrap](bootstrap.md)
 - [Packaging Decision](packaging-decision.md)
 - [Pinned Engine Fallback](pinned-engine-fallback.md)

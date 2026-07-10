@@ -167,17 +167,17 @@ def update_files(
 
 
 def replace_matrix_row(text: str, witnessd_commit: str, depone_commit: str, orro_commit: str) -> str:
-    row_label = "pending release manifest" if orro_commit == ZERO_COMMIT else f"`{orro_commit}`"
+    # The matrix table now leads with a stable "Matrix entry" label column, so the
+    # ORRO repo commit (pending or pinned) lives in the second column, not the first.
+    orro_repo_commit = "pending release manifest" if orro_commit == ZERO_COMMIT else f"`{orro_commit}`"
     row = (
-        f"| {row_label} | `{witnessd_commit}` | `{depone_commit}` | pass | "
-        f"Matches `engine-lock/orro-e2e-engine-lock.json` and "
-        f"`release/orro-release-manifest.v0.json`. |"
+        f"| orro-rc-locked-triplet | {orro_repo_commit} | `{witnessd_commit}` | `{depone_commit}` | pass | "
+        f"Matches `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, "
+        f"and `release/compatibility-matrix.v0.json`. |"
     )
     lines = text.splitlines()
     for index, line in enumerate(lines):
-        if line.startswith("| pending release manifest |") or (
-            line.startswith("| `") and "engine-lock/orro-e2e-engine-lock.json" in line
-        ):
+        if "pending release manifest" in line or "engine-lock/orro-e2e-engine-lock.json" in line:
             lines[index] = row
             return "\n".join(lines) + "\n"
     raise UpdateError("could not find compatibility matrix release row")

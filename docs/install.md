@@ -2,7 +2,7 @@
 
 Standalone ORRO package publish remains future work. Current dogfood and
 development use installs witnessd and Depone directly. This repository's local
-wrapper exposes `orro-wrapper`, not `orro`.
+wrapper exposes `orro` and `orro-wrapper`.
 
 Current development layout uses the engine repositories directly:
 
@@ -14,8 +14,9 @@ python3 -m pip install -e .
 orro init --home .witnessd --depone-root ../Depone
 ```
 
-The `orro` command is currently implemented by witnessd. This repository is a
-product/distribution skeleton and does not publish a standalone package yet.
+The ORRO-owned `orro` command delegates to witnessd. This repository is a
+product/distribution wrapper package and does not publish a standalone package
+yet.
 
 ## Bootstrap Planner
 
@@ -42,13 +43,13 @@ python3 scripts/bootstrap_orro.py \
 
 The bootstrap is setup/distribution orchestration and setup metadata, not proof.
 It contains no engine code, does not verify evidence, does not approve merge,
-does not raise assurance, and the executable `orro` command remains
-witnessd-hosted.
+does not raise assurance, and the executable `orro` command delegates runtime
+behavior to witnessd.
 
 ## Local E2E Smoke
 
-After installing the witnessd-hosted command, the ORRO repository can run a
-local smoke against sibling engine checkouts:
+After installing the ORRO wrapper command and sibling engines, the ORRO
+repository can run a local smoke against sibling engine checkouts:
 
 ```bash
 cd ../ORRO
@@ -73,9 +74,8 @@ The v0 packaging decision is documented in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json`. It is product metadata, not proof, not
 verifier truth, and not package publish.
 
-Current installs still use the witnessd-hosted `orro` command. Published ORRO
-package remains future work, and future wrapper work must contain no engine
-code.
+Current installs use the ORRO-owned thin `orro` command. Published ORRO package
+remains future work, and future wrapper work must contain no engine code.
 
 ## Wrapper Distribution Smoke
 
@@ -85,7 +85,4 @@ The local wrapper package can be checked without publishing anything:
 python3 scripts/check_orro_wrapper_distribution.py --json
 ```
 
-This builds and installs a local wheel, verifies `orro-wrapper`, and confirms
-the package does not shadow `orro`. The current `orro` command remains
-witnessd-hosted. Future migration to an ORRO-owned `orro` command requires a
-separate migration wave.
+This builds and installs a local wheel and verifies `orro` plus `orro-wrapper`.

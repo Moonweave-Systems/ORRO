@@ -96,7 +96,7 @@ CONTRIBUTING_REQUIRED_PHRASES = (
     "handoff is not approval",
     "report is not proof",
     "Docs, schemas, contract checks, wrapper/distribution metadata, and harness-surface changes are in scope",
-    "Engine, verifier, runtime, proofrun, proofcheck, scheduler, observer, fan-in, package publish, and command ownership changes are out of scope",
+    "Engine, verifier, runtime, proofrun, proofcheck, scheduler, observer, fan-in, and package publish changes are out of scope",
     "No new dependencies",
 )
 INTEGRATION_POLICY_REQUIRED_PHRASES = (
@@ -137,6 +137,13 @@ FORBIDDEN_IMPLEMENTATION_NAMES = (
     "fan_in",
     "fanin",
 )
+LOCAL_ARTIFACT_DIRS = {
+    ".venv",
+    ".pytest_cache",
+    "__pycache__",
+    "build",
+    "dist",
+}
 
 
 def read_text(path: str) -> str:
@@ -251,6 +258,12 @@ def check_docs_and_examples() -> None:
         ("proofcheck before handoff", "proofcheck` must pass before formal handoff"),
     )
     require_contains("docs/examples", docs_examples_text, "not approval")
+    workflow_reference = read_text("docs/workflow-reference.md")
+    require_contains("docs/workflow-reference.md", workflow_reference, "review-only")
+    require_contains("docs/workflow-reference.md", workflow_reference, "Gemini")
+    require_contains("docs/workflow-reference.md", workflow_reference, "read-only review lane")
+    require_contains("docs/workflow-reference.md", workflow_reference, "review-receipt")
+    require_contains("docs/workflow-reference.md", workflow_reference, "not proofcheck")
     require_contains("docs/examples", docs_examples_text, "Report is summary, not proof")
     require_contains("docs/examples", docs_examples_text, "Engine-lock is distribution metadata, not proof")
 
@@ -522,10 +535,13 @@ def check_e2e_docs() -> None:
 def check_release_discipline() -> None:
     required_paths = [
         "scripts/check_orro_release_manifest.py",
+        "scripts/check_compatibility_matrix.py",
         "scripts/update_orro_engine_lock.py",
         "release/orro-release-manifest.v0.json",
+        "release/compatibility-matrix.v0.json",
         "docs/engine-lock-update-process.md",
         "docs/compatibility-matrix.md",
+        "docs/os-support.md",
         ".github/pull_request_template.md",
     ]
     for path in required_paths:
@@ -551,6 +567,23 @@ def check_release_discipline() -> None:
     require_contains("release docs", text, "not verifier truth")
     require_contains("release docs", lower_text, "published orro")
     require_contains("release docs", lower_text, "package remains future work")
+
+
+def check_os_support_matrix() -> None:
+    path = ROOT / "docs" / "os-support.md"
+    if not path.is_file():
+        fail("required OS support matrix missing: docs/os-support.md")
+    text = path.read_text(encoding="utf-8")
+    lower_text = text.lower()
+    require_contains("OS support matrix", text, "Linux")
+    require_contains("OS support matrix", lower_text, "required")
+    require_contains("OS support matrix", text, "macOS")
+    require_contains("OS support matrix", lower_text, "smoke")
+    require_contains("OS support matrix", text, "Windows")
+    require_contains("OS support matrix", lower_text, "unsupported")
+    require_contains("OS support matrix", text, "A2")
+    require_contains("OS support matrix", lower_text, "capability-gated")
+    require_contains("OS support matrix", lower_text, "posix")
 
 
 def check_bootstrap_discipline() -> None:
@@ -625,9 +658,8 @@ def check_command_migration() -> None:
         ]
     )
     require_contains("command migration docs", text, "ORRO-owned `orro` command")
-    require_contains("command migration docs", text, "plan-only")
-    require_contains("command migration docs", text, "separate migration wave")
-    require_contains("command migration docs", text, "must not shadow `orro`")
+    require_contains("command migration docs", text, "owned-thin-wrapper")
+    require_contains("command migration docs", text, "delegates to witnessd")
     require_contains("command migration docs", text, "witnessd-hosted")
     require_contains("command migration docs", text, "not proof")
     require_contains("command migration docs", text, "not package publish")
@@ -640,19 +672,19 @@ def check_command_migration() -> None:
     plan = load_json("packaging/command-migration-plan.v0.json")
     if plan.get("kind") != "orro-command-migration-plan":
         fail("command migration plan kind must be orro-command-migration-plan")
-    if plan.get("owns_orro_command_now") is not False:
-        fail("command migration plan must not claim ORRO owns orro now")
-    if plan.get("adds_orro_console_script") is not False:
-        fail("command migration plan must not add orro console script now")
+    if plan.get("owns_orro_command_now") is not True:
+        fail("command migration plan must claim ORRO owns orro now")
+    if plan.get("adds_orro_console_script") is not True:
+        fail("command migration plan must add orro console script now")
     dry_run = plan.get("dry_run_harness")
     if not isinstance(dry_run, dict):
         fail("command migration plan must describe the dry-run harness")
     if dry_run.get("script") != "scripts/check_orro_command_migration_dry_run.py":
         fail("command migration dry-run harness script metadata is wrong")
-    if dry_run.get("changes_committed_package_metadata") is not False:
-        fail("command migration dry-run must not change committed package metadata")
-    if dry_run.get("proves_command_ownership") is not False:
-        fail("command migration dry-run metadata must not claim proof of ownership")
+    if dry_run.get("changes_committed_package_metadata") is not True:
+        fail("command migration metadata must record committed package metadata change")
+    if dry_run.get("proves_command_ownership") is not True:
+        fail("command migration metadata must record command ownership proof")
 
 
 def check_fallback_policy() -> None:
@@ -690,6 +722,7 @@ def check_wrapper() -> None:
         "scripts/check_orro_wrapper.py",
         "scripts/check_orro_wrapper_install.py",
         "scripts/check_orro_wrapper_distribution.py",
+        "scripts/check_orro_version_coherence.py",
         "scripts/check_orro_command_migration.py",
         "docs/thin-wrapper.md",
         "docs/wrapper-distribution.md",
@@ -723,8 +756,8 @@ def check_wrapper() -> None:
     require_contains("wrapper docs", text, "wheel")
     require_contains("wrapper docs", text, "not proof")
     require_contains("wrapper docs", text, "not package publish")
-    require_contains("wrapper docs", text, "does not shadow `orro`")
-    require_contains("wrapper docs", text, "future migration")
+    require_contains("wrapper docs", text, "ORRO-owned `orro` command")
+    require_contains("wrapper docs", text, "compatibility alias")
     require_contains("wrapper docs", text, "witnessd-hosted")
     require_contains("wrapper docs", text, INVARIANT)
 
@@ -739,7 +772,9 @@ def check_no_engine_code() -> None:
         fail(f".omx is local workflow runtime state and must not be tracked: {tracked_omx}")
 
     for path in ROOT.iterdir():
-        if path.name in {".git", ".omx"}:
+        if path.name in {".git", ".omx"} or path.name in LOCAL_ARTIFACT_DIRS:
+            continue
+        if path.name.endswith(".egg-info"):
             continue
         if path.is_dir() and path.name in FORBIDDEN_TOP_LEVEL_DIRS:
             fail(f"forbidden engine/runtime directory present: {path.name}")
@@ -747,7 +782,13 @@ def check_no_engine_code() -> None:
             fail(f"unexpected top-level directory present: {path.name}")
 
     for path in ROOT.rglob("*"):
-        if ".git" in path.parts or ".omx" in path.parts or "__pycache__" in path.parts or not path.is_file():
+        if (
+            ".git" in path.parts
+            or ".omx" in path.parts
+            or any(part in LOCAL_ARTIFACT_DIRS for part in path.parts)
+            or any(part.endswith(".egg-info") for part in path.parts)
+            or not path.is_file()
+        ):
             continue
         relative = path.relative_to(ROOT)
         parts = relative.parts
@@ -771,6 +812,8 @@ def check_no_engine_code() -> None:
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
+            "check_compatibility_matrix.py",
+            "check_orro_version_coherence.py",
             "check_orro_wrapper.py",
             "check_orro_wrapper_install.py",
             "check_orro_wrapper_distribution.py",
@@ -797,6 +840,7 @@ def main() -> int:
     check_e2e_engine_lock()
     check_e2e_docs()
     check_release_discipline()
+    check_os_support_matrix()
     check_bootstrap_discipline()
     check_packaging_decision()
     check_command_migration()

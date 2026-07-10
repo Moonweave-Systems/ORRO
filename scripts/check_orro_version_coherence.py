@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Check ORRO wrapper runtime version comes from package metadata."""
+
+from __future__ import annotations
+
+import importlib.metadata
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+DIST_NAME = "orro-product-wrapper"
+
+
+class VersionCoherenceError(RuntimeError):
+    def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.details = details or {}
+
+
+def _metadata_version() -> str:
+    try:
+        return importlib.metadata.version(DIST_NAME)
+    except importlib.metadata.PackageNotFoundError as exc:
+        raise VersionCoherenceError(
+            "ERR_ORRO_VERSION_METADATA_MISSING",
+            "package metadata for ORRO wrapper is not installed",
+            {"distribution": DIST_NAME},
+        ) from exc
+
+
+def _check_version_values(runtime_version: object, metadata_version: str) -> None:
+    if runtime_version != metadata_version:
+        raise VersionCoherenceError(
+            "ERR_ORRO_VERSION_MISMATCH",
+            "runtime version must match importlib.metadata version",
+            {
+                "runtime_version": runtime_version,
+                "metadata_version": metadata_version,
+            },
+        )
+
+
+def check_version_coherence() -> dict[str, Any]:
+    sys.path.insert(0, str(SRC))
+    metadata_version = _metadata_version()
+    import orro_wrapper
+
+    runtime_version = getattr(orro_wrapper, "__version__", None)
+    _check_version_values(runtime_version, metadata_version)
+    return {
+        "kind": "orro-version-coherence-result",
+        "decision": "pass",
+        "runtime_version": runtime_version,
+        "metadata_version": metadata_version,
+        "distribution": DIST_NAME,
+    }
+
+
+def self_test() -> dict[str, Any]:
+    checks = []
+    try:
+        _check_version_values("0.0.0", "0.1.0rc1")
+    except VersionCoherenceError as exc:
+        if exc.code != "ERR_ORRO_VERSION_MISMATCH":
+            raise
+    else:
+        raise VersionCoherenceError(
+            "ERR_ORRO_VERSION_SELF_TEST_FAILED",
+            "mismatch fixture did not fail closed",
+        )
+    checks.append({"name": "mismatch_fixture_fails_closed", "status": "pass"})
+    original_version = importlib.metadata.version
+
+    def missing_metadata(_name: str) -> str:
+        raise importlib.metadata.PackageNotFoundError(DIST_NAME)
+
+    try:
+        importlib.metadata.version = missing_metadata
+        _metadata_version()
+    except VersionCoherenceError as exc:
+        if exc.code != "ERR_ORRO_VERSION_METADATA_MISSING":
+            raise
+    else:
+        raise VersionCoherenceError(
+            "ERR_ORRO_VERSION_SELF_TEST_FAILED",
+            "missing metadata fixture did not fail closed",
+        )
+    finally:
+        importlib.metadata.version = original_version
+    checks.append({"name": "missing_metadata_fixture_fails_closed", "status": "pass"})
+    return {
+        "kind": "orro-version-coherence-self-test-result",
+        "decision": "pass",
+        "checks": checks,
+    }
+
+
+def main() -> int:
+    try:
+        payload = self_test() if "--self-test" in sys.argv[1:] else check_version_coherence()
+    except VersionCoherenceError as exc:
+        print(
+            json.dumps(
+                {
+                    "kind": "orro-version-coherence-result",
+                    "decision": "fail",
+                    "error": {
+                        "code": exc.code,
+                        "message": exc.message,
+                        "details": exc.details,
+                    },
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

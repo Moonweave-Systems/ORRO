@@ -1,7 +1,7 @@
-"""Thin ORRO product wrapper.
+"""Thin ORRO product command.
 
-The wrapper owns product/distribution delegation only. It shells out to the
-existing witnessd-hosted ORRO command when explicitly asked to delegate.
+ORRO owns the user-facing command and delegates execution to the pinned
+witnessd-hosted ORRO surface. It does not implement engine logic locally.
 """
 
 from __future__ import annotations
@@ -14,11 +14,11 @@ import subprocess
 import sys
 from typing import Any
 
-from . import __version__
+from . import VersionMetadataError, get_version
 
 
 SCHEMA_VERSION = "0.1"
-DEFAULT_ENGINE_COMMAND = f"{sys.executable} -m orro"
+DEFAULT_ENGINE_COMMAND = f"{sys.executable} -m witnessd orro"
 
 
 class WrapperError(RuntimeError):
@@ -35,6 +35,7 @@ def boundary() -> dict[str, Any]:
         "implements_proofrun": False,
         "implements_proofcheck": False,
         "delegates_to_witnessd_hosted_orro": True,
+        "owns_orro_command": True,
         "executes_proofrun_itself": False,
         "verifies_evidence_itself": False,
         "approves_merge": False,
@@ -49,8 +50,8 @@ def wrapper_info() -> dict[str, Any]:
     return {
         "kind": "orro-wrapper-info",
         "schema_version": SCHEMA_VERSION,
-        "version": __version__,
-        "current_command_source": "witnessd-hosted orro console script",
+        "version": get_version(),
+        "current_command_source": "ORRO-owned orro console script",
         "published_package": False,
         "not_proof": True,
         "not_verifier_truth": True,
@@ -98,9 +99,14 @@ def self_test() -> int:
     assert info["boundary"]["contains_engine_logic"] is False
     assert info["boundary"]["implements_proofrun"] is False
     assert info["boundary"]["implements_proofcheck"] is False
-    assert resolve_engine_command("python3 -m orro") == ["python3", "-m", "orro"]
+    assert resolve_engine_command("python3 -m witnessd orro") == [
+        "python3",
+        "-m",
+        "witnessd",
+        "orro",
+    ]
     try:
-        delegate("python3 -m orro", [])
+        delegate("python3 -m witnessd orro", [])
     except WrapperError as exc:
         assert exc.code == "ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED"
     else:
@@ -110,8 +116,8 @@ def self_test() -> int:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="ORRO product wrapper skeleton.")
-    parser.add_argument("--engine-command", help="Existing witnessd-hosted ORRO command to delegate to. Defaults to current Python -m orro.")
+    parser = argparse.ArgumentParser(description="ORRO product command.")
+    parser.add_argument("--engine-command", help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m witnessd orro.")
     parser.add_argument("--json", action="store_true", help="Emit JSON for wrapper-owned commands. JSON is the default for boundary/self-test.")
     parser.add_argument("--version", action="store_true", help="Print wrapper version and exit.")
     subparsers = parser.add_subparsers(dest="command")
@@ -124,10 +130,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = parse_args(sys.argv[1:] if argv is None else argv)
+    raw_args = sys.argv[1:] if argv is None else argv
+    local_commands = {"boundary", "self-test", "delegate"}
+    if raw_args and raw_args[0] not in local_commands and not raw_args[0].startswith("-"):
+        return delegate(None, raw_args)
+    args = parse_args(raw_args)
     try:
         if args.version:
-            print(__version__)
+            print(get_version())
             return 0
         if args.command in (None, "boundary"):
             print(json.dumps(wrapper_info(), indent=2, sort_keys=True))
@@ -139,6 +149,14 @@ def main(argv: list[str] | None = None) -> int:
         raise WrapperError("ERR_ORRO_WRAPPER_COMMAND_UNKNOWN", "unknown wrapper command", {"command": args.command})
     except WrapperError as exc:
         print(json.dumps(error_payload(exc), indent=2, sort_keys=True), file=sys.stderr)
+        return 2
+    except VersionMetadataError as exc:
+        error = WrapperError(
+            "ERR_ORRO_WRAPPER_METADATA_MISSING",
+            "package metadata for ORRO wrapper is not installed",
+            {"distribution": exc.distribution},
+        )
+        print(json.dumps(error_payload(error), indent=2, sort_keys=True), file=sys.stderr)
         return 2
 
 
