@@ -535,6 +535,7 @@ def check_release_discipline() -> None:
         "release/compatibility-matrix.v0.json",
         "docs/engine-lock-update-process.md",
         "docs/compatibility-matrix.md",
+        "docs/os-support.md",
         ".github/pull_request_template.md",
     ]
     for path in required_paths:
@@ -560,6 +561,23 @@ def check_release_discipline() -> None:
     require_contains("release docs", text, "not verifier truth")
     require_contains("release docs", lower_text, "published orro")
     require_contains("release docs", lower_text, "package remains future work")
+
+
+def check_os_support_matrix() -> None:
+    path = ROOT / "docs" / "os-support.md"
+    if not path.is_file():
+        fail("required OS support matrix missing: docs/os-support.md")
+    text = path.read_text(encoding="utf-8")
+    lower_text = text.lower()
+    require_contains("OS support matrix", text, "Linux")
+    require_contains("OS support matrix", lower_text, "required")
+    require_contains("OS support matrix", text, "macOS")
+    require_contains("OS support matrix", lower_text, "smoke")
+    require_contains("OS support matrix", text, "Windows")
+    require_contains("OS support matrix", lower_text, "unsupported")
+    require_contains("OS support matrix", text, "A2")
+    require_contains("OS support matrix", lower_text, "capability-gated")
+    require_contains("OS support matrix", lower_text, "posix")
 
 
 def check_bootstrap_discipline() -> None:
@@ -816,6 +834,7 @@ def main() -> int:
     check_e2e_engine_lock()
     check_e2e_docs()
     check_release_discipline()
+    check_os_support_matrix()
     check_bootstrap_discipline()
     check_packaging_decision()
     check_command_migration()
