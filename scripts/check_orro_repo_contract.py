@@ -258,6 +258,12 @@ def check_docs_and_examples() -> None:
         ("proofcheck before handoff", "proofcheck` must pass before formal handoff"),
     )
     require_contains("docs/examples", docs_examples_text, "not approval")
+    workflow_reference = read_text("docs/workflow-reference.md")
+    require_contains("docs/workflow-reference.md", workflow_reference, "review-only")
+    require_contains("docs/workflow-reference.md", workflow_reference, "Gemini")
+    require_contains("docs/workflow-reference.md", workflow_reference, "read-only review lane")
+    require_contains("docs/workflow-reference.md", workflow_reference, "review-receipt")
+    require_contains("docs/workflow-reference.md", workflow_reference, "not proofcheck")
     require_contains("docs/examples", docs_examples_text, "Report is summary, not proof")
     require_contains("docs/examples", docs_examples_text, "Engine-lock is distribution metadata, not proof")
 
