@@ -113,17 +113,21 @@ def copy_source(destination: Path) -> None:
     shutil.copytree(ROOT, destination, ignore=ignore)
 
 
-def add_simulated_orro_entry_point(source_dir: Path) -> None:
+def add_simulated_orro_entry_point(source_dir: Path) -> bool:
+    """Patch the copy to add the simulated ``orro`` entry point.
+
+    Returns whether the source was already migrated (real ORRO command
+    ownership landed), in which case the copy is left untouched: the
+    post-migration steady state already matches the simulated target and is
+    a valid pass, not a dry-run failure.
+    """
     pyproject = source_dir / "pyproject.toml"
     setup_cfg = source_dir / "setup.cfg"
     pyproject_text = pyproject.read_text(encoding="utf-8")
     setup_cfg_text = setup_cfg.read_text(encoding="utf-8")
 
     if SIMULATED_ENTRY_POINT in pyproject_text or "    orro = orro_wrapper.cli:main" in setup_cfg_text:
-        fail(
-            "ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_SOURCE_ALREADY_MIGRATED",
-            "source copy already contains the simulated orro entry point",
-        )
+        return True
     pyproject_text = pyproject_text.replace(
         'orro-wrapper = "orro_wrapper.cli:main"',
         'orro-wrapper = "orro_wrapper.cli:main"\norro = "orro_wrapper.cli:main"',
@@ -138,6 +142,7 @@ def add_simulated_orro_entry_point(source_dir: Path) -> None:
         fail("ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_PATCH_FAILED", "could not patch setup.cfg entry points in source copy")
     pyproject.write_text(pyproject_text, encoding="utf-8")
     setup_cfg.write_text(setup_cfg_text, encoding="utf-8")
+    return False
 
 
 def build_wheel(python: Path, source_dir: Path, dist_dir: Path) -> Path:
@@ -234,6 +239,15 @@ def smoke_command(label: str, command: Path, python: Path) -> dict[str, Any]:
     }
 
 
+def smoke_installed_commands(label: str, commands: dict[str, bool], bin_dir: Path, python: Path) -> dict[str, Any]:
+    smoke = {
+        "orro-wrapper": smoke_command(f"orro-wrapper-{label}", command_path(bin_dir, "orro-wrapper"), python),
+    }
+    if commands.get("orro"):
+        smoke["orro"] = smoke_command(f"orro-{label}", command_path(bin_dir, "orro"), python)
+    return smoke
+
+
 def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
     workdir, owns_workspace = prepare_workdir(workspace)
     venv_dir = workdir / "venv"
@@ -242,41 +256,39 @@ def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
     try:
         copy_source(current_source)
         copy_source(migrated_source)
-        add_simulated_orro_entry_point(migrated_source)
+        already_migrated = add_simulated_orro_entry_point(migrated_source)
         create_venv(venv_dir)
         bin_dir = scripts_dir(venv_dir)
         python = command_path(bin_dir, "python")
+
+        # Once real ORRO command ownership has landed, the "current" copy already
+        # carries the orro entry point too: that steady state is the valid target,
+        # not a pre-migration baseline, so the expected shape shifts with it.
+        expected_current_entry_points = {"orro-wrapper": True, "orro": already_migrated}
 
         current_wheel = build_wheel(python, current_source, workdir / "dist-current")
         migrated_wheel = build_wheel(python, migrated_source, workdir / "dist-migrated")
         current_entry_points = inspect_entry_points(current_wheel)
         migrated_entry_points = inspect_entry_points(migrated_wheel)
-        if current_entry_points != {"orro-wrapper": True, "orro": False}:
+        if current_entry_points != expected_current_entry_points:
             fail("ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_ENTRY_POINTS_INVALID", "current wheel entry points changed", current_entry_points)
         if migrated_entry_points != {"orro-wrapper": True, "orro": True}:
             fail("ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_ENTRY_POINTS_INVALID", "migrated wheel entry points are not simulated", migrated_entry_points)
 
         install_wheel(python, current_wheel)
         current_commands = installed_commands(bin_dir)
-        require_commands("current install", current_commands, {"orro-wrapper": True, "orro": False})
-        current_smoke = {
-            "orro-wrapper": smoke_command("orro-wrapper-current", command_path(bin_dir, "orro-wrapper"), python),
-        }
+        require_commands("current install", current_commands, expected_current_entry_points)
+        current_smoke = smoke_installed_commands("current", current_commands, bin_dir, python)
 
         install_wheel(python, migrated_wheel)
         migrated_commands = installed_commands(bin_dir)
         require_commands("migrated install", migrated_commands, {"orro-wrapper": True, "orro": True})
-        migrated_smoke = {
-            "orro-wrapper": smoke_command("orro-wrapper-migrated", command_path(bin_dir, "orro-wrapper"), python),
-            "orro": smoke_command("orro-migrated", command_path(bin_dir, "orro"), python),
-        }
+        migrated_smoke = smoke_installed_commands("migrated", migrated_commands, bin_dir, python)
 
         install_wheel(python, current_wheel)
         rollback_commands = installed_commands(bin_dir)
-        require_commands("rollback install", rollback_commands, {"orro-wrapper": True, "orro": False})
-        rollback_smoke = {
-            "orro-wrapper": smoke_command("orro-wrapper-rollback", command_path(bin_dir, "orro-wrapper"), python),
-        }
+        require_commands("rollback install", rollback_commands, expected_current_entry_points)
+        rollback_smoke = smoke_installed_commands("rollback", rollback_commands, bin_dir, python)
 
         return {
             "kind": "orro-command-migration-dry-run-result",
@@ -286,6 +298,7 @@ def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
             "current_wheel": str(current_wheel),
             "migrated_wheel": str(migrated_wheel),
             "simulated_entry_point": SIMULATED_ENTRY_POINT,
+            "already_migrated": already_migrated,
             "commands": {
                 "current": current_commands,
                 "migrated": migrated_commands,
@@ -301,11 +314,17 @@ def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
                 "rollback": rollback_smoke,
             },
             "checks": [
-                {"name": "current_package_exposes_orro_wrapper_only", "status": "pass"},
+                {
+                    "name": "current_package_already_exposes_orro_and_orro_wrapper" if already_migrated else "current_package_exposes_orro_wrapper_only",
+                    "status": "pass",
+                },
                 {"name": "temporary_migrated_copy_exposes_orro_and_orro_wrapper", "status": "pass"},
                 {"name": "simulated_commands_are_thin_wrapper_surfaces", "status": "pass"},
                 {"name": "delegate_smoke_is_harmless", "status": "pass"},
-                {"name": "rollback_reinstall_removes_orro", "status": "pass"},
+                {
+                    "name": "rollback_reinstall_preserves_migrated_state" if already_migrated else "rollback_reinstall_removes_orro",
+                    "status": "pass",
+                },
             ],
             "boundary": boundary(),
             "not_proof": True,
