@@ -13,7 +13,7 @@ import tempfile
 import venv
 import zipfile
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn, cast
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,7 +42,7 @@ class DistributionCheckError(RuntimeError):
         self.details = details or {}
 
 
-def fail(code: str, message: str, details: dict[str, Any] | None = None) -> None:
+def fail(code: str, message: str, details: dict[str, Any] | None = None) -> NoReturn:
     raise DistributionCheckError(code, message, details)
 
 
@@ -107,7 +107,7 @@ def load_json_stdout(label: str, completed: subprocess.CompletedProcess[str]) ->
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_JSON_INVALID", f"{label} did not emit valid JSON", {"stdout": completed.stdout})
     if not isinstance(data, dict):
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_JSON_INVALID", f"{label} JSON must be an object")
-    return data
+    return cast(dict[str, Any], data)
 
 
 def inspect_wheel(wheel_path: Path) -> dict[str, Any]:
@@ -142,6 +142,7 @@ def inspect_entry_points(wheel_path: Path) -> dict[str, bool]:
         entry_points_name = next((name for name in archive.namelist() if name.endswith(".dist-info/entry_points.txt")), None)
         if entry_points_name is None:
             fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ENTRY_POINTS_MISSING", "wheel entry_points.txt is missing")
+        entry_points_name = cast(str, entry_points_name)
         entry_points = archive.read(entry_points_name).decode("utf-8")
     has_wrapper = "orro-wrapper = orro_wrapper.cli:main" in entry_points
     shadows_orro = any(line.strip().startswith("orro =") for line in entry_points.splitlines())
@@ -167,6 +168,7 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
     payload_boundary = payload.get("boundary")
     if not isinstance(payload_boundary, dict):
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_BOUNDARY_INVALID", f"{label} must include boundary object")
+    boundary_payload = cast(dict[str, Any], payload_boundary)
     for key in (
         "contains_engine_logic",
         "implements_proofrun",
@@ -176,7 +178,7 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
         "approves_merge",
         "raises_assurance",
     ):
-        if key in payload_boundary and payload_boundary.get(key) is not False:
+        if key in boundary_payload and boundary_payload.get(key) is not False:
             fail("ERR_ORRO_WRAPPER_DISTRIBUTION_BOUNDARY_INVALID", f"{label}.boundary.{key} must be false")
 
 

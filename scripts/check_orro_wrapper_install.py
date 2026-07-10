@@ -12,7 +12,7 @@ import sys
 import tempfile
 import venv
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn, cast
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +28,7 @@ class InstallSmokeError(RuntimeError):
         self.details = details or {}
 
 
-def fail(code: str, message: str, details: dict[str, Any] | None = None) -> None:
+def fail(code: str, message: str, details: dict[str, Any] | None = None) -> NoReturn:
     raise InstallSmokeError(code, message, details)
 
 
@@ -95,7 +95,7 @@ def load_json_stdout(label: str, completed: subprocess.CompletedProcess[str]) ->
         fail("ERR_ORRO_WRAPPER_INSTALL_JSON_INVALID", f"{label} did not emit valid JSON", {"stdout": completed.stdout})
     if not isinstance(data, dict):
         fail("ERR_ORRO_WRAPPER_INSTALL_JSON_INVALID", f"{label} JSON must be an object")
-    return data
+    return cast(dict[str, Any], data)
 
 
 def require_false(label: str, data: dict[str, Any], key: str) -> None:
@@ -107,6 +107,7 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
     payload_boundary = payload.get("boundary")
     if not isinstance(payload_boundary, dict):
         fail("ERR_ORRO_WRAPPER_INSTALL_BOUNDARY_INVALID", f"{label} must include boundary object")
+    boundary_payload = cast(dict[str, Any], payload_boundary)
     for key in (
         "contains_engine_logic",
         "implements_proofrun",
@@ -116,8 +117,8 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
         "approves_merge",
         "raises_assurance",
     ):
-        if key in payload_boundary:
-            require_false(f"{label}.boundary", payload_boundary, key)
+        if key in boundary_payload:
+            require_false(f"{label}.boundary", boundary_payload, key)
 
 
 def check_no_orro_shadow(bin_dir: Path) -> None:
