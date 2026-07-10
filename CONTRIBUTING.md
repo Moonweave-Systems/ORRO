@@ -18,8 +18,8 @@ Docs, schemas, contract checks, wrapper/distribution metadata, and
 harness-surface changes are in scope.
 
 Engine, verifier, runtime, proofrun, proofcheck, scheduler, observer, fan-in,
-package publish, and command ownership changes are out of scope unless a
-separately approved wave explicitly allows them.
+and package publish changes are out of scope. ORRO command ownership changes
+must stay limited to thin wrapper metadata and delegation surfaces.
 
 No new dependencies without explicit approval. Prefer Python stdlib-only scripts
 for repository contract and hygiene checks.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check ORRO command ownership migration remains plan-only."""
+"""Check ORRO command ownership migration is complete and thin."""
 
 from __future__ import annotations
 
@@ -49,20 +49,12 @@ def require_true(label: str, value: Any) -> None:
         fail(f"{label} must be true")
 
 
-def check_no_orro_console_script() -> None:
+def check_orro_console_script_owned() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     setup_cfg = (ROOT / "setup.cfg").read_text(encoding="utf-8")
-    forbidden_needles = (
-        "\norro =",
-        "\n    orro =",
-        "\torro =",
-        "console_scripts =\norro =",
-    )
-    combined = f"{pyproject}\n{setup_cfg}"
-    for needle in forbidden_needles:
-        if needle in combined:
-            fail("ORRO repo must not define an orro console script in this phase")
+    require_contains("pyproject.toml", pyproject, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", pyproject, 'orro-wrapper = "orro_wrapper.cli:main"')
+    require_contains("setup.cfg", setup_cfg, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", setup_cfg, "orro-wrapper = orro_wrapper.cli:main")
 
 
@@ -72,19 +64,19 @@ def check_plan() -> None:
         fail("command migration plan kind must be orro-command-migration-plan")
     if plan.get("schema_version") != "0.1":
         fail("command migration plan schema_version must be 0.1")
-    if plan.get("status") != "planned":
-        fail("command migration status must be planned")
-    if plan.get("current_command_source") != "witnessd-hosted orro console script":
-        fail("current command source must remain witnessd-hosted")
+    if plan.get("status") != "complete":
+        fail("command migration status must be complete")
+    if plan.get("current_command_source") != "ORRO-owned orro console script":
+        fail("current command source must be ORRO-owned")
     if plan.get("current_wrapper_command") != "orro-wrapper":
         fail("current wrapper command must be orro-wrapper")
     if plan.get("target_command") != "orro":
         fail("target command must be orro")
-    if plan.get("migration_phase") != "plan-only":
-        fail("migration phase must be plan-only")
-    require_false("owns_orro_command_now", plan.get("owns_orro_command_now"))
-    require_false("adds_orro_console_script", plan.get("adds_orro_console_script"))
-    require_true("requires_separate_migration_wave", plan.get("requires_separate_migration_wave"))
+    if plan.get("migration_phase") != "owned-thin-wrapper":
+        fail("migration phase must be owned-thin-wrapper")
+    require_true("owns_orro_command_now", plan.get("owns_orro_command_now"))
+    require_true("adds_orro_console_script", plan.get("adds_orro_console_script"))
+    require_false("requires_separate_migration_wave", plan.get("requires_separate_migration_wave"))
     for list_key in ("compatibility_requirements", "required_preconditions", "forbidden_this_phase"):
         value = plan.get(list_key)
         if not isinstance(value, list) or not value:
@@ -97,12 +89,14 @@ def check_plan() -> None:
         "contains_engine_logic",
         "implements_proofrun",
         "implements_proofcheck",
-        "shadows_orro",
         "owns_orro_command_now",
         "approves_merge",
         "raises_assurance",
     ):
-        require_false(f"boundary.{key}", boundary.get(key))
+        if key == "owns_orro_command_now":
+            require_true(f"boundary.{key}", boundary.get(key))
+        else:
+            require_false(f"boundary.{key}", boundary.get(key))
     for key in ("depone_verifies", "witnessd_executes", "orro_exposes_workflow"):
         require_true(f"boundary.{key}", boundary.get(key))
     for key in ("not_proof", "not_verifier_truth", "not_package_publish"):
@@ -123,19 +117,18 @@ def check_plan() -> None:
         "requires_wrapper_thinness",
     ):
         require_true(f"dry_run_harness.{key}", dry_run.get(key))
-    for key in ("changes_committed_package_metadata", "publishes_package", "proves_command_ownership"):
-        require_false(f"dry_run_harness.{key}", dry_run.get(key))
+    require_true("dry_run_harness.changes_committed_package_metadata", dry_run.get("changes_committed_package_metadata"))
+    require_false("dry_run_harness.publishes_package", dry_run.get("publishes_package"))
+    require_true("dry_run_harness.proves_command_ownership", dry_run.get("proves_command_ownership"))
 
 
 def check_docs() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
     require_contains("command migration doc", text, INVARIANT)
-    require_contains("command migration doc", text, "plan-only")
-    require_contains("command migration doc", text, "witnessd-hosted")
+    require_contains("command migration doc", text, "owned-thin-wrapper")
+    require_contains("command migration doc", text, "ORRO-owned")
     require_contains("command migration doc", text, "orro-wrapper")
-    require_contains("command migration doc", text, "must not shadow `orro`")
-    require_contains("command migration doc", text, "future migration")
-    require_contains("command migration doc", text, "separate migration wave")
+    require_contains("command migration doc", text, "delegates to witnessd")
     require_contains("command migration doc", text, "not proof")
     require_contains("command migration doc", text, "not verifier truth")
     require_contains("command migration doc", text, "not package publish")
@@ -157,7 +150,7 @@ def main() -> int:
         fail(f"missing command migration dry-run harness: {DRY_RUN_PATH.relative_to(ROOT)}")
     check_plan()
     check_docs()
-    check_no_orro_console_script()
+    check_orro_console_script_owned()
     print("ORRO command migration: pass")
     return 0
 

@@ -49,7 +49,7 @@ def fail(code: str, message: str, details: dict[str, Any] | None = None) -> NoRe
 def boundary() -> dict[str, Any]:
     return {
         "contains_engine_logic": False,
-        "shadows_orro": False,
+        "owns_orro_command": True,
         "implements_proofrun": False,
         "implements_proofcheck": False,
         "approves_merge": False,
@@ -145,12 +145,12 @@ def inspect_entry_points(wheel_path: Path) -> dict[str, bool]:
         entry_points_name = cast(str, entry_points_name)
         entry_points = archive.read(entry_points_name).decode("utf-8")
     has_wrapper = "orro-wrapper = orro_wrapper.cli:main" in entry_points
-    shadows_orro = any(line.strip().startswith("orro =") for line in entry_points.splitlines())
+    has_orro = any(line.strip().startswith("orro =") for line in entry_points.splitlines())
     if not has_wrapper:
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_WRAPPER_ENTRY_POINT_MISSING", "wheel must expose orro-wrapper")
-    if shadows_orro:
-        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_SHADOWS_ORRO", "wheel must not expose an orro console script")
-    return {"orro-wrapper": True, "orro": False}
+    if not has_orro:
+        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ORRO_ENTRY_POINT_MISSING", "wheel must expose ORRO-owned orro")
+    return {"orro-wrapper": True, "orro": True}
 
 
 def check_installed_commands(venv_dir: Path) -> dict[str, bool]:
@@ -159,9 +159,9 @@ def check_installed_commands(venv_dir: Path) -> dict[str, bool]:
     orro = bin_dir / ("orro.exe" if os.name == "nt" else "orro")
     if not wrapper.exists():
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_SCRIPT_MISSING", "installed wheel did not create orro-wrapper", {"path": str(wrapper)})
-    if orro.exists():
-        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_SHADOWS_ORRO", "installed wheel must not create orro", {"path": str(orro)})
-    return {"orro-wrapper": True, "orro": False}
+    if not orro.exists():
+        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ORRO_SCRIPT_MISSING", "installed wheel did not create ORRO-owned orro", {"path": str(orro)})
+    return {"orro-wrapper": True, "orro": True}
 
 
 def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
@@ -215,9 +215,11 @@ def distribution_check(workspace: Path | None) -> dict[str, Any]:
 
         boundary_payload = load_json_stdout("orro-wrapper boundary", run_command([str(wrapper), "boundary"]))
         self_test_payload = load_json_stdout("orro-wrapper self-test", run_command([str(wrapper), "self-test"]))
+        orro_boundary_payload = load_json_stdout("orro boundary", run_command([str(bin_dir / ("orro.exe" if os.name == "nt" else "orro")), "boundary"]))
         delegated = run_command([str(wrapper), "--engine-command", str(python), "delegate", "--", "-c", "print('delegated')"]).stdout.strip()
         check_boundary_payload("boundary", boundary_payload)
         check_boundary_payload("self-test", self_test_payload)
+        check_boundary_payload("orro boundary", orro_boundary_payload)
         if self_test_payload.get("decision") != "pass":
             fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ASSERTION_FAILED", "installed wrapper self-test did not pass", {"payload": self_test_payload})
         if delegated != "delegated":
@@ -239,9 +241,9 @@ def distribution_check(workspace: Path | None) -> dict[str, Any]:
             "checks": [
                 {"name": "wheel_build", "status": "pass"},
                 {"name": "wheel_contains_no_engine_packages", "status": "pass"},
-                {"name": "wheel_entry_points_do_not_shadow_orro", "status": "pass"},
+                {"name": "wheel_entry_points_include_orro", "status": "pass"},
                 {"name": "wheel_install", "status": "pass"},
-                {"name": "installed_commands_do_not_shadow_orro", "status": "pass"},
+                {"name": "installed_commands_include_orro", "status": "pass"},
                 {"name": "installed_wrapper_self_test", "status": "pass"},
                 {"name": "installed_wrapper_delegate_smoke", "status": "pass"},
             ],
@@ -270,7 +272,7 @@ def self_test() -> dict[str, Any]:
         "decision": "pass",
         "built_wheel": True,
         "installed_wheel": True,
-        "commands": {"orro-wrapper": True, "orro": False},
+        "commands": {"orro-wrapper": True, "orro": True},
         "package_contents": {
             "contains_depone": False,
             "contains_witnessd": False,
@@ -281,8 +283,8 @@ def self_test() -> dict[str, Any]:
         "not_verifier_truth": True,
         "not_package_publish": True,
     }
-    if payload["commands"]["orro"] is not False:
-        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_SELF_TEST_FAILED", "self-test command shadowing guard failed")
+    if payload["commands"]["orro"] is not True:
+        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_SELF_TEST_FAILED", "self-test command ownership guard failed")
     return {
         "kind": "orro-wrapper-distribution-self-test-result",
         "schema_version": SCHEMA_VERSION,

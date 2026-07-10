@@ -13,8 +13,8 @@ python3 scripts/check_orro_wrapper_distribution.py --json
 ```
 
 The checker builds a local wheel in a temporary workspace, installs that wheel
-into a temporary virtual environment, and verifies the installed `orro-wrapper`
-console script.
+into a temporary virtual environment, and verifies the installed `orro` and
+`orro-wrapper` console scripts.
 
 ## Boundary
 
@@ -24,8 +24,7 @@ The distribution smoke verifies:
 - the wheel does not contain Depone or witnessd Python packages;
 - the wheel does not contain proofrun, proofcheck, scheduler, observer, fan-in,
   team-ledger, or verifier implementation files;
-- the wheel exposes `orro-wrapper`;
-- the wheel does not expose or shadow `orro`;
+- the wheel exposes `orro` and `orro-wrapper`;
 - the installed `orro-wrapper` boundary and self-test pass;
 - explicit delegation works with a harmless Python command.
 
@@ -35,26 +34,18 @@ MCP.
 
 ## Command Ownership
 
-`orro-wrapper` is transitional. The current executable `orro` command remains
-witnessd-hosted.
+`orro-wrapper` is a compatibility alias. The ORRO-owned `orro` command delegates
+to witnessd and must remain a thin wrapper surface.
 
-This package must not shadow `orro` yet. A future migration to an ORRO-owned
-`orro` command requires a separate migration wave, compatibility plan, and
-explicit checks that the witnessd-hosted command remains available during the
-transition.
-
-The plan-only migration contract is recorded in
+The command migration contract is recorded in
 `docs/orro-command-migration.md` and
-`packaging/command-migration-plan.v0.json`. Until that future migration is
-implemented, distribution smoke must continue to prove that only `orro-wrapper`
-is installed by this package.
+`packaging/command-migration-plan.v0.json`. Distribution smoke must continue to
+prove that both wrapper commands are installed by this package.
 
 The command migration dry-run harness is
 `scripts/check_orro_command_migration_dry_run.py`. It uses a temporary source
-copy to simulate `orro = orro_wrapper.cli:main`, verifies both wrapper command
-surfaces, and runs a rollback simulation that reinstalls the current
-`orro-wrapper`-only shape. Dry-run metadata is not proof and does not publish or
-transfer command ownership.
+copy, verifies both wrapper command surfaces, and records rollback simulation
+coverage. Dry-run metadata is not proof and does not publish a package.
 
 ## Scope
 

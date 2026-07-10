@@ -121,11 +121,11 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
             require_false(f"{label}.boundary", boundary_payload, key)
 
 
-def check_no_orro_shadow(bin_dir: Path) -> None:
-    candidates = [bin_dir / "orro", bin_dir / "orro.exe"]
-    present = [str(path) for path in candidates if path.exists()]
-    if present:
-        fail("ERR_ORRO_WRAPPER_INSTALL_SHADOWS_ORRO", "wrapper install must not install an orro console script", {"paths": present})
+def check_orro_command_installed(bin_dir: Path) -> Path:
+    orro = bin_dir / ("orro.exe" if os.name == "nt" else "orro")
+    if not orro.exists():
+        fail("ERR_ORRO_WRAPPER_INSTALL_ORRO_SCRIPT_MISSING", "ORRO package must install an orro console script", {"path": str(orro)})
+    return orro
 
 
 def install_smoke(workspace: Path | None) -> dict[str, Any]:
@@ -145,9 +145,10 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
         run_command([str(python), "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(source_dir)])
         if not wrapper.exists():
             fail("ERR_ORRO_WRAPPER_INSTALL_SCRIPT_MISSING", "orro-wrapper console script was not installed", {"path": str(wrapper)})
-        check_no_orro_shadow(bin_dir)
+        orro = check_orro_command_installed(bin_dir)
 
         boundary_payload = load_json_stdout("orro-wrapper boundary", run_command([str(wrapper), "boundary"]))
+        orro_boundary_payload = load_json_stdout("orro boundary", run_command([str(orro), "boundary"]))
         self_test_payload = load_json_stdout("orro-wrapper self-test", run_command([str(wrapper), "self-test"]))
         version = run_command([str(wrapper), "--version"]).stdout.strip()
         expected_version = run_command(
@@ -163,6 +164,7 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
         delegated = run_command([str(wrapper), "--engine-command", str(python), "delegate", "--", "-c", "print('delegated')"]).stdout.strip()
 
         check_boundary_payload("boundary", boundary_payload)
+        check_boundary_payload("orro boundary", orro_boundary_payload)
         check_boundary_payload("self-test", self_test_payload)
         if boundary_payload.get("kind") != "orro-wrapper-info":
             fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "boundary payload kind mismatch", {"kind": boundary_payload.get("kind")})
@@ -186,7 +188,7 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
             "checks": [
                 {"name": "editable_install", "status": "pass"},
                 {"name": "console_script_installed", "status": "pass"},
-                {"name": "does_not_shadow_orro", "status": "pass"},
+                {"name": "orro_console_script_installed", "status": "pass"},
                 {"name": "boundary_non_engine", "status": "pass"},
                 {"name": "self_test_passes", "status": "pass"},
                 {"name": "delegate_smoke", "status": "pass"},

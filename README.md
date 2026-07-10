@@ -15,10 +15,10 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 
 Today:
 - ORRO is the product and workflow surface for observed run and review.
-- This repository keeps ORRO docs, product boundary, locks, wrapper skeleton, assurance contract checks, and integration-surface policy.
-- The runnable `orro` command is still witnessd-hosted.
+- This repository keeps ORRO docs, product boundary, locks, thin wrapper package metadata, assurance contract checks, and integration-surface policy.
+- The runnable `orro` command is ORRO-owned and delegates to witnessd.
 - No standalone ORRO package has been published.
-- The local wrapper skeleton exposes `orro-wrapper`, not `orro`.
+- The local wrapper package exposes both `orro` and `orro-wrapper`.
 
 Current focus:
 - Make AI-assisted work reviewable.
@@ -33,11 +33,11 @@ published ORRO package.
 
 Current split:
 
-- witnessd hosts the runnable `orro` workflow command.
+- ORRO owns the runnable `orro` workflow command surface and delegates execution
+  to witnessd.
 - This ORRO repository owns the product boundary, documentation, locks, wrapper
-  skeleton, and assurance contracts.
-- `orro-wrapper` is the transitional wrapper boundary exposed by this
-  repository.
+  package metadata, and assurance contracts.
+- `orro-wrapper` remains a compatibility alias for the same wrapper module.
 
 ## What ORRO Is
 
@@ -66,8 +66,8 @@ migration.
 - Depone: <https://github.com/Moonweave-Systems/Depone>
 - witnessd: <https://github.com/Moonweave-Systems/witnessd>
 
-Current command source: the `orro` command is implemented and hosted by
-`witnessd` while ORRO packaging remains in progress.
+Current command source: the `orro` command is exposed by this ORRO package and
+delegates to `python -m witnessd orro`.
 
 Future goal: one user-facing ORRO install that pins compatible Depone and
 witnessd engine versions without merging the engines.
@@ -109,8 +109,8 @@ prepare pinned checkouts when `--execute --allow-network` is supplied.
 The bootstrap is setup/distribution orchestration. Bootstrap output is setup
 metadata, not proof, not verifier truth, not approval, and not assurance. It
 contains no engine code, does not implement proofrun or proofcheck, and does not
-run proofrun/proofcheck/handoff by default. The current executable `orro`
-command remains witnessd-hosted.
+run proofrun/proofcheck/handoff by default. The ORRO-owned `orro` command
+delegates runtime behavior to witnessd.
 
 ```bash
 python3 scripts/bootstrap_orro.py \
@@ -126,8 +126,8 @@ record the v0 wrapper packaging decision. The packaging decision is product
 metadata, not proof, not verifier truth, not package publish, not approval, and
 not assurance.
 
-The current command source remains the witnessd-hosted `orro` console script.
-Published ORRO package remains future work. Future wrapper work must contain no
+The current command source is the ORRO-owned `orro` console script. Published
+ORRO package remains future work. Future wrapper work must contain no
 engine code and must not implement proofrun, proofcheck, scheduler, observer,
 fan-in, team-ledger, or verifier logic.
 
@@ -146,13 +146,14 @@ requires an intentional engine-lock update PR.
 
 ## Thin Wrapper Skeleton
 
-`orro-wrapper` is the first thin wrapper skeleton in this repository. It does
-not replace the witnessd-hosted `orro` command. It can report wrapper boundary
-metadata and explicitly delegate commands to the existing engine command.
+The ORRO-owned `orro` command is the thin wrapper surface in this repository.
+`orro-wrapper` remains a compatibility alias. Both can report wrapper boundary
+metadata and delegate commands to the existing witnessd engine command.
 
 ```bash
 python3 -m pip install -e .
 orro-wrapper boundary
+orro boundary
 orro-wrapper self-test
 orro-wrapper delegate -- --help
 ```
@@ -161,8 +162,8 @@ The wrapper is not proof, not verifier truth, not package publish, not approval,
 and not assurance. It contains no engine code and does not implement proofrun or
 proofcheck.
 
-The wrapper install smoke verifies the editable package and installed
-`orro-wrapper` console script without publishing a package or calling engine
+The wrapper install smoke verifies the editable package and installed `orro` and
+`orro-wrapper` console scripts without publishing a package or calling engine
 repos:
 
 ```bash
@@ -175,39 +176,32 @@ package publish, not approval, and not assurance.
 ## Wrapper Distribution Smoke
 
 The wrapper distribution smoke builds a local wheel, installs it into a
-temporary virtual environment, and verifies that only `orro-wrapper` is exposed:
+temporary virtual environment, and verifies that `orro` and `orro-wrapper` are
+exposed:
 
 ```bash
 python3 scripts/check_orro_wrapper_distribution.py --json
 ```
 
 The distribution smoke checks that the wheel contains no Depone or witnessd
-packages, no proofrun/proofcheck runtime implementation files, and no `orro`
-console script. The current executable `orro` command remains witnessd-hosted,
-and this package does not shadow `orro`.
+packages and no proofrun/proofcheck runtime implementation files.
 
 The distribution smoke is local test metadata, not proof, not verifier truth,
-not package publish, not approval, and not assurance. Future migration to an
-ORRO-owned `orro` command requires a separate migration wave.
+not package publish, not approval, and not assurance.
 
 ## ORRO Command Migration
 
-The current executable `orro` command remains witnessd-hosted. ORRO-owned `orro`
-command migration is plan-only and documented in
+The executable `orro` command is ORRO-owned, thin, and delegates to witnessd.
+The command migration is documented in
 [`docs/orro-command-migration.md`](docs/orro-command-migration.md).
 
-The migration plan does not add an `orro` console script, does not publish a
-package, does not move engine code, and does not change verifier or runtime
-semantics. `orro-wrapper` remains the transitional ORRO repo command. The ORRO
-package must not shadow `orro` until a separate migration wave proves
-compatibility, rollback, and pinned-engine e2e through the migrated command.
+The migration does not publish a package, does not move engine code, and does
+not change verifier or runtime semantics. `orro-wrapper` remains a compatibility
+command for the same thin wrapper module.
 
 `scripts/check_orro_command_migration_dry_run.py` is the dry-run harness for
-that future wave. It uses a temporary source copy to simulate
-`orro = orro_wrapper.cli:main`, verifies both `orro` and `orro-wrapper` remain
-thin wrapper surfaces, and runs a rollback simulation by reinstalling the
-current `orro-wrapper`-only package shape. Dry-run metadata is not proof and
-does not make ORRO own `orro`.
+the former plan-only wave. Dry-run metadata is not proof; committed package
+metadata is now the command ownership source of truth.
 
 ## Install Reality
 
@@ -219,20 +213,19 @@ python3 -m pip install -e .
 orro init --home .witnessd --depone-root ../Depone
 ```
 
-The orro command above is currently witnessd-hosted.
-
-For the local ORRO wrapper skeleton:
+For the local ORRO wrapper package:
 
 ```bash
 cd ORRO
 python3 -m pip install -e .
 orro-wrapper boundary
+orro boundary
 orro-wrapper self-test
 ```
 
 The wrapper is product/distribution metadata and a thin delegation surface. It
-does not replace the witnessd-hosted `orro` command and is not proof, not
-verifier truth, not package publish, not approval, and not assurance.
+is not proof, not verifier truth, not package publish, not approval, and not
+assurance.
 
 ## Normal ORRO Loop
 
