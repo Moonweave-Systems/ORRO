@@ -48,10 +48,10 @@ def _check_version_values(runtime_version: object, metadata_version: str) -> Non
 
 def check_version_coherence() -> dict[str, Any]:
     sys.path.insert(0, str(SRC))
+    metadata_version = _metadata_version()
     import orro_wrapper
 
     runtime_version = getattr(orro_wrapper, "__version__", None)
-    metadata_version = _metadata_version()
     _check_version_values(runtime_version, metadata_version)
     return {
         "kind": "orro-version-coherence-result",
@@ -63,6 +63,7 @@ def check_version_coherence() -> dict[str, Any]:
 
 
 def self_test() -> dict[str, Any]:
+    checks = []
     try:
         _check_version_values("0.0.0", "0.1.0rc1")
     except VersionCoherenceError as exc:
@@ -73,10 +74,30 @@ def self_test() -> dict[str, Any]:
             "ERR_ORRO_VERSION_SELF_TEST_FAILED",
             "mismatch fixture did not fail closed",
         )
+    checks.append({"name": "mismatch_fixture_fails_closed", "status": "pass"})
+    original_version = importlib.metadata.version
+
+    def missing_metadata(_name: str) -> str:
+        raise importlib.metadata.PackageNotFoundError(DIST_NAME)
+
+    try:
+        importlib.metadata.version = missing_metadata
+        _metadata_version()
+    except VersionCoherenceError as exc:
+        if exc.code != "ERR_ORRO_VERSION_METADATA_MISSING":
+            raise
+    else:
+        raise VersionCoherenceError(
+            "ERR_ORRO_VERSION_SELF_TEST_FAILED",
+            "missing metadata fixture did not fail closed",
+        )
+    finally:
+        importlib.metadata.version = original_version
+    checks.append({"name": "missing_metadata_fixture_fails_closed", "status": "pass"})
     return {
         "kind": "orro-version-coherence-self-test-result",
         "decision": "pass",
-        "checks": [{"name": "mismatch_fixture_fails_closed", "status": "pass"}],
+        "checks": checks,
     }
 
 

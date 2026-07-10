@@ -14,7 +14,7 @@ import subprocess
 import sys
 from typing import Any
 
-from . import __version__
+from . import VersionMetadataError, get_version
 
 
 SCHEMA_VERSION = "0.1"
@@ -49,7 +49,7 @@ def wrapper_info() -> dict[str, Any]:
     return {
         "kind": "orro-wrapper-info",
         "schema_version": SCHEMA_VERSION,
-        "version": __version__,
+        "version": get_version(),
         "current_command_source": "witnessd-hosted orro console script",
         "published_package": False,
         "not_proof": True,
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
         if args.version:
-            print(__version__)
+            print(get_version())
             return 0
         if args.command in (None, "boundary"):
             print(json.dumps(wrapper_info(), indent=2, sort_keys=True))
@@ -139,6 +139,14 @@ def main(argv: list[str] | None = None) -> int:
         raise WrapperError("ERR_ORRO_WRAPPER_COMMAND_UNKNOWN", "unknown wrapper command", {"command": args.command})
     except WrapperError as exc:
         print(json.dumps(error_payload(exc), indent=2, sort_keys=True), file=sys.stderr)
+        return 2
+    except VersionMetadataError as exc:
+        error = WrapperError(
+            "ERR_ORRO_WRAPPER_METADATA_MISSING",
+            "package metadata for ORRO wrapper is not installed",
+            {"distribution": exc.distribution},
+        )
+        print(json.dumps(error_payload(error), indent=2, sort_keys=True), file=sys.stderr)
         return 2
 
 

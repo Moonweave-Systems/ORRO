@@ -151,9 +151,10 @@ not replace the witnessd-hosted `orro` command. It can report wrapper boundary
 metadata and explicitly delegate commands to the existing engine command.
 
 ```bash
-PYTHONPATH=src python3 -m orro_wrapper boundary
-PYTHONPATH=src python3 -m orro_wrapper self-test
-PYTHONPATH=src python3 -m orro_wrapper delegate -- --help
+python3 -m pip install -e .
+orro-wrapper boundary
+orro-wrapper self-test
+orro-wrapper delegate -- --help
 ```
 
 The wrapper is not proof, not verifier truth, not package publish, not approval,

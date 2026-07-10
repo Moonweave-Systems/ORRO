@@ -17,9 +17,10 @@ This is deliberate. The current `orro` command remains witnessd-hosted. The
 wrapper does not shadow the witnessd-hosted `orro` command.
 
 ```bash
-PYTHONPATH=src python3 -m orro_wrapper boundary
-PYTHONPATH=src python3 -m orro_wrapper self-test
-PYTHONPATH=src python3 -m orro_wrapper delegate -- --help
+python3 -m pip install -e .
+orro-wrapper boundary
+orro-wrapper self-test
+orro-wrapper delegate -- --help
 ```
 
 `delegate` forwards arguments to an existing engine command. By default that
@@ -60,7 +61,8 @@ Future package work must keep:
 The self-test does not call engine repositories:
 
 ```bash
-PYTHONPATH=src python3 -m orro_wrapper self-test
+python3 -m pip install -e .
+orro-wrapper self-test
 ```
 
 It verifies the wrapper boundary, default delegation command parsing, and that
