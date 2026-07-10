@@ -529,8 +529,10 @@ def check_e2e_docs() -> None:
 def check_release_discipline() -> None:
     required_paths = [
         "scripts/check_orro_release_manifest.py",
+        "scripts/check_compatibility_matrix.py",
         "scripts/update_orro_engine_lock.py",
         "release/orro-release-manifest.v0.json",
+        "release/compatibility-matrix.v0.json",
         "docs/engine-lock-update-process.md",
         "docs/compatibility-matrix.md",
         ".github/pull_request_template.md",
@@ -786,6 +788,7 @@ def check_no_engine_code() -> None:
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
+            "check_compatibility_matrix.py",
             "check_orro_version_coherence.py",
             "check_orro_wrapper.py",
             "check_orro_wrapper_install.py",

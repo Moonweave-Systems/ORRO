@@ -24,8 +24,12 @@ jobs:
         run: python3 scripts/check_orro_assurance_contract_fixtures.py
       - name: Check ORRO release manifest
         run: python3 scripts/check_orro_release_manifest.py
+      - name: Check ORRO compatibility matrix
+        run: python3 scripts/check_compatibility_matrix.py --metadata-only
       - name: Release manifest self-test
         run: python3 scripts/check_orro_release_manifest.py --self-test
+      - name: Compatibility matrix self-test
+        run: python3 scripts/check_compatibility_matrix.py --self-test
       - name: Check ORRO packaging decision
         run: python3 scripts/check_orro_packaging_decision.py
       - name: Check ORRO fallback policy
@@ -41,7 +45,7 @@ jobs:
       - name: Check ORRO wrapper distribution
         run: python3 scripts/check_orro_wrapper_distribution.py --json
       - name: Compile scripts
-        run: python3 -m py_compile scripts/check_no_bidi_controls.py scripts/check_orro_repo_contract.py scripts/check_orro_language_boundaries.py scripts/check_orro_assurance_contract_fixtures.py scripts/check_orro_release_manifest.py scripts/check_orro_packaging_decision.py scripts/check_orro_fallback_policy.py scripts/check_orro_command_migration.py scripts/check_orro_command_migration_dry_run.py scripts/check_orro_wrapper.py scripts/check_orro_wrapper_install.py scripts/check_orro_wrapper_distribution.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py scripts/bootstrap_orro.py src/orro_wrapper/__init__.py src/orro_wrapper/__main__.py src/orro_wrapper/cli.py
+        run: python3 -m py_compile scripts/check_no_bidi_controls.py scripts/check_orro_repo_contract.py scripts/check_orro_language_boundaries.py scripts/check_orro_assurance_contract_fixtures.py scripts/check_orro_release_manifest.py scripts/check_compatibility_matrix.py scripts/check_orro_packaging_decision.py scripts/check_orro_fallback_policy.py scripts/check_orro_command_migration.py scripts/check_orro_command_migration_dry_run.py scripts/check_orro_wrapper.py scripts/check_orro_wrapper_install.py scripts/check_orro_wrapper_distribution.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py scripts/bootstrap_orro.py src/orro_wrapper/__init__.py src/orro_wrapper/__main__.py src/orro_wrapper/cli.py
       - name: Bidi control scanner self-test
         run: python3 scripts/check_no_bidi_controls.py --self-test
       - name: Wrapper self-test
