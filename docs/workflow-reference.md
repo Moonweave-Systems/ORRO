@@ -14,6 +14,8 @@ Support surfaces:
 - `orro engine-lock`: distribution metadata write/check
 - `orro flowplan --profile review-only --lane-adapter gemini`: route a
   Gemini read-only review lane through witnessd
+- `orro flowplan --profile review-only --lane-adapter agy`: route a
+  Google Antigravity read-only review lane through witnessd
 - `orro next`: non-executing continuation gate
 - `orro auto --dry-run`: recommendation only
 - `orro auto --once`: one safe post-run step only
@@ -24,6 +26,6 @@ Support surfaces:
 
 Formal handoff requires a passing bound `proofcheck-verdict.json`.
 
-The `review-only` profile may produce a Gemini read-only review lane and a
-signed `review-receipt`. That receipt is advisory review signal, not proofcheck,
-not verifier truth, not execution evidence, and not approval.
+The `review-only` profile may produce a Gemini or Antigravity read-only review
+lane and a signed `review-receipt`. That receipt is advisory review signal,
+not proofcheck, not verifier truth, not execution evidence, and not approval.
