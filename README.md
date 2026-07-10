@@ -259,6 +259,15 @@ orro report .witnessd/runs/<run-dir> --home .witnessd
 - witnessd executes and emits evidence.
 - ORRO exposes the workflow.
 
+## Phase 0 Evidence Limitations
+
+The current Phase 0 safety patch makes release claims narrower while the
+evidence substrate is being hardened. ORRO version metadata, wrapper smokes, and
+engine locks are product/distribution checks. They are not proof of code
+correctness, complete artifact binding, full tamper resistance, or verifier
+truth. Evidence-core gaps such as complete artifact indexing, runlog
+chain-hardening, and provider event normalization remain Phase 1 work.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
