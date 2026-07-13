@@ -91,12 +91,14 @@ not package publish, not approval, and not assurance.
 The wrapper distribution smoke builds and installs a local wheel:
 
 ```bash
-python3 scripts/check_orro_wrapper_distribution.py --json
+python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 ```
 
 It verifies that the wheel contains wrapper modules only, exposes `orro` and
 `orro-wrapper`, and contains no Depone, witnessd, proofrun, proofcheck,
 scheduler, observer, fan-in, team-ledger, or verifier implementation files.
+The explicit network flag authorizes only pip build isolation for the wrapper's
+declared build dependency.
 
 The distribution smoke is local test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance.

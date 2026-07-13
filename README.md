@@ -180,11 +180,13 @@ temporary virtual environment, and verifies that `orro` and `orro-wrapper` are
 exposed:
 
 ```bash
-python3 scripts/check_orro_wrapper_distribution.py --json
+python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 ```
 
 The distribution smoke checks that the wheel contains no Depone or witnessd
 packages and no proofrun/proofcheck runtime implementation files.
+The explicit network flag authorizes pip build isolation to provision the
+declared `setuptools>=61` build requirement in a clean build environment.
 
 The distribution smoke is local test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance.

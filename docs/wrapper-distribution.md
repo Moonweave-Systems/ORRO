@@ -9,12 +9,16 @@ truth, not package publish, not approval, and not assurance.
 ## Command
 
 ```bash
-python3 scripts/check_orro_wrapper_distribution.py --json
+python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 ```
 
 The checker builds a local wheel in a temporary workspace, installs that wheel
 into a temporary virtual environment, and verifies the installed `orro` and
-`orro-wrapper` console scripts.
+`orro-wrapper` console scripts. It creates a separate build environment, removes
+any preinstalled `setuptools`, confirms the build backend is absent, and then
+uses pip build isolation to provision the declared `setuptools>=61` requirement.
+`--allow-network` explicitly authorizes that build-dependency bootstrap; it does
+not authorize engine checkout mutation or package publication.
 
 ## Boundary
 
