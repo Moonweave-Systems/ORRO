@@ -67,7 +67,7 @@ migration.
 - witnessd: <https://github.com/Moonweave-Systems/witnessd>
 
 Current command source: the `orro` command is exposed by this ORRO package and
-delegates to `python -m witnessd orro`.
+delegates to `python -m orro`.
 
 Future goal: one user-facing ORRO install that pins compatible Depone and
 witnessd engine versions without merging the engines.

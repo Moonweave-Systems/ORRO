@@ -18,7 +18,7 @@ from . import VersionMetadataError, get_version
 
 
 SCHEMA_VERSION = "0.1"
-DEFAULT_ENGINE_COMMAND = f"{sys.executable} -m witnessd orro"
+DEFAULT_ENGINE_COMMAND = f"{sys.executable} -m orro"
 
 
 class WrapperError(RuntimeError):
@@ -99,14 +99,13 @@ def self_test() -> int:
     assert info["boundary"]["contains_engine_logic"] is False
     assert info["boundary"]["implements_proofrun"] is False
     assert info["boundary"]["implements_proofcheck"] is False
-    assert resolve_engine_command("python3 -m witnessd orro") == [
+    assert resolve_engine_command("python3 -m orro") == [
         "python3",
         "-m",
-        "witnessd",
         "orro",
     ]
     try:
-        delegate("python3 -m witnessd orro", [])
+        delegate("python3 -m orro", [])
     except WrapperError as exc:
         assert exc.code == "ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED"
     else:
@@ -117,7 +116,7 @@ def self_test() -> int:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="ORRO product command.")
-    parser.add_argument("--engine-command", help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m witnessd orro.")
+    parser.add_argument("--engine-command", help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m orro.")
     parser.add_argument("--json", action="store_true", help="Emit JSON for wrapper-owned commands. JSON is the default for boundary/self-test.")
     parser.add_argument("--version", action="store_true", help="Print wrapper version and exit.")
     subparsers = parser.add_subparsers(dest="command")
