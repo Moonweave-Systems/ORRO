@@ -10,7 +10,7 @@
       "id": "depone-n-witnessd-n",
       "type": "engine-pair",
       "depone_commit": "44eb26ef84a239d4d04570d763c549cee05839ee",
-      "witnessd_commit": "4a0724756e97f38494cce577aca5db1bb0416416",
+      "witnessd_commit": "895c373bfd4d50a7b2da653f489fc3b5a7ed8588",
       "status": "pass",
       "notes": "Current engine pair updated from origin/main."
     },
@@ -35,7 +35,7 @@
       "type": "product-triplet",
       "orro_commit": "af5b0d5180df1c1ae26a814a0f5a1b32527edb88",
       "depone_commit": "44eb26ef84a239d4d04570d763c549cee05839ee",
-      "witnessd_commit": "4a0724756e97f38494cce577aca5db1bb0416416",
+      "witnessd_commit": "895c373bfd4d50a7b2da653f489fc3b5a7ed8588",
       "status": "pass",
       "engine_lock": "engine-lock/orro-e2e-engine-lock.json",
       "release_manifest": "release/orro-release-manifest.v0.json",
