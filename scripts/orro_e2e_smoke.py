@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "0.1"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 LOCK_BOUNDARY_FALSE_KEYS = ("approves_merge", "raises_assurance", "executes_commands", "verifies_evidence")
+ROLE_LANE_PLACEHOLDER_PROMPT_PREFIX = "Execute ORRO role "
 
 
 class OrroE2EError(RuntimeError):
@@ -112,6 +113,25 @@ def _self_test() -> int:
             lambda: _engine_lock_status(mismatch, True, witnessd_repo, depone_repo),
             checks,
         )
+        role_lane_plan = {
+            "lanes": [
+                {
+                    "lane_id": "runner",
+                    "may_execute": True,
+                    "prompt": "Execute ORRO role runner for goal: update README safely",
+                },
+                {
+                    "lane_id": "reviewer",
+                    "may_execute": False,
+                    "prompt": "Review the README without changing it",
+                },
+            ]
+        }
+        materialized = _materialize_executable_role_lane_prompts(role_lane_plan, "update README safely")
+        assert materialized == 1
+        assert role_lane_plan["lanes"][0]["prompt"] == "update README safely"
+        assert role_lane_plan["lanes"][1]["prompt"] == "Review the README without changing it"
+        checks.append({"name": "executable_role_lane_prompt_materialization", "status": "pass"})
     result = _json_result("pass", checks)
     assert result["kind"] == "orro-e2e-smoke-result"
     assert result["boundary"]["contains_engine_logic"] is False
@@ -307,6 +327,26 @@ def _run_raw(args: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
             },
         )
     return completed
+
+
+def _materialize_executable_role_lane_prompts(role_lane_plan: dict[str, Any], task: str) -> int:
+    lanes = role_lane_plan.get("lanes")
+    if not isinstance(lanes, list):
+        raise OrroE2EError(
+            "ERR_ORRO_E2E_ROLE_LANE_PLAN_INVALID",
+            "role-lane plan lanes must be a list",
+        )
+    materialized = 0
+    for lane in lanes:
+        if not isinstance(lane, dict):
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_ROLE_LANE_PLAN_INVALID",
+                "role-lane plan lanes must contain objects",
+            )
+        if lane.get("may_execute") is True:
+            lane["prompt"] = task
+            materialized += 1
+    return materialized
 
 
 class SmokeRunner:
@@ -531,6 +571,35 @@ class SmokeRunner:
         )
         self._assert(workflow_plan.is_file(), "flowplan_writes_workflow_plan", "workflow plan missing")
         self._assert(role_lane_plan.is_file(), "flowplan_writes_role_lane_plan", "role-lane plan missing")
+
+        try:
+            role_lane_payload = json.loads(role_lane_plan.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_ROLE_LANE_PLAN_INVALID",
+                "could not load generated role-lane plan",
+                {"path": str(role_lane_plan), "error": str(exc)},
+            ) from exc
+        if not isinstance(role_lane_payload, dict):
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_ROLE_LANE_PLAN_INVALID",
+                "generated role-lane plan must be a JSON object",
+                {"path": str(role_lane_plan)},
+            )
+        materialized_lanes = _materialize_executable_role_lane_prompts(role_lane_payload, goal)
+        role_lane_plan.write_text(json.dumps(role_lane_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        executable_lanes = [lane for lane in role_lane_payload["lanes"] if lane.get("may_execute") is True]
+        self._assert(
+            materialized_lanes > 0
+            and all(
+                lane.get("prompt") == goal
+                and not str(lane.get("prompt", "")).startswith(ROLE_LANE_PLACEHOLDER_PROMPT_PREFIX)
+                for lane in executable_lanes
+            ),
+            "flowplan_materializes_explicit_role_lane_prompts",
+            "every executable role lane must carry the declared E2E task before proofrun",
+            materialized_lanes=materialized_lanes,
+        )
 
         proofrun_args = [
             "proofrun",
