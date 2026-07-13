@@ -55,7 +55,7 @@ checkout or open an intentional engine-lock update PR.
 4. Run `python3 scripts/check_orro_release_manifest.py`.
 5. Run `python3 scripts/update_orro_engine_lock.py --self-test`.
 6. Run `python3 scripts/check_orro_wrapper_distribution.py --json`.
-7. Run `python3 scripts/orro_e2e_smoke.py --engine-lock engine-lock/orro-e2e-engine-lock.json --require-lock-match`.
+7. Run `python3 scripts/orro_e2e_smoke.py --engine-lock engine-lock/orro-e2e-engine-lock.json --require-lock-match --allow-network`.
 8. Confirm boundary text.
 9. Open a PR with engine commits and test results.
 

@@ -8,9 +8,12 @@ checkout, execute engines, verify evidence, approve merge, or raise assurance.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -23,6 +26,7 @@ ZERO_COMMIT = "0" * 40
 ENGINE_LOCK_REL = Path("engine-lock/orro-e2e-engine-lock.json")
 RELEASE_MANIFEST_REL = Path("release/orro-release-manifest.v0.json")
 COMPAT_MATRIX_REL = Path("docs/compatibility-matrix.md")
+STRUCTURED_COMPAT_MATRIX_REL = Path("release/compatibility-matrix.v0.json")
 
 
 class UpdateError(RuntimeError):
@@ -59,13 +63,34 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
 
 
+def matrix_entries_by_id(matrix: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    entries = matrix.get("entries")
+    if not isinstance(entries, list):
+        raise UpdateError("structured compatibility matrix entries must be a list")
+    by_id: dict[str, dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
+            raise UpdateError("structured compatibility matrix entries must be objects with string ids")
+        by_id[entry["id"]] = entry
+    return by_id
+
+
+def resolve_ref_name(requested: str | None, engine_lock: dict[str, Any], engine: str) -> str:
+    if requested is not None:
+        return requested
+    current = engine_lock.get(engine)
+    if not isinstance(current, dict) or not isinstance(current.get("ref_name"), str):
+        raise UpdateError(f"engine-lock {engine}.ref_name must be a string when no replacement ref is supplied")
+    return current["ref_name"]
+
+
 def update_files(
     root: Path,
     *,
     witnessd_commit: str,
     depone_commit: str,
-    witnessd_ref: str,
-    depone_ref: str,
+    witnessd_ref: str | None,
+    depone_ref: str | None,
     orro_commit: str,
     dry_run: bool,
 ) -> dict[str, Any]:
@@ -76,8 +101,11 @@ def update_files(
     engine_lock_path = root / ENGINE_LOCK_REL
     release_manifest_path = root / RELEASE_MANIFEST_REL
     compatibility_matrix_path = root / COMPAT_MATRIX_REL
+    structured_compatibility_matrix_path = root / STRUCTURED_COMPAT_MATRIX_REL
 
     engine_lock = read_json(engine_lock_path)
+    witnessd_ref = resolve_ref_name(witnessd_ref, engine_lock, "witnessd")
+    depone_ref = resolve_ref_name(depone_ref, engine_lock, "depone")
     engine_lock.update(
         {
             "kind": "orro-engine-lock",
@@ -142,10 +170,32 @@ def update_files(
     matrix_text = compatibility_matrix_path.read_text(encoding="utf-8")
     matrix_text = replace_matrix_row(matrix_text, witnessd_commit, depone_commit, orro_commit)
 
+    structured_matrix = read_json(structured_compatibility_matrix_path)
+    structured_entries = matrix_entries_by_id(structured_matrix)
+    try:
+        current_entry = structured_entries["depone-n-witnessd-n"]
+        triplet_entry = structured_entries["orro-rc-locked-triplet"]
+    except KeyError as exc:
+        raise UpdateError(f"structured compatibility matrix missing entry: {exc.args[0]}") from exc
+    current_entry.update(
+        {
+            "witnessd_commit": witnessd_commit,
+            "depone_commit": depone_commit,
+        }
+    )
+    triplet_entry.update(
+        {
+            "orro_commit": orro_commit,
+            "witnessd_commit": witnessd_commit,
+            "depone_commit": depone_commit,
+        }
+    )
+
     changed = {
         "engine_lock": str(ENGINE_LOCK_REL),
         "release_manifest": str(RELEASE_MANIFEST_REL),
         "compatibility_matrix": str(COMPAT_MATRIX_REL),
+        "structured_compatibility_matrix": str(STRUCTURED_COMPAT_MATRIX_REL),
         "witnessd_commit": witnessd_commit,
         "depone_commit": depone_commit,
         "orro_commit": orro_commit,
@@ -163,6 +213,7 @@ def update_files(
         write_json(engine_lock_path, engine_lock)
         write_json(release_manifest_path, release_manifest)
         compatibility_matrix_path.write_text(matrix_text, encoding="utf-8")
+        write_json(structured_compatibility_matrix_path, structured_matrix)
     return changed
 
 
@@ -186,28 +237,51 @@ def replace_matrix_row(text: str, witnessd_commit: str, depone_commit: str, orro
 def self_test() -> int:
     with tempfile.TemporaryDirectory(prefix="orro-update-lock-self-test-") as raw_tmp:
         tmp = Path(raw_tmp)
-        for rel in (ENGINE_LOCK_REL, RELEASE_MANIFEST_REL, COMPAT_MATRIX_REL):
+        checker_rel = Path("scripts/check_compatibility_matrix.py")
+        for rel in (ENGINE_LOCK_REL, RELEASE_MANIFEST_REL, COMPAT_MATRIX_REL, STRUCTURED_COMPAT_MATRIX_REL, checker_rel):
             (tmp / rel.parent).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / rel, tmp / rel)
-        result = update_files(
-            tmp,
-            witnessd_commit="1" * 40,
-            depone_commit="2" * 40,
-            witnessd_ref="test-witnessd",
-            depone_ref="test-depone",
-            orro_commit=ZERO_COMMIT,
-            dry_run=False,
-        )
+        original_lock = read_json(tmp / ENGINE_LOCK_REL)
+        with contextlib.redirect_stdout(io.StringIO()):
+            status = main(
+                [
+                    "--root",
+                    str(tmp),
+                    "--witnessd-commit",
+                    "1" * 40,
+                    "--depone-commit",
+                    "2" * 40,
+                    "--orro-commit",
+                    "3" * 40,
+                ]
+            )
+        assert status == 0
         engine_lock = read_json(tmp / ENGINE_LOCK_REL)
         release_manifest = read_json(tmp / RELEASE_MANIFEST_REL)
+        structured_matrix = read_json(tmp / STRUCTURED_COMPAT_MATRIX_REL)
+        structured_entries = {entry["id"]: entry for entry in structured_matrix["entries"]}
         matrix = (tmp / COMPAT_MATRIX_REL).read_text(encoding="utf-8")
         assert engine_lock["witnessd"]["commit"] == "1" * 40
         assert engine_lock["depone"]["commit"] == "2" * 40
+        assert engine_lock["witnessd"]["ref_name"] == original_lock["witnessd"]["ref_name"]
+        assert engine_lock["depone"]["ref_name"] == original_lock["depone"]["ref_name"]
         assert release_manifest["engines"]["witnessd"]["commit"] == "1" * 40
         assert release_manifest["engines"]["depone"]["commit"] == "2" * 40
+        assert structured_entries["depone-n-witnessd-n"]["witnessd_commit"] == "1" * 40
+        assert structured_entries["depone-n-witnessd-n"]["depone_commit"] == "2" * 40
+        assert structured_entries["orro-rc-locked-triplet"]["orro_commit"] == "3" * 40
+        assert structured_entries["orro-rc-locked-triplet"]["witnessd_commit"] == "1" * 40
+        assert structured_entries["orro-rc-locked-triplet"]["depone_commit"] == "2" * 40
         assert "`1111111111111111111111111111111111111111`" in matrix
         assert "`2222222222222222222222222222222222222222`" in matrix
-        assert result["boundary"]["contains_engine_logic"] is False
+        assert "`3333333333333333333333333333333333333333`" in matrix
+        checker = subprocess.run(
+            [sys.executable, str(tmp / checker_rel), "--metadata-only"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert checker.returncode == 0, checker.stderr
     print("ORRO engine-lock update helper: self-test pass")
     return 0
 
@@ -216,8 +290,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Update ORRO e2e engine-lock and release metadata together.")
     parser.add_argument("--witnessd-commit")
     parser.add_argument("--depone-commit")
-    parser.add_argument("--witnessd-ref", default="main")
-    parser.add_argument("--depone-ref", default="main")
+    parser.add_argument("--witnessd-ref")
+    parser.add_argument("--depone-ref")
     parser.add_argument("--orro-commit", default=ZERO_COMMIT)
     parser.add_argument("--root", default=str(ROOT))
     parser.add_argument("--dry-run", action="store_true")
