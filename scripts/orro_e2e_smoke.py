@@ -315,11 +315,13 @@ class SmokeRunner:
         witnessd_root: Path,
         depone_root: Path,
         workdir: Path,
+        allow_network: bool,
         engine_lock: dict[str, Any] | None = None,
     ) -> None:
         self.witnessd_root = witnessd_root
         self.depone_root = depone_root
         self.workdir = workdir
+        self.allow_network = allow_network
         self.engine_lock = engine_lock
         self.checks: list[dict[str, Any]] = []
 
@@ -395,10 +397,50 @@ class SmokeRunner:
     def _wrapper_default_delegate_help(self) -> None:
         wrapper_root = self.workdir / "wrapper-default-delegate"
         venv_dir = wrapper_root / "venv"
-        venv.EnvBuilder(with_pip=True, clear=True, system_site_packages=True).create(venv_dir)
+        venv.EnvBuilder(with_pip=True, clear=True, system_site_packages=False).create(venv_dir)
         bin_dir = venv_dir / ("Scripts" if os.name == "nt" else "bin")
         python = bin_dir / ("python.exe" if os.name == "nt" else "python")
         wrapper = bin_dir / ("orro-wrapper.exe" if os.name == "nt" else "orro-wrapper")
+        remove_setuptools = subprocess.run(
+            [str(python), "-m", "pip", "uninstall", "--yes", "setuptools"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if remove_setuptools.returncode != 0:
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_COMMAND_FAILED",
+                "could not prepare wrapper regression venv without setuptools",
+                {
+                    "returncode": remove_setuptools.returncode,
+                    "stdout": remove_setuptools.stdout,
+                    "stderr": remove_setuptools.stderr,
+                },
+            )
+        setuptools_probe = subprocess.run(
+            [
+                str(python),
+                "-c",
+                "import importlib.util; print(importlib.util.find_spec('setuptools') is not None)",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self._assert(
+            setuptools_probe.returncode == 0 and setuptools_probe.stdout.strip() == "False",
+            "wrapper_venv_has_no_setuptools_before_install",
+            "wrapper regression venv must not contain setuptools before install",
+            returncode=setuptools_probe.returncode,
+            stdout=setuptools_probe.stdout,
+            stderr=setuptools_probe.stderr,
+        )
+        if not self.allow_network:
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_NETWORK_NOT_ALLOWED",
+                "wrapper build dependency bootstrap requires --allow-network",
+                {"build_backend": "setuptools.build_meta", "build_requirement": "setuptools>=61"},
+            )
         install = subprocess.run(
             [
                 str(python),
@@ -406,7 +448,6 @@ class SmokeRunner:
                 "pip",
                 "install",
                 "--no-deps",
-                "--no-build-isolation",
                 "-e",
                 str(ROOT),
             ],
@@ -564,6 +605,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--engine-lock", help="Optional ORRO engine lock to validate before running smoke.")
     parser.add_argument("--require-lock-match", action="store_true", help="Require local engine HEADs to match --engine-lock commits.")
     parser.add_argument("--workdir")
+    parser.add_argument(
+        "--allow-network",
+        action="store_true",
+        help="Allow pip build isolation to bootstrap the wrapper's declared build dependency.",
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON result. JSON is the default output format.")
     parser.add_argument("--self-test", action="store_true", help="Validate output shape without engine checkouts.")
     return parser.parse_args(argv)
@@ -592,7 +638,7 @@ def main(argv: list[str] | None = None) -> int:
         lock_path = Path(args.engine_lock).resolve() if args.engine_lock else None
         engine_lock = _engine_lock_status(lock_path, args.require_lock_match, witnessd_root, depone_root)
         workdir = Path(args.workdir).resolve() if args.workdir else Path(tempfile.mkdtemp(prefix="orro-e2e-"))
-        runner = SmokeRunner(witnessd_root, depone_root, workdir, engine_lock=engine_lock)
+        runner = SmokeRunner(witnessd_root, depone_root, workdir, args.allow_network, engine_lock=engine_lock)
         result = runner.run()
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0

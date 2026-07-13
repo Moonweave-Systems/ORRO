@@ -58,6 +58,7 @@ python3 scripts/orro_e2e_smoke.py \
   --depone-root ../Depone \
   --engine-lock engine-lock/orro-e2e-engine-lock.json \
   --require-lock-match \
+  --allow-network \
   --workdir /tmp/orro-e2e \
   --json
 ```

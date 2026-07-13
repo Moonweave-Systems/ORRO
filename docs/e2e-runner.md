@@ -10,9 +10,19 @@ python3 scripts/orro_e2e_smoke.py \
   --depone-root ../Depone \
   --engine-lock engine-lock/orro-e2e-engine-lock.json \
   --require-lock-match \
+  --allow-network \
   --workdir /tmp/orro-e2e \
   --json
 ```
+
+The full smoke creates a fresh virtual environment without system site
+packages, removes any interpreter-bundled `setuptools`, confirms it is absent,
+and uses pip build isolation to install the wrapper against the build
+requirements declared in `pyproject.toml`. Pass `--allow-network` to authorize
+that build-dependency bootstrap. The install may use a populated pip cache;
+otherwise it requires access to a configured package index. The flag
+authorizes only this wrapper build bootstrap and does not allow engine checkout
+mutation.
 
 Environment variables are also supported:
 
