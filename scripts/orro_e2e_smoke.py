@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import venv
 from pathlib import Path
 from typing import Any
 
@@ -334,12 +335,16 @@ class SmokeRunner:
             raise OrroE2EError("ERR_ORRO_E2E_ASSERTION_FAILED", message, {"check": name, **details})
         self._record(name, "pass", **details)
 
-    def _orro(self, args: list[str], *, expect: int | None = 0) -> tuple[int, dict[str, Any], str, str]:
+    def _engine_env(self) -> dict[str, str]:
         env = os.environ.copy()
         pythonpath_parts = [str(self.witnessd_root), str(self.depone_root)]
         if env.get("PYTHONPATH"):
             pythonpath_parts.append(env["PYTHONPATH"])
         env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+        return env
+
+    def _orro(self, args: list[str], *, expect: int | None = 0) -> tuple[int, dict[str, Any], str, str]:
+        env = self._engine_env()
         completed = subprocess.run(
             [sys.executable, "-m", "orro", *args],
             cwd=self.witnessd_root,
@@ -374,6 +379,7 @@ class SmokeRunner:
         if self.workdir.exists():
             shutil.rmtree(self.workdir)
         self.workdir.mkdir(parents=True)
+        self._wrapper_default_delegate_help()
         self._full_flow()
         self._scout_only_negative()
         return self.result("pass")
@@ -385,6 +391,63 @@ class SmokeRunner:
             "depone": str(self.depone_root),
         }
         return result
+
+    def _wrapper_default_delegate_help(self) -> None:
+        wrapper_root = self.workdir / "wrapper-default-delegate"
+        venv_dir = wrapper_root / "venv"
+        venv.EnvBuilder(with_pip=True, clear=True, system_site_packages=True).create(venv_dir)
+        bin_dir = venv_dir / ("Scripts" if os.name == "nt" else "bin")
+        python = bin_dir / ("python.exe" if os.name == "nt" else "python")
+        wrapper = bin_dir / ("orro-wrapper.exe" if os.name == "nt" else "orro-wrapper")
+        install = subprocess.run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--no-deps",
+                "--no-build-isolation",
+                "-e",
+                str(ROOT),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if install.returncode != 0:
+            raise OrroE2EError(
+                "ERR_ORRO_E2E_COMMAND_FAILED",
+                "wrapper install failed",
+                {
+                    "returncode": install.returncode,
+                    "stdout": install.stdout,
+                    "stderr": install.stderr,
+                },
+            )
+        completed = subprocess.run(
+            [str(wrapper), "delegate", "--", "--help"],
+            cwd=self.witnessd_root,
+            env=self._engine_env(),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self._assert(
+            completed.returncode == 0,
+            "wrapper_default_delegate_help_exit_zero",
+            "default wrapper delegate --help must exit zero",
+            returncode=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
+        self._assert(
+            "usage: orro" in completed.stdout,
+            "wrapper_default_delegate_help_reaches_orro",
+            "default wrapper delegate --help must reach the ORRO public command",
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
 
     def _full_flow(self) -> None:
         root = self.workdir / "happy"

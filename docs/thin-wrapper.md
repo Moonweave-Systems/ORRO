@@ -23,7 +23,7 @@ orro-wrapper delegate -- --help
 ```
 
 `delegate` forwards arguments to an existing engine command. By default that
-command is the current Python interpreter running `-m witnessd orro`. Operators
+command is the current Python interpreter running `-m orro`. Operators
 may override it with `--engine-command` or `ORRO_ENGINE_COMMAND`.
 
 ## Boundary

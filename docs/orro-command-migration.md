@@ -27,7 +27,7 @@ names. It must delegate engine behavior to witnessd and must not implement
 proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, verifier logic,
 or any third engine behavior.
 
-The default delegation target is `python -m witnessd orro`. Operators may
+The default delegation target is `python -m orro`. Operators may
 override that target with `--engine-command` or `ORRO_ENGINE_COMMAND` for
 compatibility smoke tests and controlled local installs.
 
@@ -54,7 +54,7 @@ The historical harness still documents its temporary source copy and rollback si
 
 Rollback must not change Depone verifier semantics or witnessd execution
 semantics. If an ORRO-owned command install is faulty, operators can invoke the
-witnessd-hosted surface directly with `python -m witnessd orro ...` while the
+witnessd-hosted surface directly with `python -m orro ...` while the
 ORRO package metadata is fixed.
 
 Superflow remains historical compatibility context only; it is not an engine
