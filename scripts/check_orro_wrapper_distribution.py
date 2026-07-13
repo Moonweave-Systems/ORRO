@@ -182,15 +182,36 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
             fail("ERR_ORRO_WRAPPER_DISTRIBUTION_BOUNDARY_INVALID", f"{label}.boundary.{key} must be false")
 
 
-def build_wheel(source_dir: Path, dist_dir: Path) -> Path:
-    run_command([sys.executable, "-m", "pip", "wheel", "--no-deps", "--no-build-isolation", "-w", str(dist_dir), str(source_dir)])
+def prepare_build_venv(venv_dir: Path) -> Path:
+    create_venv(venv_dir)
+    bin_dir = scripts_dir(venv_dir)
+    python = bin_dir / ("python.exe" if os.name == "nt" else "python")
+    run_command([str(python), "-m", "pip", "uninstall", "--yes", "setuptools"])
+    probe = run_command(
+        [
+            str(python),
+            "-c",
+            "import importlib.util; print(importlib.util.find_spec('setuptools') is not None)",
+        ]
+    )
+    if probe.stdout.strip() != "False":
+        fail(
+            "ERR_ORRO_WRAPPER_DISTRIBUTION_BUILD_ENV_INVALID",
+            "wrapper build venv must not contain setuptools before the isolated build",
+            {"stdout": probe.stdout, "stderr": probe.stderr},
+        )
+    return python
+
+
+def build_wheel(source_dir: Path, dist_dir: Path, python: Path) -> Path:
+    run_command([str(python), "-m", "pip", "wheel", "--no-deps", "-w", str(dist_dir), str(source_dir)])
     wheels = sorted(dist_dir.glob("orro_product_wrapper-*.whl"))
     if len(wheels) != 1:
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_WHEEL_NOT_FOUND", "expected exactly one ORRO wrapper wheel", {"wheels": [str(path) for path in wheels]})
     return wheels[0]
 
 
-def distribution_check(workspace: Path | None) -> dict[str, Any]:
+def distribution_check(workspace: Path | None, *, allow_network: bool) -> dict[str, Any]:
     owns_workspace = workspace is None
     workdir = Path(tempfile.mkdtemp(prefix="orro-wrapper-dist-")) if workspace is None else workspace
     if workdir.exists() and any(workdir.iterdir()):
@@ -198,11 +219,19 @@ def distribution_check(workspace: Path | None) -> dict[str, Any]:
     workdir.mkdir(parents=True, exist_ok=True)
     source_dir = workdir / "source"
     dist_dir = workdir / "dist"
+    build_venv_dir = workdir / "build-venv"
     venv_dir = workdir / "venv"
     try:
         copy_source(source_dir)
         dist_dir.mkdir()
-        wheel_path = build_wheel(source_dir, dist_dir)
+        build_python = prepare_build_venv(build_venv_dir)
+        if not allow_network:
+            fail(
+                "ERR_ORRO_WRAPPER_DISTRIBUTION_NETWORK_NOT_ALLOWED",
+                "isolated wrapper build dependency bootstrap requires --allow-network",
+                {"build_backend": "setuptools.build_meta", "build_requirement": "setuptools>=61"},
+            )
+        wheel_path = build_wheel(source_dir, dist_dir, build_python)
         package_contents = inspect_wheel(wheel_path)
         entry_points = inspect_entry_points(wheel_path)
 
@@ -239,6 +268,7 @@ def distribution_check(workspace: Path | None) -> dict[str, Any]:
             "wheel_entry_points": entry_points,
             "package_contents": package_contents,
             "checks": [
+                {"name": "build_venv_has_no_setuptools_before_build", "status": "pass"},
                 {"name": "wheel_build", "status": "pass"},
                 {"name": "wheel_contains_no_engine_packages", "status": "pass"},
                 {"name": "wheel_entry_points_include_orro", "status": "pass"},
@@ -303,6 +333,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build and smoke-test the local ORRO wrapper wheel.")
     parser.add_argument("--workspace", "--workdir", dest="workspace", help="Empty workspace for build/install artifacts. Defaults to a temporary directory.")
     parser.add_argument("--json", action="store_true", help="Emit JSON. JSON is the default output.")
+    parser.add_argument(
+        "--allow-network",
+        action="store_true",
+        help="Allow pip build isolation to bootstrap the wrapper's declared build dependency.",
+    )
     parser.add_argument("--self-test", action="store_true", help="Run offline self-test without building a wheel.")
     return parser.parse_args(argv)
 
@@ -310,7 +345,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        result = self_test() if args.self_test else distribution_check(Path(args.workspace) if args.workspace else None)
+        result = (
+            self_test()
+            if args.self_test
+            else distribution_check(Path(args.workspace) if args.workspace else None, allow_network=args.allow_network)
+        )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     except DistributionCheckError as exc:

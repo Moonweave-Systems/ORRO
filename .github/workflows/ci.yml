@@ -43,7 +43,7 @@ jobs:
       - name: Check ORRO wrapper install
         run: python3 scripts/check_orro_wrapper_install.py --json
       - name: Check ORRO wrapper distribution
-        run: python3 scripts/check_orro_wrapper_distribution.py --json
+        run: python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
       - name: Compile scripts
         run: python3 -m py_compile scripts/check_no_bidi_controls.py scripts/check_orro_repo_contract.py scripts/check_orro_language_boundaries.py scripts/check_orro_assurance_contract_fixtures.py scripts/check_orro_release_manifest.py scripts/check_compatibility_matrix.py scripts/check_orro_packaging_decision.py scripts/check_orro_fallback_policy.py scripts/check_orro_command_migration.py scripts/check_orro_command_migration_dry_run.py scripts/check_orro_wrapper.py scripts/check_orro_wrapper_install.py scripts/check_orro_wrapper_distribution.py scripts/orro_e2e_smoke.py scripts/update_orro_engine_lock.py scripts/bootstrap_orro.py src/orro_wrapper/__init__.py src/orro_wrapper/__main__.py src/orro_wrapper/cli.py
       - name: Bidi control scanner self-test

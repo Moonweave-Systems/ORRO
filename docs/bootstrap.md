@@ -84,12 +84,13 @@ Published ORRO package remains future work.
 The wrapper distribution smoke is separate from bootstrap:
 
 ```bash
-python3 scripts/check_orro_wrapper_distribution.py --json
+python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 ```
 
 It builds and installs a local wheel to verify packaging boundaries. It does not
 prepare engine checkouts, does not verify evidence, does not publish a package,
-and does not shadow the witnessd-hosted `orro` command.
+and does not shadow the witnessd-hosted `orro` command. The explicit network
+flag authorizes only the isolated wrapper build-dependency bootstrap.
 
 ## Self-Test
 

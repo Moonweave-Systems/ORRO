@@ -83,7 +83,9 @@ remains future work, and future wrapper work must contain no engine code.
 The local wrapper package can be checked without publishing anything:
 
 ```bash
-python3 scripts/check_orro_wrapper_distribution.py --json
+python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 ```
 
 This builds and installs a local wheel and verifies `orro` plus `orro-wrapper`.
+The flag authorizes pip build isolation to provision the declared wrapper build
+dependency; it does not authorize engine checkout or package publication.
