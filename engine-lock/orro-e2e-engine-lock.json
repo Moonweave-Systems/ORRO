@@ -3,13 +3,13 @@
   "schema_version": "1.0",
   "witnessd": {
     "repository": "Moonweave-Systems/witnessd",
-    "commit": "9715ea278242ac920a721f6079aad6cebf49cd40",
-    "ref_name": "9715ea278242ac920a721f6079aad6cebf49cd40"
+    "commit": "5db87ac975452d9fed233306645e179b78087d68",
+    "ref_name": "5db87ac975452d9fed233306645e179b78087d68"
   },
   "depone": {
     "repository": "Moonweave-Systems/Depone",
-    "commit": "44eb26ef84a239d4d04570d763c549cee05839ee",
-    "ref_name": "44eb26ef84a239d4d04570d763c549cee05839ee"
+    "commit": "e1b020b8300c569e35f771c9f84f6998f99a86ce",
+    "ref_name": "e1b020b8300c569e35f771c9f84f6998f99a86ce"
   },
   "boundary": {
     "approves_merge": false,
