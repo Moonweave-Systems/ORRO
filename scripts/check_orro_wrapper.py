@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +68,23 @@ def check_package_files() -> None:
             fail(f"wrapper package must not contain {needle!r}")
 
 
+def check_delegation_environment() -> None:
+    sys.path.insert(0, str(ROOT / "src"))
+    from orro_wrapper.cli import delegate
+
+    run = Mock()
+    run.return_value.returncode = 0
+    with patch("orro_wrapper.cli.subprocess.run", run):
+        result = delegate("python3 -m orro", ["flowplan", "--help"])
+    if result != 0:
+        fail("wrapper delegation test command returned a non-zero status")
+    if run.call_args is None:
+        fail("wrapper delegation did not invoke subprocess.run")
+    environment = run.call_args.kwargs.get("env")
+    if not isinstance(environment, dict) or environment.get("ORRO_WRAPPER_DELEGATION") != "1":
+        fail("wrapper delegation must set ORRO_WRAPPER_DELEGATION=1 in the child environment")
+
+
 def check_docs() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
     require_contains("thin wrapper doc", text, INVARIANT)
@@ -90,6 +108,7 @@ def main() -> int:
     check_pyproject()
     check_setup_cfg()
     check_package_files()
+    check_delegation_environment()
     check_docs()
     print("ORRO wrapper: pass")
     return 0

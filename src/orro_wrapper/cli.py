@@ -89,7 +89,9 @@ def delegate(engine_command: str | None, delegate_args: list[str]) -> int:
     if not delegate_args:
         raise WrapperError("ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED", "delegate requires engine command arguments after --")
     command = [*resolve_engine_command(engine_command), *delegate_args]
-    completed = subprocess.run(command, check=False)
+    child_env = os.environ.copy()
+    child_env["ORRO_WRAPPER_DELEGATION"] = "1"
+    completed = subprocess.run(command, check=False, env=child_env)
     return completed.returncode
 
 
