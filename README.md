@@ -17,7 +17,8 @@ Today:
 - ORRO is the product and workflow surface for observed run and review.
 - This repository keeps ORRO docs, product boundary, locks, thin wrapper package metadata, assurance contract checks, and integration-surface policy.
 - The runnable `orro` command is ORRO-owned and delegates to witnessd.
-- No standalone ORRO package has been published.
+- The `orro` package is published on PyPI (0.0.x is live); this repository now
+  sources version 0.1.0.
 - The local wrapper package exposes both `orro` and `orro-wrapper`.
 
 Current focus:
@@ -28,8 +29,8 @@ Current focus:
 
 ## Can I use ORRO today?
 
-Yes for development dogfood through Depone and witnessd. No as a standalone
-published ORRO package.
+Yes. The `orro` package is published on PyPI, and development dogfood can also
+run directly against pinned Depone and witnessd checkouts.
 
 Current split:
 
@@ -69,8 +70,8 @@ migration.
 Current command source: the `orro` command is exposed by this ORRO package and
 delegates to `python -m orro`.
 
-Future goal: one user-facing ORRO install that pins compatible Depone and
-witnessd engine versions without merging the engines.
+The 0.1.0 package metadata declares `witnessd>=2.3.2` while keeping Depone and
+witnessd as separate engine repositories.
 
 ## Pinned Engine E2E
 
@@ -87,13 +88,14 @@ runtime scheduling, observer, fan-in, team-ledger, or verifier logic.
 `release/orro-release-manifest.v0.json` records the current ORRO product release
 candidate metadata and the pinned engine pair validated by e2e CI. The release
 manifest is product/distribution metadata, not proof, not verifier truth, not
-approval, and not assurance. No ORRO package is published by this manifest.
+approval, and not assurance. This manifest does not publish a package.
 
 Engine-lock update discipline is documented in
 [`docs/engine-lock-update-process.md`](docs/engine-lock-update-process.md), and
 validated engine pairs are listed in
-[`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). Published ORRO
-package remains future work.
+[`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). The `orro`
+package is published on PyPI; this repository sources 0.1.0, whose publication
+is a separate release step.
 
 Use `scripts/update_orro_engine_lock.py` for future pin updates so the e2e
 engine lock, release manifest, and compatibility matrix stay aligned. The
@@ -126,10 +128,11 @@ record the v0 wrapper packaging decision. The packaging decision is product
 metadata, not proof, not verifier truth, not package publish, not approval, and
 not assurance.
 
-The current command source is the ORRO-owned `orro` console script. Published
-ORRO package remains future work. Future wrapper work must contain no
-engine code and must not implement proofrun, proofcheck, scheduler, observer,
-fan-in, team-ledger, or verifier logic.
+The current command source is the ORRO-owned `orro` console script. The `orro`
+package is published on PyPI, and this repository sources version 0.1.0 with a
+`witnessd>=2.3.2` dependency. The wrapper contains no engine code and must not
+implement proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, or
+verifier logic.
 
 ## Pinned Engine Fallback
 
@@ -144,7 +147,7 @@ using latest `main`, rewriting the engine lock during bootstrap, or
 auto-selecting alternate engine commits. Moving to a different engine pair
 requires an intentional engine-lock update PR.
 
-## Thin Wrapper Skeleton
+## Thin Wrapper
 
 The ORRO-owned `orro` command is the thin wrapper surface in this repository.
 `orro-wrapper` remains a compatibility alias. Both can report wrapper boundary

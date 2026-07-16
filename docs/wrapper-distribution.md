@@ -2,9 +2,9 @@
 
 Depone verifies; witnessd executes; ORRO exposes the workflow.
 
-The wrapper distribution smoke verifies local wheel packaging before any package
-publish. It is product/distribution test metadata, not proof, not verifier
-truth, not package publish, not approval, and not assurance.
+The wrapper distribution smoke verifies local wheel packaging without
+publishing a new release. It is product/distribution test metadata, not proof,
+not verifier truth, not package publish, not approval, and not assurance.
 
 ## Command
 
@@ -57,4 +57,6 @@ This is local distribution smoke only. It builds and installs a local wheel, but
 it does not publish a package, upload artifacts, create a marketplace release,
 or claim verifier truth.
 
-Published ORRO package remains future work.
+The `orro` package is published on PyPI. PyPI has live 0.0.x releases, while
+this repository sources 0.1.0 with `witnessd>=2.3.2`; publishing 0.1.0 is a
+separate approved step.

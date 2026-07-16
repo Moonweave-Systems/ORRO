@@ -1,10 +1,13 @@
 {
   "kind": "orro-wrapper-package-plan",
   "schema_version": "0.1",
-  "status": "planning",
+  "status": "published",
   "package_goal": "single user-facing ORRO install that prepares and invokes pinned Depone and witnessd engines",
-  "current_command_source": "witnessd-hosted orro console script",
-  "published_package": false,
+  "distribution_name": "orro",
+  "source_version": "0.1.0",
+  "published_pypi_versions": "0.0.x",
+  "current_command_source": "ORRO-owned orro console script",
+  "published_package": true,
   "phases": [
     {
       "phase": "bootstrap",
@@ -14,27 +17,28 @@
     },
     {
       "phase": "thin-wrapper",
-      "status": "distribution-smoke",
-      "description": "Expose orro-wrapper as a product wrapper skeleton that delegates explicitly to witnessd-hosted ORRO commands and passes local editable install plus wheel distribution smoke.",
+      "status": "current",
+      "description": "Expose orro and the orro-wrapper compatibility alias as a thin product wrapper that delegates explicitly to witnessd-hosted ORRO commands and passes local editable install plus wheel distribution smoke.",
       "contains_engine_logic": false
     },
     {
       "phase": "command-migration",
-      "status": "plan-only",
-      "description": "Define the future ORRO-owned orro command migration without adding or shadowing the orro console script in this phase.",
+      "status": "complete",
+      "description": "Keep the ORRO-owned orro console script and the orro-wrapper compatibility alias on the same thin delegation module.",
       "contains_engine_logic": false
     },
     {
       "phase": "published-package",
-      "status": "future",
-      "description": "Publish a user-facing install only after pinned-engine e2e, bootstrap, and wrapper contracts remain green.",
+      "status": "current",
+      "description": "Record that orro 0.0.x is live on PyPI and this repository now sources 0.1.0; publishing 0.1.0 remains a separate approved release step.",
       "contains_engine_logic": false
     }
   ],
   "engine_dependencies": {
     "witnessd": {
       "repository": "Moonweave-Systems/witnessd",
-      "role": "execution engine"
+      "role": "execution engine",
+      "package_requirement": "witnessd>=2.3.2"
     },
     "depone": {
       "repository": "Moonweave-Systems/Depone",
@@ -62,7 +66,7 @@
     "implements_proofrun": false,
     "implements_proofcheck": false,
     "creates_third_engine": false,
-    "published_package": false,
+    "published_package": true,
     "approves_merge": false,
     "raises_assurance": false,
     "depone_verifies": true,

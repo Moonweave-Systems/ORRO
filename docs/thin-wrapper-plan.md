@@ -1,30 +1,31 @@
 # Thin Wrapper Plan
 
-The current `orro` command is implemented and hosted by witnessd. This ORRO
-repository prepares the product and distribution layer that can eventually make
-ORRO feel like one install while keeping the engines separate.
+The ORRO repository is the canonical source of the published `orro`
+distribution. PyPI has live 0.0.x releases; this repository now sources 0.1.0
+and declares `witnessd>=2.3.2`.
 
 ## Current State
 
 - Depone verifies.
 - witnessd executes.
 - ORRO exposes the workflow.
-- The witnessd-hosted `orro` console script is the active command surface.
-- This repository contains docs, examples, packaging drafts, bootstrap setup
-  planning, and smoke-contract planning only.
-- This repository now contains an `orro-wrapper` skeleton that reports wrapper
-  boundaries and delegates explicitly to the witnessd-hosted command.
+- The ORRO-owned `orro` console script is the active command surface.
+- `orro-wrapper` is a compatibility alias for the same thin wrapper module.
+- The wrapper delegates through a subprocess to the witnessd-hosted engine
+  command and contains no engine logic.
+- This repository contains package metadata, docs, examples, bootstrap setup,
+  locks, and smoke contracts.
 
-## Future Wrapper Scope
+## Wrapper Scope
 
-A future wrapper may:
+The wrapper may:
 
-- install or pin compatible witnessd and Depone versions;
+- declare compatible witnessd package versions;
 - reuse bootstrap setup/distribution orchestration for pinned engine checkouts;
 - generate and check `orro-engine-lock.json`;
 - expose one user-facing command surface;
 - run e2e smoke checks against pinned engines;
-- publish marketplace or plugin metadata.
+- publish marketplace or plugin metadata in separately approved steps.
 
 It must not:
 
@@ -34,54 +35,47 @@ It must not:
 - duplicate proofrun, scheduler, observer, or team-lane execution;
 - become a third engine.
 
-The current bootstrap is setup/distribution orchestration and setup metadata,
-not proof. It contains no engine code, does not implement proofrun or
-proofcheck, and the executable `orro` command remains witnessd-hosted.
+The bootstrap is setup/distribution orchestration and setup metadata, not proof.
+It contains no engine code, does not implement proofrun or proofcheck, and the
+ORRO-owned executable `orro` command delegates to the witnessd-hosted engine
+surface.
 
 ## Release Gate
 
-Before adding executable wrapper code here, ORRO needs:
+Before a new package release, ORRO needs:
 
 1. Stable engine version-lock policy.
-2. Cross-engine e2e smoke runner.
-3. Packaging decision for local, pip, and marketplace installs.
+2. Cross-engine e2e smoke coverage.
+3. Packaging checks for local and pip installs.
 4. Clear fallback when a pinned engine is unavailable.
 
-Any wrapper code must preserve the engine boundary:
+Every release must preserve the engine boundary:
 
 Depone verifies; witnessd executes; ORRO exposes the workflow.
 
-The v0 packaging decision is now recorded in `docs/packaging-decision.md` and
+The packaging decision is recorded in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json`. It is product metadata, not package
-publish, and keeps the current command source witnessd-hosted until a future
-thin wrapper is explicitly implemented.
+publish. It records the published package reality, the ORRO-owned command, the
+`witnessd>=2.3.2` dependency, and the requirement that the package contain no
+engine code.
 
-The pinned-engine fallback is now recorded in
-`docs/pinned-engine-fallback.md` and
-`packaging/pinned-engine-fallback-policy.v0.json`. It requires fail-closed
-behavior when pinned engine commits are missing or mismatched. Future wrapper
-work must not silently use latest `main`, auto-select alternate engine commits,
-or rewrite the engine lock outside an intentional engine-lock update PR.
+The pinned-engine fallback is recorded in `docs/pinned-engine-fallback.md` and
+`packaging/pinned-engine-fallback-policy.v0.json`. Missing or mismatched engine
+commits fail closed. Wrapper work must not silently use latest `main`, select an
+alternate engine commit, or rewrite the lock outside an intentional update PR.
 
-The initial wrapper skeleton is documented in `docs/thin-wrapper.md`. It exposes
-`orro-wrapper`, not `orro`, so the current witnessd-hosted command remains the
-active ORRO command source. The skeleton delegates only when explicitly asked
-and does not implement proofrun or proofcheck.
+The thin package is documented in `docs/thin-wrapper.md`. Both `orro` and
+`orro-wrapper` delegate through the same subprocess-based wrapper and do not
+implement proofrun or proofcheck.
 
-`scripts/check_orro_wrapper_install.py` performs the local wrapper install smoke.
-It installs the wrapper into a temporary virtual environment and verifies the
-installed `orro-wrapper` command without publishing a package, calling Depone or
-witnessd, running proofrun, or running proofcheck. The install smoke output is
-setup/test metadata, not proof, not verifier truth, not package publish, not
+`scripts/check_orro_wrapper_install.py` installs the source into a temporary
+virtual environment and verifies both commands without publishing a package,
+calling Depone or witnessd, running proofrun, or running proofcheck. The result
+is setup/test metadata, not proof, not verifier truth, not package publish, not
 approval, and not assurance.
 
-`scripts/check_orro_wrapper_distribution.py` performs the local wheel
-distribution smoke. It builds a local wheel, installs it into a temporary
-virtual environment, verifies that only `orro-wrapper` is exposed, and checks
-that the wheel contains no Depone or witnessd packages and no engine
-implementation files. The distribution smoke is local test metadata, not proof,
-not verifier truth, not package publish, not approval, and not assurance.
-
-The current executable `orro` command remains witnessd-hosted. This repository
-must not shadow `orro` until a separate future migration wave defines
-compatibility and ownership for an ORRO-owned `orro` command.
+`scripts/check_orro_wrapper_distribution.py` builds and installs a local wheel,
+verifies both command surfaces, and checks that the wheel contains no Depone or
+witnessd packages or engine implementation files. The result is local test
+metadata, not proof, not verifier truth, not package publish, not approval, and
+not assurance.

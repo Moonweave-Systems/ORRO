@@ -37,8 +37,8 @@ checkout candidates.
 Use `scripts/bootstrap_orro.py --check-existing` before local smoke runs when
 you want to confirm that local engine checkout commits match the pinned engine
 lock. The bootstrap is setup/distribution orchestration and setup metadata, not
-proof. It contains no engine code and the current executable `orro` command
-remains witnessd-hosted.
+proof. It contains no engine code and the ORRO-owned executable `orro` command
+delegates to the witnessd-hosted engine surface.
 
 ## Boundary
 
@@ -77,4 +77,5 @@ wrapper install smoke, wrapper distribution smoke, and `--self-test`. The
 separate pinned-engine e2e CI checks out the pinned witnessd and Depone commits
 from the e2e lock, then runs the full smoke.
 
-Published ORRO package e2e remains future work.
+The `orro` package is published on PyPI. This pinned-engine smoke validates the
+0.1.0 source package without publishing a new release.

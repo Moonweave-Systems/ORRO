@@ -205,7 +205,7 @@ def prepare_build_venv(venv_dir: Path) -> Path:
 
 def build_wheel(source_dir: Path, dist_dir: Path, python: Path) -> Path:
     run_command([str(python), "-m", "pip", "wheel", "--no-deps", "-w", str(dist_dir), str(source_dir)])
-    wheels = sorted(dist_dir.glob("orro_product_wrapper-*.whl"))
+    wheels = sorted(dist_dir.glob("orro-*.whl"))
     if len(wheels) != 1:
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_WHEEL_NOT_FOUND", "expected exactly one ORRO wrapper wheel", {"wheels": [str(path) for path in wheels]})
     return wheels[0]
@@ -291,7 +291,7 @@ def self_test() -> dict[str, Any]:
     fake_names = [
         "orro_wrapper/__init__.py",
         "orro_wrapper/cli.py",
-        "orro_product_wrapper-0.1.0rc1.dist-info/entry_points.txt",
+        "orro-0.1.0.dist-info/entry_points.txt",
     ]
     forbidden_packages = [name for name in fake_names if name.startswith(FORBIDDEN_PACKAGE_PREFIXES)]
     if forbidden_packages:

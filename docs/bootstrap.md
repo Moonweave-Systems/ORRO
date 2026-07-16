@@ -11,8 +11,8 @@ implement proofrun, proofcheck, scheduling, observing, fan-in, team-ledger, or
 verifier logic.
 
 Bootstrap output is setup metadata, not proof, not verifier truth, not merge
-approval, and not assurance. The current executable `orro` command remains
-witnessd-hosted until a future package exists.
+approval, and not assurance. The ORRO-owned executable `orro` command delegates
+to the witnessd-hosted engine surface.
 
 ## Dry Run
 
@@ -79,7 +79,8 @@ python3 scripts/bootstrap_orro.py \
   --json
 ```
 
-Published ORRO package remains future work.
+The `orro` package is published on PyPI; 0.0.x is live and this repository now
+sources 0.1.0 with `witnessd>=2.3.2`.
 
 The wrapper distribution smoke is separate from bootstrap:
 
@@ -89,8 +90,8 @@ python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 
 It builds and installs a local wheel to verify packaging boundaries. It does not
 prepare engine checkouts, does not verify evidence, does not publish a package,
-and does not shadow the witnessd-hosted `orro` command. The explicit network
-flag authorizes only the isolated wrapper build-dependency bootstrap.
+and does not replace the witnessd-hosted engine implementation. The explicit
+network flag authorizes only the isolated wrapper build-dependency bootstrap.
 
 ## Self-Test
 

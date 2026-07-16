@@ -51,8 +51,9 @@ lock, and asserts:
 - auto v0 does not run proofrun
 
 The e2e engine lock is distribution and CI metadata, not proof, not verifier
-truth, not approval, and not assurance. Future published-package e2e remains
-future work.
+truth, not approval, and not assurance. The `orro` package is published on
+PyPI; this smoke validates the source package against pinned engines without
+publishing a new release.
 
 ```text
 Depone verifies; witnessd executes; ORRO exposes the workflow.

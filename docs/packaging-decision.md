@@ -12,13 +12,12 @@ ORRO will remain product/distribution/wrapper only while Depone and witnessd
 stay separate engine repositories.
 
 Current command source is the ORRO-owned `orro` console script, which delegates
-to witnessd. Published ORRO package remains future work. The canonical
-packaging rule is:
-published ORRO package remains future work.
+to witnessd. The `orro` package is published on PyPI (0.0.x is live), and this
+repository now sources 0.1.0 with a `witnessd>=2.3.2` dependency. Publishing
+0.1.0 is a separate approved release step.
 
-The next package shape, when implemented, should be a thin wrapper that prepares
-or locates pinned engine checkouts and delegates to the existing engine command
-surface. It must contain no engine code.
+The package remains a thin wrapper that delegates to the existing engine
+command surface. It must contain no engine code.
 
 ## Allowed Packaging Scope
 
@@ -45,16 +44,16 @@ The ORRO repository must not contain:
 
 1. Bootstrap: current phase. `scripts/bootstrap_orro.py` prepares or checks
    local pinned engine checkouts. Bootstrap output is setup metadata, not proof.
-2. Thin wrapper: install-smoke phase. `orro` and `orro-wrapper` may expose
+2. Thin wrapper: current phase. `orro` and `orro-wrapper` expose
    product onboarding and invoke witnessd-hosted ORRO commands, and local CI
    verifies the editable install and installed console scripts. They must not
-   implement proofrun or proofcheck and must not imply package publish.
+   implement proofrun or proofcheck.
    The local wheel distribution smoke verifies that the built wheel exposes
    `orro` and `orro-wrapper`, and contains no engine packages or engine
    implementation files.
-3. Published package: future phase. A package may be published only after
-   pinned-engine e2e, boundary checks, bootstrap checks, and release metadata
-   remain green.
+3. Published package: current phase. `orro` 0.0.x is live on PyPI, this
+   repository sources 0.1.0, and any new release still requires pinned-engine
+   e2e, boundary checks, bootstrap checks, and release metadata to remain green.
 
 4. Command ownership: current phase. `orro = orro_wrapper.cli:main` and
    `orro-wrapper = orro_wrapper.cli:main` are committed package metadata. Both
@@ -63,7 +62,7 @@ The ORRO repository must not contain:
 
 ## Release Gate
 
-Before executable wrapper code is added, a PR must show:
+Before a new wrapper release, a PR must show:
 
 - `engine-lock/orro-e2e-engine-lock.json` is current;
 - `release/orro-release-manifest.v0.json` matches the engine lock;
