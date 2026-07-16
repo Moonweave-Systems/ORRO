@@ -506,7 +506,7 @@ class SmokeRunner:
                 },
             )
         completed = subprocess.run(
-            [str(wrapper), "delegate", "--", "--help"],
+            [str(wrapper), "delegate", "--", "flowplan", "--help"],
             cwd=wrapper_root,
             text=True,
             capture_output=True,
@@ -515,15 +515,15 @@ class SmokeRunner:
         self._assert(
             completed.returncode == 0,
             "wrapper_default_delegate_help_exit_zero",
-            "default wrapper delegate --help must exit zero",
+            "wrapper delegate flowplan --help must exit zero",
             returncode=completed.returncode,
             stdout=completed.stdout,
             stderr=completed.stderr,
         )
         self._assert(
-            "usage: orro" in completed.stdout,
+            "usage: witnessd flowplan" in completed.stdout,
             "wrapper_default_delegate_help_reaches_orro",
-            "default wrapper delegate --help must reach the ORRO public command",
+            "wrapper delegate flowplan --help must reach the witnessd ORRO surface",
             stdout=completed.stdout,
             stderr=completed.stderr,
         )
