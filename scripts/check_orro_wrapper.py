@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import io
 import sys
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -28,15 +30,18 @@ def require_contains(label: str, haystack: str, needle: str) -> None:
 
 def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
-    require_contains("pyproject.toml", text, 'name = "orro-product-wrapper"')
-    require_contains("pyproject.toml", text, "dependencies = []")
+    require_contains("pyproject.toml", text, 'name = "orro"')
+    require_contains("pyproject.toml", text, 'version = "0.1.0"')
+    require_contains("pyproject.toml", text, 'dependencies = ["witnessd>=2.3.2"]')
     require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
 
 
 def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
-    require_contains("setup.cfg", text, "name = orro-product-wrapper")
+    require_contains("setup.cfg", text, "name = orro")
+    require_contains("setup.cfg", text, "version = 0.1.0")
+    require_contains("setup.cfg", text, "witnessd>=2.3.2")
     require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
 
@@ -52,13 +57,14 @@ def check_package_files() -> None:
     require_contains("wrapper package", text, "implements_proofrun")
     require_contains("wrapper package", text, "implements_proofcheck")
     require_contains("wrapper package", text, "delegates_to_witnessd_hosted_orro")
-    require_contains("wrapper package", text, "subprocess.run")
+    require_contains("wrapper package", text, "from witnessd.__main__ import ORRO_COMMANDS, main as witnessd_main")
 
     forbidden = (
         "from depone",
         "import depone",
-        "from witnessd",
-        "import witnessd",
+        "subprocess.run",
+        "ORRO_ENGINE_COMMAND",
+        "DEFAULT_ENGINE_COMMAND",
         "team-ledger verifier",
         "scheduler implementation",
     )
@@ -68,21 +74,66 @@ def check_package_files() -> None:
             fail(f"wrapper package must not contain {needle!r}")
 
 
-def check_delegation_environment() -> None:
+def check_in_process_delegation() -> None:
     sys.path.insert(0, str(ROOT / "src"))
-    from orro_wrapper.cli import delegate
+    from orro_wrapper.cli import main
 
-    run = Mock()
-    run.return_value.returncode = 0
-    with patch("orro_wrapper.cli.subprocess.run", run):
-        result = delegate("python3 -m orro", ["flowplan", "--help"])
+    witnessd_main = Mock(return_value=0)
+    with (
+        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"}), create=True),
+        patch("orro_wrapper.cli.witnessd_main", witnessd_main, create=True),
+    ):
+        result = main(["flowplan", "--help"])
     if result != 0:
-        fail("wrapper delegation test command returned a non-zero status")
-    if run.call_args is None:
-        fail("wrapper delegation did not invoke subprocess.run")
-    environment = run.call_args.kwargs.get("env")
-    if not isinstance(environment, dict) or environment.get("ORRO_WRAPPER_DELEGATION") != "1":
-        fail("wrapper delegation must set ORRO_WRAPPER_DELEGATION=1 in the child environment")
+        fail("in-process delegation returned a non-zero status")
+    witnessd_main.assert_called_once_with(["orro", "flowplan", "--help"])
+
+
+def check_unknown_command_error() -> None:
+    from orro_wrapper.cli import main
+
+    stderr = io.StringIO()
+    with (
+        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"}), create=True),
+        patch("orro_wrapper.cli.witnessd_main", Mock(), create=True),
+        redirect_stderr(stderr),
+    ):
+        result = main(["flowpln"])
+    if result != 2:
+        fail("unknown command must exit 2")
+    message = stderr.getvalue()
+    require_contains("unknown command error", message, "orro: unknown command 'flowpln'")
+    require_contains("unknown command suggestion", message, "Did you mean 'flowplan'?")
+    require_contains("unknown command list", message, "Valid commands:")
+
+
+def check_local_commands() -> None:
+    from orro_wrapper.cli import main
+
+    for command, expected_kind in (
+        ("boundary", "orro-wrapper-info"),
+        ("self-test", "orro-wrapper-self-test-result"),
+    ):
+        stdout = io.StringIO()
+        with patch("orro_wrapper.cli.get_version", return_value="0.1.0"), redirect_stdout(stdout):
+            result = main([command])
+        if result != 0:
+            fail(f"local {command} command returned a non-zero status")
+        require_contains(f"local {command} output", stdout.getvalue(), expected_kind)
+
+
+def check_explicit_delegate() -> None:
+    from orro_wrapper.cli import main
+
+    witnessd_main = Mock(return_value=0)
+    with (
+        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"}), create=True),
+        patch("orro_wrapper.cli.witnessd_main", witnessd_main, create=True),
+    ):
+        result = main(["delegate", "--", "flowplan", "--help"])
+    if result != 0:
+        fail("explicit delegate returned a non-zero status")
+    witnessd_main.assert_called_once_with(["orro", "flowplan", "--help"])
 
 
 def check_docs() -> None:
@@ -108,7 +159,10 @@ def main() -> int:
     check_pyproject()
     check_setup_cfg()
     check_package_files()
-    check_delegation_environment()
+    check_in_process_delegation()
+    check_unknown_command_error()
+    check_local_commands()
+    check_explicit_delegate()
     check_docs()
     print("ORRO wrapper: pass")
     return 0

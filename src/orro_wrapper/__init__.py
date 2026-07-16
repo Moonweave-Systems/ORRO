@@ -1,4 +1,4 @@
-"""ORRO product wrapper skeleton.
+"""ORRO product command wrapper.
 
 This package delegates to existing engine commands. It does not implement
 Depone verifier logic or witnessd runtime logic.
@@ -9,7 +9,7 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError, version
 
 
-DIST_NAME = "orro-product-wrapper"
+DIST_NAME = "orro"
 
 
 class VersionMetadataError(RuntimeError):

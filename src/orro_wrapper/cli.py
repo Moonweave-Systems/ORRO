@@ -7,10 +7,8 @@ witnessd-hosted ORRO surface. It does not implement engine logic locally.
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
-import os
-import shlex
-import subprocess
 import sys
 from typing import Any
 
@@ -18,7 +16,13 @@ from . import VersionMetadataError, get_version
 
 
 SCHEMA_VERSION = "0.1"
-DEFAULT_ENGINE_COMMAND = f"{sys.executable} -m orro"
+LOCAL_COMMANDS = frozenset({"boundary", "self-test", "delegate"})
+
+try:
+    from witnessd.__main__ import ORRO_COMMANDS, main as witnessd_main
+except ImportError:
+    ORRO_COMMANDS = frozenset()
+    witnessd_main = None
 
 
 class WrapperError(RuntimeError):
@@ -72,27 +76,27 @@ def error_payload(exc: WrapperError) -> dict[str, Any]:
     }
 
 
-def resolve_engine_command(raw: str | None) -> list[str]:
-    command = raw or os.environ.get("ORRO_ENGINE_COMMAND") or DEFAULT_ENGINE_COMMAND
-    try:
-        parts = shlex.split(command)
-    except ValueError as exc:
-        raise WrapperError("ERR_ORRO_WRAPPER_ENGINE_COMMAND_INVALID", "engine command could not be parsed", {"command": command}) from exc
-    if not parts:
-        raise WrapperError("ERR_ORRO_WRAPPER_ENGINE_COMMAND_INVALID", "engine command must not be empty")
-    return parts
-
-
-def delegate(engine_command: str | None, delegate_args: list[str]) -> int:
+def delegate(delegate_args: list[str]) -> int:
     if delegate_args and delegate_args[0] == "--":
         delegate_args = delegate_args[1:]
     if not delegate_args:
         raise WrapperError("ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED", "delegate requires engine command arguments after --")
-    command = [*resolve_engine_command(engine_command), *delegate_args]
-    child_env = os.environ.copy()
-    child_env["ORRO_WRAPPER_DELEGATION"] = "1"
-    completed = subprocess.run(command, check=False, env=child_env)
-    return completed.returncode
+    if witnessd_main is None:
+        raise WrapperError(
+            "ERR_ORRO_WRAPPER_WITNESSD_MISSING",
+            "witnessd is not installed; install witnessd>=2.3.2 to use ORRO commands",
+        )
+    return witnessd_main(["orro", *delegate_args])
+
+
+def unknown_command(command: str) -> int:
+    valid_commands = sorted(ORRO_COMMANDS | LOCAL_COMMANDS)
+    print(f"orro: unknown command '{command}'", file=sys.stderr)
+    matches = difflib.get_close_matches(command, valid_commands, n=1)
+    if matches:
+        print(f"Did you mean '{matches[0]}'?", file=sys.stderr)
+    print(f"Valid commands: {', '.join(valid_commands)}", file=sys.stderr)
+    return 2
 
 
 def self_test() -> int:
@@ -101,13 +105,8 @@ def self_test() -> int:
     assert info["boundary"]["contains_engine_logic"] is False
     assert info["boundary"]["implements_proofrun"] is False
     assert info["boundary"]["implements_proofcheck"] is False
-    assert resolve_engine_command("python3 -m orro") == [
-        "python3",
-        "-m",
-        "orro",
-    ]
     try:
-        delegate("python3 -m orro", [])
+        delegate([])
     except WrapperError as exc:
         assert exc.code == "ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED"
     else:
@@ -118,7 +117,6 @@ def self_test() -> int:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="ORRO product command.")
-    parser.add_argument("--engine-command", help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m orro.")
     parser.add_argument("--json", action="store_true", help="Emit JSON for wrapper-owned commands. JSON is the default for boundary/self-test.")
     parser.add_argument("--version", action="store_true", help="Print wrapper version and exit.")
     subparsers = parser.add_subparsers(dest="command")
@@ -132,9 +130,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     raw_args = sys.argv[1:] if argv is None else argv
-    local_commands = {"boundary", "self-test", "delegate"}
-    if raw_args and raw_args[0] not in local_commands and not raw_args[0].startswith("-"):
-        return delegate(None, raw_args)
+    if raw_args and raw_args[0] not in LOCAL_COMMANDS and not raw_args[0].startswith("-"):
+        if witnessd_main is None:
+            print("orro: witnessd is not installed; install witnessd>=2.3.2 to use ORRO commands", file=sys.stderr)
+            return 1
+        if raw_args[0] in ORRO_COMMANDS:
+            return witnessd_main(["orro", *raw_args])
+        return unknown_command(raw_args[0])
     args = parse_args(raw_args)
     try:
         if args.version:
@@ -146,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "self-test":
             return self_test()
         if args.command == "delegate":
-            return delegate(args.engine_command, args.delegate_args)
+            return delegate(args.delegate_args)
         raise WrapperError("ERR_ORRO_WRAPPER_COMMAND_UNKNOWN", "unknown wrapper command", {"command": args.command})
     except WrapperError as exc:
         print(json.dumps(error_payload(exc), indent=2, sort_keys=True), file=sys.stderr)
