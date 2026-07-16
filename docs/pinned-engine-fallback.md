@@ -67,5 +67,6 @@ mismatched engines and point to bootstrap/setup commands, but it must not
 auto-select different engine commits or rewrite the engine lock outside an
 intentional update PR.
 
-The `orro` package is published on PyPI; 0.0.x is live and this repository now
-sources 0.1.0 with `witnessd>=2.3.2`.
+`orro` 0.1.0 is published on PyPI, this repository is its canonical source, and
+the package metadata declares `witnessd>=2.3.2`. The current engine lock pins
+witnessd 2.3.3 at tag `v2.3.3`, satisfying that declared dependency.

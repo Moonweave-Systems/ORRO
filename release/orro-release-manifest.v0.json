@@ -10,7 +10,8 @@
   "engines": {
     "witnessd": {
       "repository": "Moonweave-Systems/witnessd",
-      "commit": "5db87ac975452d9fed233306645e179b78087d68",
+      "commit": "ae260fb9c020a0bf9e00b60d4053a8fcd7adc8a9",
+      "version": "2.3.3",
       "role": "execution engine"
     },
     "depone": {

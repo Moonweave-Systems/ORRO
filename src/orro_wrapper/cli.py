@@ -52,7 +52,7 @@ def wrapper_info() -> dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "version": get_version(),
         "current_command_source": "ORRO-owned orro console script",
-        "published_package": False,
+        "published_package": True,
         "not_proof": True,
         "not_verifier_truth": True,
         "boundary": boundary(),

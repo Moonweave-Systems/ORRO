@@ -118,7 +118,7 @@ def check_docs() -> None:
     require_contains("packaging decision doc", text, "not package publish")
     require_contains("packaging decision doc", text, "witnessd-hosted")
     require_contains("packaging decision doc", text, "no engine code")
-    require_contains("packaging decision doc", text, "The `orro` package is published on PyPI")
+    require_contains("packaging decision doc", text, "`orro` 0.1.0 is published on PyPI")
     require_contains("packaging decision doc", text, "witnessd>=2.3.2")
     require_contains("packaging decision doc", text, "proofrun")
     require_contains("packaging decision doc", text, "proofcheck")

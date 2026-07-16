@@ -537,6 +537,7 @@ def check_e2e_docs() -> None:
 def check_release_discipline() -> None:
     required_paths = [
         "scripts/check_orro_release_manifest.py",
+        "scripts/check_orro_release_state.py",
         "scripts/check_compatibility_matrix.py",
         "scripts/update_orro_engine_lock.py",
         "release/orro-release-manifest.v0.json",
@@ -567,7 +568,7 @@ def check_release_discipline() -> None:
     require_contains("release docs", lower_text, "engine-lock update")
     require_contains("release docs", text, "not proof")
     require_contains("release docs", text, "not verifier truth")
-    require_contains("release docs", lower_text, "the `orro` package is published on pypi")
+    require_contains("release docs", lower_text, "`orro` 0.1.0 is published on pypi")
 
 
 def check_os_support_matrix() -> None:
@@ -641,7 +642,7 @@ def check_packaging_decision() -> None:
     )
     require_contains("packaging decision docs", text, "packaging decision")
     require_contains("packaging decision docs", text, "not package publish")
-    require_contains("packaging decision docs", text, "The `orro` package is published on PyPI")
+    require_contains("packaging decision docs", text, "`orro` 0.1.0 is published on PyPI")
     require_contains("packaging decision docs", text, "witnessd>=2.3.2")
     require_contains("packaging decision docs", text, "no engine code")
     require_contains("packaging decision docs", text, "witnessd-hosted")
@@ -814,6 +815,7 @@ def check_no_engine_code() -> None:
             "check_orro_packaging_decision.py",
             "check_orro_repo_contract.py",
             "check_orro_release_manifest.py",
+            "check_orro_release_state.py",
             "check_compatibility_matrix.py",
             "check_orro_version_coherence.py",
             "check_orro_wrapper.py",

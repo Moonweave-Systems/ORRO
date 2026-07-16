@@ -1,8 +1,7 @@
 # Thin Wrapper Plan
 
-The ORRO repository is the canonical source of the published `orro`
-distribution. PyPI has live 0.0.x releases; this repository now sources 0.1.0
-and declares `witnessd>=2.3.2`.
+`orro` 0.1.0 is published on PyPI, and the ORRO repository is its canonical
+source. The package metadata declares `witnessd>=2.3.2`.
 
 ## Current State
 
