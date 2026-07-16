@@ -20,6 +20,7 @@ ENGINE_LOCK_PATH = ROOT / "engine-lock" / "orro-e2e-engine-lock.json"
 RELEASE_MANIFEST_PATH = ROOT / "release" / "orro-release-manifest.v0.json"
 DOC_MATRIX_PATH = ROOT / "docs" / "compatibility-matrix.md"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FORBIDDEN_REFS = {"main", "master", "HEAD"}
 
 
@@ -133,6 +134,10 @@ def validate_matrix_shape(matrix: dict[str, Any]) -> dict[str, dict[str, Any]]:
             require_commit(f"{entry_id}.orro_commit", entry.get("orro_commit"))
         if entry.get("status") not in {"pass", "warn"}:
             fail(f"{entry_id}.status must be pass or warn")
+    for entry_id in ("depone-n-witnessd-n", "orro-rc-locked-triplet"):
+        version = by_id[entry_id].get("witnessd_version")
+        if not isinstance(version, str) or VERSION_RE.fullmatch(version) is None:
+            fail(f"{entry_id}.witnessd_version must be an X.Y.Z version")
     return by_id
 
 
@@ -152,6 +157,10 @@ def validate_lock_and_manifest(by_id: dict[str, dict[str, Any]]) -> None:
         fail("engine-lock witnessd commit must match depone-n-witnessd-n")
     if lock["depone"].get("commit") != current["depone_commit"]:
         fail("engine-lock Depone commit must match depone-n-witnessd-n")
+    if lock["witnessd"].get("version") != current["witnessd_version"]:
+        fail("engine-lock witnessd version must match depone-n-witnessd-n")
+    if lock["witnessd"].get("ref_name") != f"v{current['witnessd_version']}":
+        fail("engine-lock witnessd ref_name must match depone-n-witnessd-n version")
     engines = manifest.get("engines")
     product = manifest.get("product")
     if not isinstance(engines, dict) or not isinstance(product, dict):
@@ -160,6 +169,8 @@ def validate_lock_and_manifest(by_id: dict[str, dict[str, Any]]) -> None:
         fail("release manifest product.commit must match ORRO triplet")
     if engines.get("witnessd", {}).get("commit") != triplet["witnessd_commit"]:
         fail("release manifest witnessd commit must match ORRO triplet")
+    if engines.get("witnessd", {}).get("version") != triplet["witnessd_version"]:
+        fail("release manifest witnessd version must match ORRO triplet")
     if engines.get("depone", {}).get("commit") != triplet["depone_commit"]:
         fail("release manifest Depone commit must match ORRO triplet")
 
@@ -173,11 +184,12 @@ def validate_doc_matrix(by_id: dict[str, dict[str, Any]]) -> None:
         "orro-rc-locked-triplet",
     ):
         entry = by_id[entry_id]
-        if entry_id not in text:
+        row = next((line for line in text.splitlines() if line.startswith(f"| {entry_id} |")), None)
+        if row is None:
             fail(f"docs compatibility matrix missing {entry_id}")
-        for key in ("orro_commit", "witnessd_commit", "depone_commit"):
+        for key in ("orro_commit", "witnessd_commit", "witnessd_version", "depone_commit"):
             value = entry.get(key)
-            if isinstance(value, str) and value not in text:
+            if isinstance(value, str) and value not in row:
                 fail(f"docs compatibility matrix missing {entry_id}.{key}")
 
 
@@ -220,10 +232,10 @@ def self_test() -> int:
         "not_verifier_truth": True,
         "not_package_publish": True,
         "entries": [
-            {"id": "depone-n-witnessd-n", "depone_commit": "1" * 40, "witnessd_commit": "2" * 40, "status": "pass"},
+            {"id": "depone-n-witnessd-n", "depone_commit": "1" * 40, "witnessd_commit": "2" * 40, "witnessd_version": "2.3.3", "status": "pass"},
             {"id": "depone-n-witnessd-n-1", "depone_commit": "1" * 40, "witnessd_commit": "3" * 40, "status": "warn"},
             {"id": "depone-n-1-witnessd-n", "depone_commit": "4" * 40, "witnessd_commit": "2" * 40, "status": "warn"},
-            {"id": "orro-rc-locked-triplet", "orro_commit": "5" * 40, "depone_commit": "1" * 40, "witnessd_commit": "2" * 40, "status": "pass"},
+            {"id": "orro-rc-locked-triplet", "orro_commit": "5" * 40, "depone_commit": "1" * 40, "witnessd_commit": "2" * 40, "witnessd_version": "2.3.3", "status": "pass"},
         ],
         "boundary": {
             "approves_merge": False,
@@ -238,9 +250,18 @@ def self_test() -> int:
         with contextlib.redirect_stderr(io.StringIO()):
             validate_matrix_shape(matrix)
     except SystemExit:
+        matrix["entries"][0]["witnessd_commit"] = "2" * 40
+    else:
+        print("self-test failed: mutable ref was accepted", file=sys.stderr)
+        return 1
+    matrix["entries"][0]["witnessd_version"] = "latest"
+    try:
+        with contextlib.redirect_stderr(io.StringIO()):
+            validate_matrix_shape(matrix)
+    except SystemExit:
         print("ORRO compatibility matrix self-test: pass")
         return 0
-    print("self-test failed: mutable ref was accepted", file=sys.stderr)
+    print("self-test failed: invalid witnessd version was accepted", file=sys.stderr)
     return 1
 
 

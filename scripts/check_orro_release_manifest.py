@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "release" / "orro-release-manifest.v0.json"
 ENGINE_LOCK_PATH = ROOT / "engine-lock" / "orro-e2e-engine-lock.json"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 ZERO_COMMIT = "0" * 40
 REQUIRED_SURFACES = {
     "advise",
@@ -131,9 +132,17 @@ def validate(manifest: dict[str, Any], engine_lock: dict[str, Any], *, repo_root
         if engine.get("role") != role:
             fail(f"engines.{key}.role must be {role}")
         manifest_commit = require_commit(f"engines.{key}.commit", engine.get("commit"))
-        lock_commit = require_object(f"engine_lock.{key}", engine_lock.get(key)).get("commit")
+        locked_engine = require_object(f"engine_lock.{key}", engine_lock.get(key))
+        lock_commit = locked_engine.get("commit")
         if manifest_commit != lock_commit:
             fail(f"engines.{key}.commit must match engine-lock/orro-e2e-engine-lock.json")
+        if key == "witnessd":
+            manifest_version = engine.get("version")
+            lock_version = locked_engine.get("version")
+            if not isinstance(manifest_version, str) or VERSION_RE.fullmatch(manifest_version) is None:
+                fail("engines.witnessd.version must be an X.Y.Z version")
+            if manifest_version != lock_version:
+                fail("engines.witnessd.version must match engine-lock/orro-e2e-engine-lock.json")
 
     release_lock = require_object("engine_lock", manifest.get("engine_lock"))
     if release_lock.get("path") != "engine-lock/orro-e2e-engine-lock.json":
@@ -180,6 +189,7 @@ def _build_fixtures() -> tuple[dict[str, Any], dict[str, Any]]:
             "witnessd": {
                 "repository": "Moonweave-Systems/witnessd",
                 "commit": witnessd_commit,
+                "version": "9.8.7",
                 "role": "execution engine",
             },
             "depone": {
@@ -215,6 +225,7 @@ def _build_fixtures() -> tuple[dict[str, Any], dict[str, Any]]:
         "witnessd": {
             "repository": "Moonweave-Systems/witnessd",
             "commit": witnessd_commit,
+            "version": "9.8.7",
             "ref_name": "main",
         },
         "depone": {
@@ -246,6 +257,7 @@ def self_test() -> int:
 
     forgeries: list[tuple[str, Any]] = [
         ("engines.witnessd.commit mismatch", lambda m: m["engines"]["witnessd"].__setitem__("commit", "3" * 40)),
+        ("engines.witnessd.version mismatch", lambda m: m["engines"]["witnessd"].__setitem__("version", "9.8.6")),
         ("validated_surfaces missing proofrun", lambda m: m["validated_surfaces"].remove("proofrun")),
         ("boundary.approves_merge true", lambda m: m["boundary"].__setitem__("approves_merge", True)),
         ("not_proof false", lambda m: m.__setitem__("not_proof", False)),

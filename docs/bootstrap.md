@@ -79,8 +79,8 @@ python3 scripts/bootstrap_orro.py \
   --json
 ```
 
-The `orro` package is published on PyPI; 0.0.x is live and this repository now
-sources 0.1.0 with `witnessd>=2.3.2`.
+`orro` 0.1.0 is published on PyPI, this repository is its canonical source, and
+the package metadata declares `witnessd>=2.3.2`.
 
 The wrapper distribution smoke is separate from bootstrap:
 

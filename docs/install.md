@@ -1,17 +1,16 @@
 # Install
 
-The `orro` package is published on PyPI (0.0.x is live). This repository now
-sources 0.1.0, whose metadata declares `witnessd>=2.3.2`; publishing that new
-version is a separate release step. The package exposes `orro` and the
-`orro-wrapper` compatibility alias.
+`orro` 0.1.0 is published on PyPI, and this repository is its canonical source.
+The package metadata declares `witnessd>=2.3.2`, and the package exposes `orro`
+plus the `orro-wrapper` compatibility alias.
 
 ```bash
 python3 -m pip install orro
 ```
 
-Until 0.1.0 is published, that command installs the live 0.0.x release.
-Development dogfood may instead use the source checkout and pinned engine
-repositories directly.
+That command installs `orro` 0.1.0 and resolves its `witnessd>=2.3.2`
+dependency. Development dogfood may instead use the source checkout and pinned
+engine repositories directly.
 
 Current development layout uses the engine repositories directly:
 

@@ -42,6 +42,7 @@ checkout or open an intentional engine-lock update PR.
    ```bash
    python3 scripts/update_orro_engine_lock.py \
      --witnessd-commit <40-hex-witnessd-commit> \
+     --witnessd-version <X.Y.Z-witnessd-version> \
      --depone-commit <40-hex-depone-commit>
    ```
 

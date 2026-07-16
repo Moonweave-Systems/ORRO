@@ -46,9 +46,8 @@ the engine command the operator explicitly invoked. The wrapper only delegates.
 
 ## Relationship To Packaging
 
-This repository is the canonical source of the published `orro` package. PyPI
-has live 0.0.x releases; this repository sources 0.1.0 and declares
-`witnessd>=2.3.2`.
+`orro` 0.1.0 is published on PyPI, and this repository is its canonical source.
+The package metadata declares `witnessd>=2.3.2`.
 
 Package work must keep:
 

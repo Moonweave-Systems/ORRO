@@ -17,8 +17,9 @@ Today:
 - ORRO is the product and workflow surface for observed run and review.
 - This repository keeps ORRO docs, product boundary, locks, thin wrapper package metadata, assurance contract checks, and integration-surface policy.
 - The runnable `orro` command is ORRO-owned and delegates to witnessd.
-- The `orro` package is published on PyPI (0.0.x is live); this repository now
-  sources version 0.1.0.
+- `orro` 0.1.0 is published on PyPI, and this repository is its canonical
+  source. A normal `pip install orro` installs the 0.1.0 package, whose metadata
+  declares `witnessd>=2.3.2`.
 - The local wrapper package exposes both `orro` and `orro-wrapper`.
 
 Current focus:
@@ -29,8 +30,8 @@ Current focus:
 
 ## Can I use ORRO today?
 
-Yes. The `orro` package is published on PyPI, and development dogfood can also
-run directly against pinned Depone and witnessd checkouts.
+Yes. `orro` 0.1.0 is published on PyPI, and development dogfood can also run
+directly against pinned Depone and witnessd checkouts.
 
 Current split:
 
@@ -95,7 +96,8 @@ Engine-lock update discipline is documented in
 validated engine pairs are listed in
 [`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). The `orro`
 package is published on PyPI; this repository sources 0.1.0, whose publication
-is a separate release step.
+was completed as a separate release step. Repository metadata changes do not
+republish or rewrite that artifact.
 
 Use `scripts/update_orro_engine_lock.py` for future pin updates so the e2e
 engine lock, release manifest, and compatibility matrix stay aligned. The

@@ -57,6 +57,5 @@ This is local distribution smoke only. It builds and installs a local wheel, but
 it does not publish a package, upload artifacts, create a marketplace release,
 or claim verifier truth.
 
-The `orro` package is published on PyPI. PyPI has live 0.0.x releases, while
-this repository sources 0.1.0 with `witnessd>=2.3.2`; publishing 0.1.0 is a
-separate approved step.
+`orro` 0.1.0 is published on PyPI, this repository is its canonical source, and
+the package metadata declares `witnessd>=2.3.2`.

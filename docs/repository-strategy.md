@@ -31,8 +31,8 @@ witnessd-hosted engine surface.
 The release manifest and compatibility matrix are product/distribution
 metadata. They record which pinned engine pair has passed ORRO e2e CI, but they
 are not proof, not verifier truth, not approval, and not assurance. Engine-lock
-update process is intentional and PR-reviewed. The `orro` package is published
-on PyPI; 0.0.x is live and this repository now sources 0.1.0.
+update process is intentional and PR-reviewed. `orro` 0.1.0 is published on
+PyPI, and this repository is its canonical source.
 
 The packaging decision in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json` is also product metadata, not package

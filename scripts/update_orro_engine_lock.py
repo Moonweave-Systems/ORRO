@@ -22,6 +22,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 ZERO_COMMIT = "0" * 40
 ENGINE_LOCK_REL = Path("engine-lock/orro-e2e-engine-lock.json")
 RELEASE_MANIFEST_REL = Path("release/orro-release-manifest.v0.json")
@@ -84,10 +85,20 @@ def resolve_ref_name(requested: str | None, engine_lock: dict[str, Any], engine:
     return current["ref_name"]
 
 
+def resolve_witnessd_ref_name(requested: str | None, version: str) -> str:
+    version_ref = f"v{version}"
+    if requested is None:
+        return version_ref
+    if requested != version_ref:
+        raise UpdateError(f"witnessd ref must be {version_ref} for witnessd version {version}")
+    return requested
+
+
 def update_files(
     root: Path,
     *,
     witnessd_commit: str,
+    witnessd_version: str,
     depone_commit: str,
     witnessd_ref: str | None,
     depone_ref: str | None,
@@ -95,6 +106,8 @@ def update_files(
     dry_run: bool,
 ) -> dict[str, Any]:
     validate_commit("witnessd commit", witnessd_commit)
+    if VERSION_RE.fullmatch(witnessd_version) is None:
+        raise UpdateError("witnessd version must be an X.Y.Z version")
     validate_commit("Depone commit", depone_commit)
     validate_commit("ORRO commit", orro_commit, allow_zero=True)
 
@@ -104,7 +117,7 @@ def update_files(
     structured_compatibility_matrix_path = root / STRUCTURED_COMPAT_MATRIX_REL
 
     engine_lock = read_json(engine_lock_path)
-    witnessd_ref = resolve_ref_name(witnessd_ref, engine_lock, "witnessd")
+    witnessd_ref = resolve_witnessd_ref_name(witnessd_ref, witnessd_version)
     depone_ref = resolve_ref_name(depone_ref, engine_lock, "depone")
     engine_lock.update(
         {
@@ -113,6 +126,7 @@ def update_files(
             "witnessd": {
                 "repository": "Moonweave-Systems/witnessd",
                 "commit": witnessd_commit,
+                "version": witnessd_version,
                 "ref_name": witnessd_ref,
             },
             "depone": {
@@ -143,6 +157,7 @@ def update_files(
         "witnessd": {
             "repository": "Moonweave-Systems/witnessd",
             "commit": witnessd_commit,
+            "version": witnessd_version,
             "role": "execution engine",
         },
         "depone": {
@@ -168,7 +183,7 @@ def update_files(
     release_manifest["not_package_publish"] = True
 
     matrix_text = compatibility_matrix_path.read_text(encoding="utf-8")
-    matrix_text = replace_matrix_row(matrix_text, witnessd_commit, depone_commit, orro_commit)
+    matrix_text = replace_matrix_row(matrix_text, witnessd_commit, witnessd_version, depone_commit, orro_commit)
 
     structured_matrix = read_json(structured_compatibility_matrix_path)
     structured_entries = matrix_entries_by_id(structured_matrix)
@@ -180,6 +195,7 @@ def update_files(
     current_entry.update(
         {
             "witnessd_commit": witnessd_commit,
+            "witnessd_version": witnessd_version,
             "depone_commit": depone_commit,
         }
     )
@@ -187,6 +203,7 @@ def update_files(
         {
             "orro_commit": orro_commit,
             "witnessd_commit": witnessd_commit,
+            "witnessd_version": witnessd_version,
             "depone_commit": depone_commit,
         }
     )
@@ -197,6 +214,7 @@ def update_files(
         "compatibility_matrix": str(COMPAT_MATRIX_REL),
         "structured_compatibility_matrix": str(STRUCTURED_COMPAT_MATRIX_REL),
         "witnessd_commit": witnessd_commit,
+        "witnessd_version": witnessd_version,
         "depone_commit": depone_commit,
         "orro_commit": orro_commit,
         "dry_run": dry_run,
@@ -217,21 +235,38 @@ def update_files(
     return changed
 
 
-def replace_matrix_row(text: str, witnessd_commit: str, depone_commit: str, orro_commit: str) -> str:
+def replace_matrix_row(
+    text: str,
+    witnessd_commit: str,
+    witnessd_version: str,
+    depone_commit: str,
+    orro_commit: str,
+) -> str:
     # The matrix table now leads with a stable "Matrix entry" label column, so the
     # ORRO repo commit (pending or pinned) lives in the second column, not the first.
     orro_repo_commit = "pending release manifest" if orro_commit == ZERO_COMMIT else f"`{orro_commit}`"
-    row = (
-        f"| orro-rc-locked-triplet | {orro_repo_commit} | `{witnessd_commit}` | `{depone_commit}` | pass | "
-        f"Matches `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, "
-        f"and `release/compatibility-matrix.v0.json`. |"
-    )
+    rows = {
+        "depone-n-witnessd-n": (
+            f"| depone-n-witnessd-n | n/a | `{witnessd_commit}` | `{depone_commit}` | pass | "
+            f"Current locally validated engine pair; witnessd v{witnessd_version}. |"
+        ),
+        "orro-rc-locked-triplet": (
+            f"| orro-rc-locked-triplet | {orro_repo_commit} | `{witnessd_commit}` | `{depone_commit}` | pass | "
+            f"Matches witnessd v{witnessd_version}, `engine-lock/orro-e2e-engine-lock.json`, "
+            f"`release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |"
+        ),
+    }
     lines = text.splitlines()
+    found: set[str] = set()
     for index, line in enumerate(lines):
-        if "pending release manifest" in line or "engine-lock/orro-e2e-engine-lock.json" in line:
-            lines[index] = row
-            return "\n".join(lines) + "\n"
-    raise UpdateError("could not find compatibility matrix release row")
+        for entry_id, row in rows.items():
+            if line.startswith(f"| {entry_id} |"):
+                lines[index] = row
+                found.add(entry_id)
+    missing = sorted(rows.keys() - found)
+    if missing:
+        raise UpdateError(f"could not find compatibility matrix rows: {', '.join(missing)}")
+    return "\n".join(lines) + "\n"
 
 
 def self_test() -> int:
@@ -249,6 +284,8 @@ def self_test() -> int:
                     str(tmp),
                     "--witnessd-commit",
                     "1" * 40,
+                    "--witnessd-version",
+                    "9.8.7",
                     "--depone-commit",
                     "2" * 40,
                     "--orro-commit",
@@ -262,15 +299,19 @@ def self_test() -> int:
         structured_entries = {entry["id"]: entry for entry in structured_matrix["entries"]}
         matrix = (tmp / COMPAT_MATRIX_REL).read_text(encoding="utf-8")
         assert engine_lock["witnessd"]["commit"] == "1" * 40
+        assert engine_lock["witnessd"]["version"] == "9.8.7"
         assert engine_lock["depone"]["commit"] == "2" * 40
-        assert engine_lock["witnessd"]["ref_name"] == original_lock["witnessd"]["ref_name"]
+        assert engine_lock["witnessd"]["ref_name"] == "v9.8.7"
         assert engine_lock["depone"]["ref_name"] == original_lock["depone"]["ref_name"]
         assert release_manifest["engines"]["witnessd"]["commit"] == "1" * 40
+        assert release_manifest["engines"]["witnessd"]["version"] == "9.8.7"
         assert release_manifest["engines"]["depone"]["commit"] == "2" * 40
         assert structured_entries["depone-n-witnessd-n"]["witnessd_commit"] == "1" * 40
+        assert structured_entries["depone-n-witnessd-n"]["witnessd_version"] == "9.8.7"
         assert structured_entries["depone-n-witnessd-n"]["depone_commit"] == "2" * 40
         assert structured_entries["orro-rc-locked-triplet"]["orro_commit"] == "3" * 40
         assert structured_entries["orro-rc-locked-triplet"]["witnessd_commit"] == "1" * 40
+        assert structured_entries["orro-rc-locked-triplet"]["witnessd_version"] == "9.8.7"
         assert structured_entries["orro-rc-locked-triplet"]["depone_commit"] == "2" * 40
         assert "`1111111111111111111111111111111111111111`" in matrix
         assert "`2222222222222222222222222222222222222222`" in matrix
@@ -282,6 +323,12 @@ def self_test() -> int:
             check=False,
         )
         assert checker.returncode == 0, checker.stderr
+        try:
+            resolve_witnessd_ref_name("main", "9.8.7")
+        except UpdateError:
+            pass
+        else:
+            raise AssertionError("mismatched witnessd version ref was accepted")
     print("ORRO engine-lock update helper: self-test pass")
     return 0
 
@@ -289,6 +336,7 @@ def self_test() -> int:
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Update ORRO e2e engine-lock and release metadata together.")
     parser.add_argument("--witnessd-commit")
+    parser.add_argument("--witnessd-version")
     parser.add_argument("--depone-commit")
     parser.add_argument("--witnessd-ref")
     parser.add_argument("--depone-ref")
@@ -303,12 +351,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     if args.self_test:
         return self_test()
-    if not args.witnessd_commit or not args.depone_commit:
-        fail("--witnessd-commit and --depone-commit are required")
+    if not args.witnessd_commit or not args.witnessd_version or not args.depone_commit:
+        fail("--witnessd-commit, --witnessd-version, and --depone-commit are required")
     try:
         result = update_files(
             Path(args.root).resolve(),
             witnessd_commit=args.witnessd_commit,
+            witnessd_version=args.witnessd_version,
             depone_commit=args.depone_commit,
             witnessd_ref=args.witnessd_ref,
             depone_ref=args.depone_ref,
