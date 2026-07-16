@@ -60,10 +60,14 @@ def check_plan() -> None:
         fail("wrapper package plan schema_version must be 0.1")
     if plan.get("published_package") is not True:
         fail("wrapper package plan must record the published package")
+    if plan.get("published_package_scope") != "product-line":
+        fail("wrapper package plan published_package must be scoped to the product line")
+    if plan.get("status") != "release-candidate":
+        fail("wrapper package plan status must be release-candidate")
     if plan.get("distribution_name") != "orro":
         fail("wrapper package plan distribution_name must be orro")
-    if plan.get("source_version") != "0.1.0":
-        fail("wrapper package plan source_version must be 0.1.0")
+    if plan.get("source_version") != "0.1.1":
+        fail("wrapper package plan source_version must be 0.1.1")
     if plan.get("current_command_source") != "ORRO-owned orro console script":
         fail("current command source must be ORRO-owned")
 
@@ -118,7 +122,7 @@ def check_docs() -> None:
     require_contains("packaging decision doc", text, "not package publish")
     require_contains("packaging decision doc", text, "witnessd-hosted")
     require_contains("packaging decision doc", text, "no engine code")
-    require_contains("packaging decision doc", text, "`orro` 0.1.0 is published on PyPI")
+    require_contains("packaging decision doc", text, "`orro` 0.1.1 is published on PyPI")
     require_contains("packaging decision doc", text, "witnessd>=2.3.2")
     require_contains("packaging decision doc", text, "proofrun")
     require_contains("packaging decision doc", text, "proofcheck")

@@ -1,13 +1,19 @@
 {
   "kind": "orro-wrapper-package-plan",
   "schema_version": "0.1",
-  "status": "published",
+  "status": "release-candidate",
   "package_goal": "single user-facing ORRO install that prepares and invokes pinned Depone and witnessd engines",
   "distribution_name": "orro",
-  "source_version": "0.1.0",
-  "published_pypi_versions": "0.1.0",
+  "source_version": "0.1.1",
+  "published_pypi_versions": [
+    "0.0.1",
+    "0.0.2",
+    "0.0.3",
+    "0.1.0"
+  ],
   "current_command_source": "ORRO-owned orro console script",
   "published_package": true,
+  "published_package_scope": "product-line",
   "phases": [
     {
       "phase": "bootstrap",
@@ -30,7 +36,7 @@
     {
       "phase": "published-package",
       "status": "current",
-      "description": "Record that orro 0.1.0 is published on PyPI and this repository is its canonical source.",
+      "description": "Track the published ORRO product line through 0.1.0 and prepare source 0.1.1 for the tag-triggered Trusted-Publishing workflow.",
       "contains_engine_logic": false
     }
   ],

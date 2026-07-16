@@ -41,6 +41,7 @@ STALE_RELEASE_PHRASES = (
     "publishing 0.1.0 is a separate",
     "Publishing 0.1.0 is a separate",
 )
+PUBLISHED_PYPI_VERSIONS = ("0.0.1", "0.0.2", "0.0.3", "0.1.0")
 
 
 class ReleaseStateError(RuntimeError):
@@ -75,7 +76,7 @@ def require_match(label: str, pattern: str, text: str) -> str:
     return match.group(1)
 
 
-def wrapper_published_claim(text: str) -> bool:
+def wrapper_publication_claim(text: str) -> tuple[bool, str]:
     try:
         module = ast.parse(text, filename=str(WRAPPER_PATH))
     except SyntaxError as exc:
@@ -86,12 +87,22 @@ def wrapper_published_claim(text: str) -> bool:
         for child in ast.walk(node):
             if not isinstance(child, ast.Return) or not isinstance(child.value, ast.Dict):
                 continue
+            published_package: bool | None = None
+            published_package_scope: str | None = None
             for key, value in zip(child.value.keys, child.value.values):
                 if isinstance(key, ast.Constant) and key.value == "published_package":
                     if isinstance(value, ast.Constant) and isinstance(value.value, bool):
-                        return value.value
+                        published_package = value.value
+                        continue
                     fail("wrapper_info published_package must be a literal boolean")
-    fail("wrapper_info must declare published_package")
+                if isinstance(key, ast.Constant) and key.value == "published_package_scope":
+                    if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                        published_package_scope = value.value
+                        continue
+                    fail("wrapper_info published_package_scope must be a literal string")
+            if published_package is not None and published_package_scope is not None:
+                return published_package, published_package_scope
+    fail("wrapper_info must declare published_package and published_package_scope")
 
 
 def parse_setup_cfg(text: str) -> tuple[str, str]:
@@ -139,18 +150,22 @@ def repository_state() -> dict[str, Any]:
     if not isinstance(manifest_engines, dict) or not isinstance(manifest_engines.get("witnessd"), dict):
         fail("release manifest witnessd engine must be an object")
     witnessd_manifest = manifest_engines["witnessd"]
+    published_package, published_package_scope = wrapper_publication_claim(read_text(WRAPPER_PATH))
     return {
         "pyproject_version": pyproject_version,
         "setup_cfg_version": setup_cfg_version,
         "pyproject_requirement": pyproject_requirement,
         "setup_cfg_requirement": setup_cfg_requirement,
-        "published_package": wrapper_published_claim(read_text(WRAPPER_PATH)),
+        "published_package": published_package,
+        "published_package_scope": published_package_scope,
         "engine_lock_witnessd_version": witnessd_lock.get("version"),
         "engine_lock_witnessd_ref": witnessd_lock.get("ref_name"),
         "manifest_witnessd_version": witnessd_manifest.get("version"),
         "package_plan_version": package_plan.get("source_version"),
+        "package_plan_status": package_plan.get("status"),
         "package_plan_published_versions": package_plan.get("published_pypi_versions"),
         "package_plan_published_package": package_plan.get("published_package"),
+        "package_plan_published_package_scope": package_plan.get("published_package_scope"),
         "docs": {str(path): read_text(ROOT / path) for path in DOC_PATHS},
     }
 
@@ -178,6 +193,8 @@ def validate_release_state(state: dict[str, Any]) -> None:
         fail("setup.cfg version must match pyproject.toml version")
     if state.get("published_package") is not True:
         fail("wrapper_info published_package must be true")
+    if state.get("published_package_scope") != "product-line":
+        fail("wrapper_info published_package must be scoped to the product line")
 
     pyproject_minimum = minimum_witnessd_version("pyproject.toml witnessd requirement", state.get("pyproject_requirement"))
     setup_cfg_minimum = minimum_witnessd_version("setup.cfg witnessd requirement", state.get("setup_cfg_requirement"))
@@ -195,21 +212,36 @@ def validate_release_state(state: dict[str, Any]) -> None:
 
     if state.get("package_plan_version") != package_version:
         fail("wrapper package plan source_version must match the packaged version")
-    if state.get("package_plan_published_versions") != package_version:
-        fail("wrapper package plan published_pypi_versions must match the packaged version")
+    if state.get("package_plan_status") != "release-candidate":
+        fail("wrapper package plan status must be release-candidate")
+    published_versions = state.get("package_plan_published_versions")
+    if not isinstance(published_versions, list) or not published_versions:
+        fail("wrapper package plan published_pypi_versions must be a non-empty list")
+    for published_version in published_versions:
+        version_tuple("wrapper package plan published PyPI version", published_version)
+    if len(published_versions) != len(set(published_versions)):
+        fail("wrapper package plan published_pypi_versions must not contain duplicates")
+    if published_versions != sorted(published_versions, key=lambda value: version_tuple("published version", value)):
+        fail("wrapper package plan published_pypi_versions must be ordered by version")
+    if package_version in published_versions:
+        fail("wrapper package plan must not claim the unreleased source version is published")
+    if published_versions != list(PUBLISHED_PYPI_VERSIONS):
+        fail("wrapper package plan published_pypi_versions must match the known PyPI release history")
     if state.get("package_plan_published_package") is not True:
         fail("wrapper package plan must record published_package true")
+    if state.get("package_plan_published_package_scope") != "product-line":
+        fail("wrapper package plan published_package must be scoped to the product line")
 
     docs = state.get("docs")
     if not isinstance(docs, dict) or not docs:
         fail("release-state docs must be a non-empty mapping")
-    published_sentence = f"`orro` {package_version} is published on PyPI"
+    release_target_sentence = f"The post-release target state is: `orro` {package_version} is published on PyPI"
     for path, text in docs.items():
         if not isinstance(path, str) or not isinstance(text, str):
             fail("release-state docs must map path strings to text")
         normalized_text = " ".join(text.split())
-        if published_sentence not in normalized_text:
-            fail(f"{path} must state that {published_sentence}")
+        if release_target_sentence not in normalized_text:
+            fail(f"{path} must state the post-release target {release_target_sentence!r}")
         for phrase in STALE_RELEASE_PHRASES:
             if phrase in text:
                 fail(f"{path} contains stale release claim {phrase!r}")
@@ -222,27 +254,49 @@ def self_test() -> int:
     assert parsed_version == "0.1.0"
     assert parsed_requirement == "witnessd>=2.3.2"
     base: dict[str, Any] = {
-        "pyproject_version": "0.1.0",
-        "setup_cfg_version": "0.1.0",
+        "pyproject_version": "0.1.1",
+        "setup_cfg_version": "0.1.1",
         "pyproject_requirement": "witnessd>=2.3.2",
         "setup_cfg_requirement": "witnessd>=2.3.2",
         "published_package": True,
+        "published_package_scope": "product-line",
         "engine_lock_witnessd_version": "2.3.3",
         "engine_lock_witnessd_ref": "v2.3.3",
         "manifest_witnessd_version": "2.3.3",
-        "package_plan_version": "0.1.0",
-        "package_plan_published_versions": "0.1.0",
+        "package_plan_version": "0.1.1",
+        "package_plan_status": "release-candidate",
+        "package_plan_published_versions": ["0.0.1", "0.0.2", "0.0.3", "0.1.0"],
         "package_plan_published_package": True,
-        "docs": {"README.md": "`orro` 0.1.0 is published on PyPI."},
+        "package_plan_published_package_scope": "product-line",
+        "docs": {
+            "README.md": (
+                "The post-release target state is: `orro` 0.1.1 is published on PyPI. "
+                "It becomes true only after Trusted Publishing completes."
+            )
+        },
     }
     validate_release_state(base)
     for label, key, value in (
-        ("package version mismatch", "setup_cfg_version", "0.1.1"),
+        ("package version mismatch", "setup_cfg_version", "0.1.2"),
         ("unpublished wrapper claim", "published_package", False),
+        ("ambiguous wrapper publication scope", "published_package_scope", "source-version"),
         ("unsatisfied witnessd lock", "engine_lock_witnessd_version", "2.3.0"),
         ("mutable witnessd ref", "engine_lock_witnessd_ref", "main"),
         ("manifest version mismatch", "manifest_witnessd_version", "2.3.2"),
-        ("package plan stale version", "package_plan_published_versions", "0.0.x"),
+        ("published package-plan status", "package_plan_status", "published"),
+        ("package plan stale version", "package_plan_published_versions", ["0.0.x"]),
+        (
+            "invented published version",
+            "package_plan_published_versions",
+            ["0.0.1", "0.0.2", "0.0.3", "0.0.4", "0.1.0"],
+        ),
+        ("missing published version", "package_plan_published_versions", ["0.0.1", "0.0.3", "0.1.0"]),
+        ("unreleased source listed as published", "package_plan_published_versions", ["0.1.0", "0.1.1"]),
+        (
+            "ambiguous package-plan publication scope",
+            "package_plan_published_package_scope",
+            "source-version",
+        ),
     ):
         forged = copy.deepcopy(base)
         forged[key] = value
@@ -251,6 +305,14 @@ def self_test() -> int:
         except ReleaseStateError:
             continue
         fail(f"self-test accepted forgery: {label}")
+    forged_docs = copy.deepcopy(base)
+    forged_docs["docs"]["README.md"] = "`orro` 0.1.1 is published on PyPI."
+    try:
+        validate_release_state(forged_docs)
+    except ReleaseStateError:
+        pass
+    else:
+        fail("self-test accepted a premature direct publication claim")
     forged_docs = copy.deepcopy(base)
     forged_docs["docs"]["README.md"] = "Only 0.0.x is live."
     try:

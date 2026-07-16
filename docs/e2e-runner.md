@@ -77,5 +77,5 @@ wrapper install smoke, wrapper distribution smoke, and `--self-test`. The
 separate pinned-engine e2e CI checks out the pinned witnessd and Depone commits
 from the e2e lock, then runs the full smoke.
 
-The `orro` package is published on PyPI. This pinned-engine smoke validates the
-0.1.0 source package without publishing a new release.
+The ORRO product line is published on PyPI through 0.1.0. This pinned-engine
+smoke validates the 0.1.1 source package without publishing a new release.

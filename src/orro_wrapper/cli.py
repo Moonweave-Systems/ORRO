@@ -53,6 +53,7 @@ def wrapper_info() -> dict[str, Any]:
         "version": get_version(),
         "current_command_source": "ORRO-owned orro console script",
         "published_package": True,
+        "published_package_scope": "product-line",
         "not_proof": True,
         "not_verifier_truth": True,
         "boundary": boundary(),

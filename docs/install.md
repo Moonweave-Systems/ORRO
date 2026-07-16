@@ -1,16 +1,18 @@
 # Install
 
-`orro` 0.1.0 is published on PyPI, and this repository is its canonical source.
-The package metadata declares `witnessd>=2.3.2`, and the package exposes `orro`
-plus the `orro-wrapper` compatibility alias.
+The ORRO product line is published on PyPI through 0.1.0, while this repository
+packages 0.1.1. The post-release target state is: `orro` 0.1.1 is published on
+PyPI. It becomes true only after `v0.1.1` is tagged and the Trusted-Publishing
+workflow completes. The 0.1.1 package metadata declares `witnessd>=2.3.2`, and
+the package exposes `orro` plus the `orro-wrapper` compatibility alias.
 
 ```bash
 python3 -m pip install orro
 ```
 
-That command installs `orro` 0.1.0 and resolves its `witnessd>=2.3.2`
-dependency. Development dogfood may instead use the source checkout and pinned
-engine repositories directly.
+Until the `v0.1.1` workflow completes, that command installs `orro` 0.1.0.
+Development dogfood may instead use the 0.1.1 source checkout and pinned engine
+repositories directly.
 
 For the shared pinned-engine development layout, run bootstrap with the shared
 virtual environment's Python. Bootstrap prepares the pinned
@@ -95,9 +97,9 @@ The v0 packaging decision is documented in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json`. It is product metadata, not proof, not
 verifier truth, and not package publish.
 
-Current installs use the ORRO-owned thin `orro` command. The `orro` package is
-published on PyPI, this repository sources 0.1.0, and the wrapper continues to
-contain no engine code.
+Current installs use the ORRO-owned thin `orro` command. The ORRO product line is
+published on PyPI through 0.1.0, this repository prepares source 0.1.1 for the
+tag-triggered workflow, and the wrapper continues to contain no engine code.
 
 ## Wrapper Distribution Smoke
 

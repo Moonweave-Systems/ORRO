@@ -46,8 +46,10 @@ the engine command the operator explicitly invoked. The wrapper only delegates.
 
 ## Relationship To Packaging
 
-`orro` 0.1.0 is published on PyPI, and this repository is its canonical source.
-The package metadata declares `witnessd>=2.3.2`.
+The post-release target state is: `orro` 0.1.1 is published on PyPI. It becomes
+true only after `v0.1.1` is tagged and the Trusted-Publishing workflow completes;
+until then, PyPI contains the ORRO product line through 0.1.0. This repository is
+the canonical 0.1.1 source, whose metadata declares `witnessd>=2.3.2`.
 
 Package work must keep:
 
