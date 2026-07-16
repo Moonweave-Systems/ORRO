@@ -67,10 +67,10 @@ migration.
 - witnessd: <https://github.com/Moonweave-Systems/witnessd>
 
 Current command source: the `orro` command is exposed by this ORRO package and
-delegates to `python -m orro`.
+delegates in-process to the witnessd runtime.
 
-Future goal: one user-facing ORRO install that pins compatible Depone and
-witnessd engine versions without merging the engines.
+The package declares `witnessd>=2.3.2`, so installing an ORRO wheel also
+installs a compatible runtime without merging the engines.
 
 ## Pinned Engine E2E
 
@@ -126,10 +126,11 @@ record the v0 wrapper packaging decision. The packaging decision is product
 metadata, not proof, not verifier truth, not package publish, not approval, and
 not assurance.
 
-The current command source is the ORRO-owned `orro` console script. Published
-ORRO package remains future work. Future wrapper work must contain no
-engine code and must not implement proofrun, proofcheck, scheduler, observer,
-fan-in, team-ledger, or verifier logic.
+The current command source is the ORRO-owned `orro` console script. The
+publishable package is versioned here; publishing it to PyPI remains a separate
+future step. Published ORRO package remains future work. The wrapper must
+contain no engine code and must not implement proofrun, proofcheck, scheduler,
+observer, fan-in, team-ledger, or verifier logic.
 
 ## Pinned Engine Fallback
 
@@ -144,27 +145,27 @@ using latest `main`, rewriting the engine lock during bootstrap, or
 auto-selecting alternate engine commits. Moving to a different engine pair
 requires an intentional engine-lock update PR.
 
-## Thin Wrapper Skeleton
+## Thin Product Wrapper
 
 The ORRO-owned `orro` command is the thin wrapper surface in this repository.
 `orro-wrapper` remains a compatibility alias. Both can report wrapper boundary
-metadata and delegate commands to the existing witnessd engine command.
+metadata and delegate commands in-process to the witnessd runtime.
 
 ```bash
 python3 -m pip install -e .
 orro-wrapper boundary
 orro boundary
 orro-wrapper self-test
-orro-wrapper delegate -- --help
+orro-wrapper delegate -- flowplan --help
 ```
 
 The wrapper is not proof, not verifier truth, not package publish, not approval,
 and not assurance. It contains no engine code and does not implement proofrun or
 proofcheck.
 
-The wrapper install smoke verifies the editable package and installed `orro` and
-`orro-wrapper` console scripts without publishing a package or calling engine
-repos:
+The wrapper install smoke verifies the editable package, its witnessd
+dependency, and the installed `orro` and `orro-wrapper` console scripts without
+publishing a package:
 
 ```bash
 python3 scripts/check_orro_wrapper_install.py --json
@@ -185,8 +186,9 @@ python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 
 The distribution smoke checks that the wheel contains no Depone or witnessd
 packages and no proofrun/proofcheck runtime implementation files.
-The explicit network flag authorizes pip build isolation to provision the
-declared `setuptools>=61` build requirement in a clean build environment.
+The explicit network flag authorizes pip to provision the declared
+`setuptools>=61` build requirement and `witnessd>=2.3.2` runtime dependency in
+clean environments.
 
 The distribution smoke is local test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance.
@@ -206,6 +208,17 @@ the former plan-only wave. Dry-run metadata is not proof; committed package
 metadata is now the command ownership source of truth.
 
 ## Install Reality
+
+The ORRO repo is the source of the publishable package. A local install pulls
+the witnessd runtime dependency:
+
+```bash
+python3 -m pip install .
+orro flowplan --help
+```
+
+PyPI publication is intentionally a separate release step and is not performed
+by repository install or smoke commands.
 
 ```bash
 git clone https://github.com/Moonweave-Systems/Depone.git

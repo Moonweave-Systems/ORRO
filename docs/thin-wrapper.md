@@ -19,12 +19,12 @@ python3 -m pip install -e .
 orro-wrapper boundary
 orro boundary
 orro-wrapper self-test
-orro-wrapper delegate -- --help
+orro-wrapper delegate -- flowplan --help
 ```
 
-`delegate` forwards arguments to an existing engine command. By default that
-command is the current Python interpreter running `-m orro`. Operators
-may override it with `--engine-command` or `ORRO_ENGINE_COMMAND`.
+`delegate` forwards arguments in-process to `witnessd.__main__.main`, prefixed
+with the public `orro` command namespace. Normal ORRO commands use the same
+in-process path after validation against `witnessd.__main__.ORRO_COMMANDS`.
 
 ## Boundary
 
@@ -46,8 +46,9 @@ the engine command the operator explicitly invoked. The wrapper only delegates.
 
 ## Relationship To Packaging
 
-This repository contains ORRO package metadata for local install and wheel
-smoke tests. Published ORRO package remains future work.
+This repository contains the canonical publishable ORRO package metadata and
+wrapper source. Published ORRO package remains future work because uploading it
+to PyPI is a separate release step.
 
 Future package work must keep:
 
@@ -65,23 +66,23 @@ python3 -m pip install -e .
 orro-wrapper self-test
 ```
 
-It verifies the wrapper boundary, default delegation command parsing, and that
-empty delegate invocations fail closed.
+It verifies the wrapper boundary and that empty delegate invocations fail
+closed without invoking witnessd commands.
 
 ## Install Smoke
 
 The local install smoke creates a temporary virtual environment, installs this
-repository in editable mode, and verifies the installed `orro` and
-`orro-wrapper` console scripts:
+repository and its witnessd dependency in editable mode, and verifies the
+installed `orro` and `orro-wrapper` console scripts:
 
 ```bash
 python3 scripts/check_orro_wrapper_install.py --json
 ```
 
 The install smoke checks that both commands are installed, that boundary and
-self-test commands pass, and that explicit delegation works with a harmless
-Python command. It does not call Depone or witnessd, does not run proofrun, does
-not run proofcheck, and does not publish a package.
+self-test commands pass, and that explicit in-process delegation shows
+witnessd's `flowplan --help`. It does not run proofrun, does not run proofcheck,
+and does not publish a package.
 
 The install smoke result is setup/test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance.
@@ -97,8 +98,8 @@ python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 It verifies that the wheel contains wrapper modules only, exposes `orro` and
 `orro-wrapper`, and contains no Depone, witnessd, proofrun, proofcheck,
 scheduler, observer, fan-in, team-ledger, or verifier implementation files.
-The explicit network flag authorizes only pip build isolation for the wrapper's
-declared build dependency.
+The explicit network flag authorizes pip provisioning for declared build and
+runtime dependencies, including `witnessd>=2.3.2`.
 
 The distribution smoke is local test metadata, not proof, not verifier truth,
 not package publish, not approval, and not assurance.

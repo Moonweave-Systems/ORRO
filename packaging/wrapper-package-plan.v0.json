@@ -1,9 +1,9 @@
 {
   "kind": "orro-wrapper-package-plan",
   "schema_version": "0.1",
-  "status": "planning",
-  "package_goal": "single user-facing ORRO install that prepares and invokes pinned Depone and witnessd engines",
-  "current_command_source": "witnessd-hosted orro console script",
+  "status": "publishable-not-published",
+  "package_goal": "single user-facing ORRO install that delegates in-process to a compatible witnessd runtime",
+  "current_command_source": "ORRO-owned orro console script",
   "published_package": false,
   "phases": [
     {
@@ -14,20 +14,20 @@
     },
     {
       "phase": "thin-wrapper",
-      "status": "distribution-smoke",
-      "description": "Expose orro-wrapper as a product wrapper skeleton that delegates explicitly to witnessd-hosted ORRO commands and passes local editable install plus wheel distribution smoke.",
+      "status": "publishable",
+      "description": "Expose orro and the orro-wrapper compatibility alias from the canonical product package with in-process witnessd delegation.",
       "contains_engine_logic": false
     },
     {
       "phase": "command-migration",
-      "status": "plan-only",
-      "description": "Define the future ORRO-owned orro command migration without adding or shadowing the orro console script in this phase.",
+      "status": "complete",
+      "description": "Record the completed ORRO-owned orro command migration while retaining orro-wrapper as a compatibility alias.",
       "contains_engine_logic": false
     },
     {
       "phase": "published-package",
-      "status": "future",
-      "description": "Publish a user-facing install only after pinned-engine e2e, bootstrap, and wrapper contracts remain green.",
+      "status": "separate-step",
+      "description": "Publish version 0.1.0 only in a separately approved PyPI release step after repository verification remains green.",
       "contains_engine_logic": false
     }
   ],

@@ -17,7 +17,7 @@ from typing import Any, NoReturn, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "0.1"
-DIST_NAME = "orro-product-wrapper"
+DIST_NAME = "orro"
 
 
 class InstallSmokeError(RuntimeError):
@@ -76,7 +76,7 @@ def scripts_dir(venv_dir: Path) -> Path:
 
 
 def create_venv(venv_dir: Path) -> None:
-    venv.EnvBuilder(with_pip=True, clear=True, system_site_packages=True).create(venv_dir)
+    venv.EnvBuilder(with_pip=True, clear=True).create(venv_dir)
 
 
 def copy_source(destination: Path) -> None:
@@ -142,7 +142,7 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
         bin_dir = scripts_dir(venv_dir)
         python = bin_dir / ("python.exe" if os.name == "nt" else "python")
         wrapper = bin_dir / ("orro-wrapper.exe" if os.name == "nt" else "orro-wrapper")
-        run_command([str(python), "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(source_dir)])
+        run_command([str(python), "-m", "pip", "install", "-e", str(source_dir)])
         if not wrapper.exists():
             fail("ERR_ORRO_WRAPPER_INSTALL_SCRIPT_MISSING", "orro-wrapper console script was not installed", {"path": str(wrapper)})
         orro = check_orro_command_installed(bin_dir)
@@ -161,7 +161,7 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
                 ),
             ]
         ).stdout.strip()
-        delegated = run_command([str(wrapper), "--engine-command", str(python), "delegate", "--", "-c", "print('delegated')"]).stdout.strip()
+        delegated = run_command([str(wrapper), "delegate", "--", "flowplan", "--help"]).stdout
 
         check_boundary_payload("boundary", boundary_payload)
         check_boundary_payload("orro boundary", orro_boundary_payload)
@@ -176,8 +176,8 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
                 "wrapper version must match package metadata",
                 {"version": version, "metadata_version": expected_version},
             )
-        if delegated != "delegated":
-            fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "delegate smoke did not return expected output", {"stdout": delegated})
+        if "usage: witnessd flowplan" not in delegated:
+            fail("ERR_ORRO_WRAPPER_INSTALL_ASSERTION_FAILED", "delegate smoke did not show witnessd flowplan usage", {"stdout": delegated})
 
         return {
             "kind": "orro-wrapper-install-smoke-result",
@@ -191,7 +191,7 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
                 {"name": "orro_console_script_installed", "status": "pass"},
                 {"name": "boundary_non_engine", "status": "pass"},
                 {"name": "self_test_passes", "status": "pass"},
-                {"name": "delegate_smoke", "status": "pass"},
+                {"name": "in_process_delegate_smoke", "status": "pass"},
             ],
             "boundary": boundary(),
             "not_proof": True,

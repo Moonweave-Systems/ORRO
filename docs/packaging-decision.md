@@ -12,12 +12,10 @@ ORRO will remain product/distribution/wrapper only while Depone and witnessd
 stay separate engine repositories.
 
 Current command source is the ORRO-owned `orro` console script, which delegates
-to witnessd. Published ORRO package remains future work. The canonical
-packaging rule is:
-published ORRO package remains future work.
+in-process to witnessd. The canonical publishable package is sourced from this
+repository and declares `witnessd>=2.3.2`. In release-state terms, published ORRO package remains future work because PyPI upload is a separate step.
 
-The next package shape, when implemented, should be a thin wrapper that prepares
-or locates pinned engine checkouts and delegates to the existing engine command
+The package is a thin wrapper that delegates to the existing witnessd command
 surface. It must contain no engine code.
 
 ## Allowed Packaging Scope

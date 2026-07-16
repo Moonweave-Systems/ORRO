@@ -27,20 +27,20 @@ names. It must delegate engine behavior to witnessd and must not implement
 proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, verifier logic,
 or any third engine behavior.
 
-The default delegation target is `python -m orro`. Operators may
-override that target with `--engine-command` or `ORRO_ENGINE_COMMAND` for
-compatibility smoke tests and controlled local installs.
+The wrapper imports `ORRO_COMMANDS` and `main` from `witnessd.__main__` and
+delegates recognized commands in-process as `witnessd_main(["orro", *args])`.
+Unknown commands are rejected by the ORRO-owned wrapper before witnessd parsing.
 
 ## Compatibility
 
 `orro-wrapper` remains a thin compatibility alias for the same wrapper module.
-The wrapper can still run `boundary`, `self-test`, and explicit `delegate`
-commands without invoking engine repositories.
+The wrapper can still run `boundary` and `self-test` locally. Explicit
+`delegate` uses the same in-process witnessd path as recognized ORRO commands.
 
 The clean install and wheel distribution checks prove command ownership only:
 they verify that both `orro` and `orro-wrapper` are installed, that both expose
-the non-engine boundary, and that harmless explicit delegation works. They do
-not verify evidence and do not publish a package.
+the non-engine boundary, and that in-process `flowplan --help` delegation works.
+They do not verify evidence and do not publish a package.
 
 ## Dry-Run Harness
 
@@ -54,8 +54,7 @@ The historical harness still documents its temporary source copy and rollback si
 
 Rollback must not change Depone verifier semantics or witnessd execution
 semantics. If an ORRO-owned command install is faulty, operators can invoke the
-witnessd-hosted surface directly with `python -m orro ...` while the
-ORRO package metadata is fixed.
+witnessd command surface directly while the ORRO package metadata is fixed.
 
 Superflow remains historical compatibility context only; it is not an engine
 implementation inside ORRO.

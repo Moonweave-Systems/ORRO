@@ -17,8 +17,9 @@ into a temporary virtual environment, and verifies the installed `orro` and
 `orro-wrapper` console scripts. It creates a separate build environment, removes
 any preinstalled `setuptools`, confirms the build backend is absent, and then
 uses pip build isolation to provision the declared `setuptools>=61` requirement.
-`--allow-network` explicitly authorizes that build-dependency bootstrap; it does
-not authorize engine checkout mutation or package publication.
+`--allow-network` explicitly authorizes build-dependency bootstrap and
+installation of the declared `witnessd>=2.3.2` runtime dependency; it does not
+authorize engine checkout mutation or package publication.
 
 ## Boundary
 
@@ -30,11 +31,10 @@ The distribution smoke verifies:
   team-ledger, or verifier implementation files;
 - the wheel exposes `orro` and `orro-wrapper`;
 - the installed `orro-wrapper` boundary and self-test pass;
-- explicit delegation works with a harmless Python command.
+- explicit in-process delegation shows witnessd's `flowplan --help`.
 
-The checker does not call Depone or witnessd, does not run proofrun, does not run
-proofcheck, does not run handoff, does not call live models, and does not call
-MCP.
+The checker imports witnessd through the installed wrapper but does not run
+proofrun, proofcheck, handoff, live models, or MCP.
 
 ## Command Ownership
 
@@ -57,4 +57,5 @@ This is local distribution smoke only. It builds and installs a local wheel, but
 it does not publish a package, upload artifacts, create a marketplace release,
 or claim verifier truth.
 
-Published ORRO package remains future work.
+The publishable package is sourced here. Published ORRO package remains future
+work because PyPI upload is a separate release step.

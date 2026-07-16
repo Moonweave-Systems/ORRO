@@ -1,8 +1,14 @@
 # Install
 
-Standalone ORRO package publish remains future work. Current dogfood and
-development use installs witnessd and Depone directly. This repository's local
-wrapper exposes `orro` and `orro-wrapper`.
+The ORRO repo now contains the publishable `orro` package. Publishing that
+package to PyPI remains a separate future step; this task does not publish it.
+The package exposes `orro` and the `orro-wrapper` compatibility alias and
+declares `witnessd>=2.3.2` as its runtime dependency.
+
+```bash
+python3 -m pip install .
+orro flowplan --help
+```
 
 Current development layout uses the engine repositories directly:
 
@@ -14,9 +20,9 @@ python3 -m pip install -e .
 orro init --home .witnessd --depone-root ../Depone
 ```
 
-The ORRO-owned `orro` command delegates to witnessd. This repository is a
-product/distribution wrapper package and does not publish a standalone package
-yet.
+The ORRO-owned `orro` command delegates in-process to witnessd. This repository
+is the canonical product/distribution wrapper source; installation and wheel
+builds do not publish the package.
 
 ## Bootstrap Planner
 
@@ -66,8 +72,8 @@ python3 scripts/orro_e2e_smoke.py \
 The smoke runner is an orchestration harness only. It calls the current engine
 commands and does not implement proofrun, proofcheck, or runtime logic.
 
-Future packaging should provide one user-facing ORRO install with pinned Depone
-and witnessd engine versions.
+The package provides one user-facing ORRO install while keeping Depone and
+witnessd as separate engine projects.
 
 ## Packaging Decision
 
@@ -76,7 +82,8 @@ The v0 packaging decision is documented in `docs/packaging-decision.md` and
 verifier truth, and not package publish.
 
 Current installs use the ORRO-owned thin `orro` command. Published ORRO package
-remains future work, and future wrapper work must contain no engine code.
+remains future work because PyPI publication is a separate release step; the
+publishable wrapper here contains no engine code.
 
 ## Wrapper Distribution Smoke
 
@@ -87,5 +94,5 @@ python3 scripts/check_orro_wrapper_distribution.py --json --allow-network
 ```
 
 This builds and installs a local wheel and verifies `orro` plus `orro-wrapper`.
-The flag authorizes pip build isolation to provision the declared wrapper build
-dependency; it does not authorize engine checkout or package publication.
+The flag authorizes pip to provision declared build and runtime dependencies;
+it does not authorize engine checkout mutation or package publication.

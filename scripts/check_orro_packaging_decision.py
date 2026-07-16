@@ -60,8 +60,8 @@ def check_plan() -> None:
         fail("wrapper package plan schema_version must be 0.1")
     if plan.get("published_package") is not False:
         fail("wrapper package plan must not claim a published package")
-    if plan.get("current_command_source") != "witnessd-hosted orro console script":
-        fail("current command source must remain witnessd-hosted")
+    if plan.get("current_command_source") != "ORRO-owned orro console script":
+        fail("current command source must be ORRO-owned")
 
     engines = plan.get("engine_dependencies")
     if not isinstance(engines, dict):

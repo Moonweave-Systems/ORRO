@@ -148,7 +148,7 @@ def add_simulated_orro_entry_point(source_dir: Path) -> bool:
 def build_wheel(python: Path, source_dir: Path, dist_dir: Path) -> Path:
     dist_dir.mkdir(parents=True, exist_ok=True)
     run_command([str(python), "-m", "pip", "wheel", "--no-deps", "--no-build-isolation", "-w", str(dist_dir), str(source_dir)])
-    wheels = sorted(dist_dir.glob("orro_product_wrapper-*.whl"))
+    wheels = sorted(dist_dir.glob("orro-*.whl"))
     if len(wheels) != 1:
         fail(
             "ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_WHEEL_NOT_FOUND",
@@ -220,31 +220,31 @@ def require_commands(label: str, actual: dict[str, bool], expected: dict[str, bo
             )
 
 
-def smoke_command(label: str, command: Path, python: Path) -> dict[str, Any]:
+def smoke_command(label: str, command: Path) -> dict[str, Any]:
     boundary_payload = load_json_stdout(f"{label} boundary", run_command([str(command), "boundary"]))
     self_test_payload = load_json_stdout(f"{label} self-test", run_command([str(command), "self-test"]))
-    delegated = run_command([str(command), "--engine-command", str(python), "delegate", "--", "-c", f"print('{label}-delegated')"]).stdout.strip()
+    delegated = run_command([str(command), "delegate", "--", "flowplan", "--help"]).stdout
     check_boundary_payload(f"{label} boundary", boundary_payload)
     check_boundary_payload(f"{label} self-test", self_test_payload)
     if boundary_payload.get("kind") != "orro-wrapper-info":
         fail("ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_ASSERTION_FAILED", f"{label} boundary kind mismatch", {"payload": boundary_payload})
     if self_test_payload.get("decision") != "pass":
         fail("ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_ASSERTION_FAILED", f"{label} self-test did not pass", {"payload": self_test_payload})
-    if delegated != f"{label}-delegated":
+    if "usage: witnessd flowplan" not in delegated:
         fail("ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_ASSERTION_FAILED", f"{label} delegate smoke mismatch", {"stdout": delegated})
     return {
         "boundary_kind": boundary_payload.get("kind"),
         "self_test_decision": self_test_payload.get("decision"),
-        "delegate_stdout": delegated,
+        "delegate_flowplan_help": True,
     }
 
 
-def smoke_installed_commands(label: str, commands: dict[str, bool], bin_dir: Path, python: Path) -> dict[str, Any]:
+def smoke_installed_commands(label: str, commands: dict[str, bool], bin_dir: Path) -> dict[str, Any]:
     smoke = {
-        "orro-wrapper": smoke_command(f"orro-wrapper-{label}", command_path(bin_dir, "orro-wrapper"), python),
+        "orro-wrapper": smoke_command(f"orro-wrapper-{label}", command_path(bin_dir, "orro-wrapper")),
     }
     if commands.get("orro"):
-        smoke["orro"] = smoke_command(f"orro-{label}", command_path(bin_dir, "orro"), python)
+        smoke["orro"] = smoke_command(f"orro-{label}", command_path(bin_dir, "orro"))
     return smoke
 
 
@@ -260,6 +260,7 @@ def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
         create_venv(venv_dir)
         bin_dir = scripts_dir(venv_dir)
         python = command_path(bin_dir, "python")
+        run_command([str(python), "-m", "pip", "install", "--upgrade", "witnessd>=2.3.2"])
 
         # Once real ORRO command ownership has landed, the "current" copy already
         # carries the orro entry point too: that steady state is the valid target,
@@ -278,17 +279,17 @@ def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
         install_wheel(python, current_wheel)
         current_commands = installed_commands(bin_dir)
         require_commands("current install", current_commands, expected_current_entry_points)
-        current_smoke = smoke_installed_commands("current", current_commands, bin_dir, python)
+        current_smoke = smoke_installed_commands("current", current_commands, bin_dir)
 
         install_wheel(python, migrated_wheel)
         migrated_commands = installed_commands(bin_dir)
         require_commands("migrated install", migrated_commands, {"orro-wrapper": True, "orro": True})
-        migrated_smoke = smoke_installed_commands("migrated", migrated_commands, bin_dir, python)
+        migrated_smoke = smoke_installed_commands("migrated", migrated_commands, bin_dir)
 
         install_wheel(python, current_wheel)
         rollback_commands = installed_commands(bin_dir)
         require_commands("rollback install", rollback_commands, expected_current_entry_points)
-        rollback_smoke = smoke_installed_commands("rollback", rollback_commands, bin_dir, python)
+        rollback_smoke = smoke_installed_commands("rollback", rollback_commands, bin_dir)
 
         return {
             "kind": "orro-command-migration-dry-run-result",

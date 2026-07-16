@@ -41,7 +41,6 @@ def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
     require_contains("setup.cfg", text, "name = orro")
     require_contains("setup.cfg", text, "version = 0.1.0")
-    require_contains("setup.cfg", text, "witnessd>=2.3.2")
     require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
 
@@ -80,8 +79,8 @@ def check_in_process_delegation() -> None:
 
     witnessd_main = Mock(return_value=0)
     with (
-        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"}), create=True),
-        patch("orro_wrapper.cli.witnessd_main", witnessd_main, create=True),
+        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"})),
+        patch("orro_wrapper.cli.witnessd_main", witnessd_main),
     ):
         result = main(["flowplan", "--help"])
     if result != 0:
@@ -94,8 +93,8 @@ def check_unknown_command_error() -> None:
 
     stderr = io.StringIO()
     with (
-        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"}), create=True),
-        patch("orro_wrapper.cli.witnessd_main", Mock(), create=True),
+        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"})),
+        patch("orro_wrapper.cli.witnessd_main", Mock()),
         redirect_stderr(stderr),
     ):
         result = main(["flowpln"])
@@ -126,14 +125,22 @@ def check_explicit_delegate() -> None:
     from orro_wrapper.cli import main
 
     witnessd_main = Mock(return_value=0)
-    with (
-        patch("orro_wrapper.cli.ORRO_COMMANDS", frozenset({"flowplan"}), create=True),
-        patch("orro_wrapper.cli.witnessd_main", witnessd_main, create=True),
-    ):
+    with patch("orro_wrapper.cli.witnessd_main", witnessd_main):
         result = main(["delegate", "--", "flowplan", "--help"])
     if result != 0:
         fail("explicit delegate returned a non-zero status")
     witnessd_main.assert_called_once_with(["orro", "flowplan", "--help"])
+
+
+def check_missing_witnessd_error() -> None:
+    from orro_wrapper.cli import main
+
+    stderr = io.StringIO()
+    with patch("orro_wrapper.cli.witnessd_main", None), redirect_stderr(stderr):
+        result = main(["flowplan"])
+    if result == 0:
+        fail("missing witnessd must return a non-zero status")
+    require_contains("missing witnessd error", stderr.getvalue(), "install witnessd>=2.3.2")
 
 
 def check_docs() -> None:
@@ -163,6 +170,7 @@ def main() -> int:
     check_unknown_command_error()
     check_local_commands()
     check_explicit_delegate()
+    check_missing_witnessd_error()
     check_docs()
     print("ORRO wrapper: pass")
     return 0

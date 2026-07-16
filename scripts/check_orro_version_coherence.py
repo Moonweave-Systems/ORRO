@@ -12,7 +12,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
-DIST_NAME = "orro-product-wrapper"
+DIST_NAME = "orro"
 
 
 class VersionCoherenceError(RuntimeError):
@@ -65,7 +65,7 @@ def check_version_coherence() -> dict[str, Any]:
 def self_test() -> dict[str, Any]:
     checks = []
     try:
-        _check_version_values("0.0.0", "0.1.0rc1")
+        _check_version_values("0.0.0", "0.1.0")
     except VersionCoherenceError as exc:
         if exc.code != "ERR_ORRO_VERSION_MISMATCH":
             raise

@@ -205,7 +205,7 @@ def prepare_build_venv(venv_dir: Path) -> Path:
 
 def build_wheel(source_dir: Path, dist_dir: Path, python: Path) -> Path:
     run_command([str(python), "-m", "pip", "wheel", "--no-deps", "-w", str(dist_dir), str(source_dir)])
-    wheels = sorted(dist_dir.glob("orro_product_wrapper-*.whl"))
+    wheels = sorted(dist_dir.glob("orro-*.whl"))
     if len(wheels) != 1:
         fail("ERR_ORRO_WRAPPER_DISTRIBUTION_WHEEL_NOT_FOUND", "expected exactly one ORRO wrapper wheel", {"wheels": [str(path) for path in wheels]})
     return wheels[0]
@@ -238,21 +238,21 @@ def distribution_check(workspace: Path | None, *, allow_network: bool) -> dict[s
         create_venv(venv_dir)
         bin_dir = scripts_dir(venv_dir)
         python = bin_dir / ("python.exe" if os.name == "nt" else "python")
-        run_command([str(python), "-m", "pip", "install", "--no-deps", str(wheel_path)])
+        run_command([str(python), "-m", "pip", "install", str(wheel_path)])
         installed_commands = check_installed_commands(venv_dir)
         wrapper = bin_dir / ("orro-wrapper.exe" if os.name == "nt" else "orro-wrapper")
 
         boundary_payload = load_json_stdout("orro-wrapper boundary", run_command([str(wrapper), "boundary"]))
         self_test_payload = load_json_stdout("orro-wrapper self-test", run_command([str(wrapper), "self-test"]))
         orro_boundary_payload = load_json_stdout("orro boundary", run_command([str(bin_dir / ("orro.exe" if os.name == "nt" else "orro")), "boundary"]))
-        delegated = run_command([str(wrapper), "--engine-command", str(python), "delegate", "--", "-c", "print('delegated')"]).stdout.strip()
+        delegated = run_command([str(wrapper), "delegate", "--", "flowplan", "--help"]).stdout
         check_boundary_payload("boundary", boundary_payload)
         check_boundary_payload("self-test", self_test_payload)
         check_boundary_payload("orro boundary", orro_boundary_payload)
         if self_test_payload.get("decision") != "pass":
             fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ASSERTION_FAILED", "installed wrapper self-test did not pass", {"payload": self_test_payload})
-        if delegated != "delegated":
-            fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ASSERTION_FAILED", "delegate smoke did not return expected output", {"stdout": delegated})
+        if "usage: witnessd flowplan" not in delegated:
+            fail("ERR_ORRO_WRAPPER_DISTRIBUTION_ASSERTION_FAILED", "delegate smoke did not show witnessd flowplan usage", {"stdout": delegated})
 
         return {
             "kind": "orro-wrapper-distribution-check",
@@ -275,7 +275,7 @@ def distribution_check(workspace: Path | None, *, allow_network: bool) -> dict[s
                 {"name": "wheel_install", "status": "pass"},
                 {"name": "installed_commands_include_orro", "status": "pass"},
                 {"name": "installed_wrapper_self_test", "status": "pass"},
-                {"name": "installed_wrapper_delegate_smoke", "status": "pass"},
+                {"name": "installed_wrapper_in_process_delegate_smoke", "status": "pass"},
             ],
             "boundary": boundary(),
             "not_proof": True,
@@ -291,7 +291,7 @@ def self_test() -> dict[str, Any]:
     fake_names = [
         "orro_wrapper/__init__.py",
         "orro_wrapper/cli.py",
-        "orro_product_wrapper-0.1.0rc1.dist-info/entry_points.txt",
+        "orro-0.1.0.dist-info/entry_points.txt",
     ]
     forbidden_packages = [name for name in fake_names if name.startswith(FORBIDDEN_PACKAGE_PREFIXES)]
     if forbidden_packages:

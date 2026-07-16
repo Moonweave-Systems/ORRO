@@ -487,7 +487,6 @@ class SmokeRunner:
                 "-m",
                 "pip",
                 "install",
-                "--no-deps",
                 "-e",
                 str(ROOT),
             ],
@@ -509,7 +508,6 @@ class SmokeRunner:
         completed = subprocess.run(
             [str(wrapper), "delegate", "--", "--help"],
             cwd=self.witnessd_root,
-            env=self._engine_env(),
             text=True,
             capture_output=True,
             check=False,
