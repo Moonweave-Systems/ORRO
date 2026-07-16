@@ -725,6 +725,7 @@ def check_wrapper() -> None:
         "scripts/check_orro_wrapper.py",
         "scripts/check_orro_wrapper_install.py",
         "scripts/check_orro_wrapper_distribution.py",
+        "scripts/orro_build_backend.py",
         "scripts/check_orro_version_coherence.py",
         "scripts/check_orro_command_migration.py",
         "docs/thin-wrapper.md",
@@ -737,6 +738,26 @@ def check_wrapper() -> None:
     for path in required_paths:
         if not (ROOT / path).is_file():
             fail(f"required wrapper file missing: {path}")
+
+    ci_text = read_text(".github/workflows/ci.yml")
+    compile_line = next((line for line in ci_text.splitlines() if "python3 -m py_compile" in line), "")
+    if "scripts/orro_build_backend.py" not in compile_line:
+        fail("CI script compilation must include scripts/orro_build_backend.py")
+    require_contains(
+        "CI build-backend self-test",
+        ci_text,
+        "python3 scripts/orro_build_backend.py --self-test",
+    )
+    for script in (
+        "check_orro_wrapper_install.py",
+        "check_orro_wrapper_distribution.py",
+        "check_orro_command_migration_dry_run.py",
+    ):
+        require_contains(
+            "CI isolated build network gating",
+            ci_text,
+            f"python3 scripts/{script} --json --allow-network",
+        )
 
     text = combined_text(
         [
@@ -821,6 +842,7 @@ def check_no_engine_code() -> None:
             "check_orro_wrapper.py",
             "check_orro_wrapper_install.py",
             "check_orro_wrapper_distribution.py",
+            "orro_build_backend.py",
             "orro_e2e_smoke.py",
             "update_orro_engine_lock.py",
         }:

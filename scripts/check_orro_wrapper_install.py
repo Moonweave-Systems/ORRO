@@ -10,9 +10,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import venv
 from pathlib import Path
 from typing import Any, NoReturn, cast
+
+from orro_build_backend import BuildBackendBootstrapError, install_isolated_editable, prepare_build_venv
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,10 +76,6 @@ def scripts_dir(venv_dir: Path) -> Path:
     return venv_dir / ("Scripts" if os.name == "nt" else "bin")
 
 
-def create_venv(venv_dir: Path) -> None:
-    venv.EnvBuilder(with_pip=True, clear=True, system_site_packages=True).create(venv_dir)
-
-
 def copy_source(destination: Path) -> None:
     def ignore(_directory: str, names: list[str]) -> set[str]:
         ignored = {".git", "__pycache__", ".pytest_cache"}
@@ -128,7 +125,7 @@ def check_orro_command_installed(bin_dir: Path) -> Path:
     return orro
 
 
-def install_smoke(workspace: Path | None) -> dict[str, Any]:
+def install_smoke(workspace: Path | None, *, allow_network: bool) -> dict[str, Any]:
     owns_workspace = workspace is None
     workdir = Path(tempfile.mkdtemp(prefix="orro-wrapper-install-")) if workspace is None else workspace
     if workdir.exists() and any(workdir.iterdir()):
@@ -138,11 +135,10 @@ def install_smoke(workspace: Path | None) -> dict[str, Any]:
     source_dir = workdir / "source"
     try:
         copy_source(source_dir)
-        create_venv(venv_dir)
+        python = prepare_build_venv(venv_dir)
         bin_dir = scripts_dir(venv_dir)
-        python = bin_dir / ("python.exe" if os.name == "nt" else "python")
         wrapper = bin_dir / ("orro-wrapper.exe" if os.name == "nt" else "orro-wrapper")
-        run_command([str(python), "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(source_dir)])
+        install_isolated_editable(python, source_dir, allow_network=allow_network)
         if not wrapper.exists():
             fail("ERR_ORRO_WRAPPER_INSTALL_SCRIPT_MISSING", "orro-wrapper console script was not installed", {"path": str(wrapper)})
         orro = check_orro_command_installed(bin_dir)
@@ -232,6 +228,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Smoke-test the ORRO wrapper install.")
     parser.add_argument("--workspace", help="Empty workspace to use for the install smoke. Defaults to a temporary directory.")
     parser.add_argument("--json", action="store_true", help="Emit JSON. JSON is the default output.")
+    parser.add_argument(
+        "--allow-network",
+        action="store_true",
+        help="Allow pip build isolation to bootstrap the wrapper's declared build dependency.",
+    )
     parser.add_argument("--self-test", action="store_true", help="Run offline self-test without creating a venv.")
     return parser.parse_args(argv)
 
@@ -239,10 +240,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        result = self_test() if args.self_test else install_smoke(Path(args.workspace) if args.workspace else None)
+        result = (
+            self_test()
+            if args.self_test
+            else install_smoke(Path(args.workspace) if args.workspace else None, allow_network=args.allow_network)
+        )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    except InstallSmokeError as exc:
+    except (InstallSmokeError, BuildBackendBootstrapError) as exc:
         print(
             json.dumps(
                 {
