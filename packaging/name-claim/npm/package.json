@@ -1,0 +1,26 @@
+{
+  "name": "orro",
+  "version": "0.0.1",
+  "description": "ORRO — the Observed Run & Review Orchestrator. Name placeholder for the Moonweave evidence-backed execution layer for coding agents.",
+  "keywords": [
+    "orro",
+    "moonweave",
+    "evidence",
+    "verification",
+    "coding-agents",
+    "provenance"
+  ],
+  "homepage": "https://github.com/Moonweave-Systems/ORRO",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Moonweave-Systems/ORRO.git"
+  },
+  "author": "Moonweave Systems",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ]
+}
