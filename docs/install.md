@@ -1,8 +1,17 @@
 # Install
 
-Standalone ORRO package publish remains future work. Current dogfood and
-development use installs witnessd and Depone directly. This repository's local
-wrapper exposes `orro` and `orro-wrapper`.
+The `orro` package is published on PyPI (0.0.x is live). This repository now
+sources 0.1.0, whose metadata declares `witnessd>=2.3.2`; publishing that new
+version is a separate release step. The package exposes `orro` and the
+`orro-wrapper` compatibility alias.
+
+```bash
+python3 -m pip install orro
+```
+
+Until 0.1.0 is published, that command installs the live 0.0.x release.
+Development dogfood may instead use the source checkout and pinned engine
+repositories directly.
 
 Current development layout uses the engine repositories directly:
 
@@ -14,9 +23,8 @@ python3 -m pip install -e .
 orro init --home .witnessd --depone-root ../Depone
 ```
 
-The ORRO-owned `orro` command delegates to witnessd. This repository is a
-product/distribution wrapper package and does not publish a standalone package
-yet.
+The ORRO-owned `orro` command delegates to witnessd. This repository is the
+canonical source of the published product/distribution wrapper package.
 
 ## Bootstrap Planner
 
@@ -66,8 +74,9 @@ python3 scripts/orro_e2e_smoke.py \
 The smoke runner is an orchestration harness only. It calls the current engine
 commands and does not implement proofrun, proofcheck, or runtime logic.
 
-Future packaging should provide one user-facing ORRO install with pinned Depone
-and witnessd engine versions.
+The source package provides one user-facing ORRO install and declares
+`witnessd>=2.3.2`; pinned-engine e2e metadata continues to govern repository
+compatibility validation.
 
 ## Packaging Decision
 
@@ -75,8 +84,9 @@ The v0 packaging decision is documented in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json`. It is product metadata, not proof, not
 verifier truth, and not package publish.
 
-Current installs use the ORRO-owned thin `orro` command. Published ORRO package
-remains future work, and future wrapper work must contain no engine code.
+Current installs use the ORRO-owned thin `orro` command. The `orro` package is
+published on PyPI, this repository sources 0.1.0, and the wrapper continues to
+contain no engine code.
 
 ## Wrapper Distribution Smoke
 

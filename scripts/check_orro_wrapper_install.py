@@ -17,7 +17,7 @@ from typing import Any, NoReturn, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "0.1"
-DIST_NAME = "orro-product-wrapper"
+DIST_NAME = "orro"
 
 
 class InstallSmokeError(RuntimeError):

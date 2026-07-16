@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the ORRO thin wrapper skeleton stays a delegating wrapper."""
+"""Check the published ORRO package stays a delegating thin wrapper."""
 
 from __future__ import annotations
 
@@ -28,15 +28,18 @@ def require_contains(label: str, haystack: str, needle: str) -> None:
 
 def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
-    require_contains("pyproject.toml", text, 'name = "orro-product-wrapper"')
-    require_contains("pyproject.toml", text, "dependencies = []")
+    require_contains("pyproject.toml", text, 'name = "orro"')
+    require_contains("pyproject.toml", text, 'version = "0.1.0"')
+    require_contains("pyproject.toml", text, 'dependencies = ["witnessd>=2.3.2"]')
     require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
 
 
 def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
-    require_contains("setup.cfg", text, "name = orro-product-wrapper")
+    require_contains("setup.cfg", text, "name = orro")
+    require_contains("setup.cfg", text, "version = 0.1.0")
+    require_contains("setup.cfg", text, "witnessd>=2.3.2")
     require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
 

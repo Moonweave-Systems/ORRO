@@ -58,16 +58,22 @@ def check_plan() -> None:
         fail("wrapper package plan kind must be orro-wrapper-package-plan")
     if plan.get("schema_version") != "0.1":
         fail("wrapper package plan schema_version must be 0.1")
-    if plan.get("published_package") is not False:
-        fail("wrapper package plan must not claim a published package")
-    if plan.get("current_command_source") != "witnessd-hosted orro console script":
-        fail("current command source must remain witnessd-hosted")
+    if plan.get("published_package") is not True:
+        fail("wrapper package plan must record the published package")
+    if plan.get("distribution_name") != "orro":
+        fail("wrapper package plan distribution_name must be orro")
+    if plan.get("source_version") != "0.1.0":
+        fail("wrapper package plan source_version must be 0.1.0")
+    if plan.get("current_command_source") != "ORRO-owned orro console script":
+        fail("current command source must be ORRO-owned")
 
     engines = plan.get("engine_dependencies")
     if not isinstance(engines, dict):
         fail("engine_dependencies must be an object")
     if engines.get("witnessd", {}).get("repository") != "Moonweave-Systems/witnessd":
         fail("witnessd engine dependency must reference Moonweave-Systems/witnessd")
+    if engines.get("witnessd", {}).get("package_requirement") != "witnessd>=2.3.2":
+        fail("witnessd engine dependency must require witnessd>=2.3.2")
     if engines.get("depone", {}).get("repository") != "Moonweave-Systems/Depone":
         fail("Depone engine dependency must reference Moonweave-Systems/Depone")
 
@@ -92,12 +98,11 @@ def check_plan() -> None:
         "implements_proofrun",
         "implements_proofcheck",
         "creates_third_engine",
-        "published_package",
         "approves_merge",
         "raises_assurance",
     ):
         require_false(boundary, key)
-    for key in ("depone_verifies", "witnessd_executes", "orro_exposes_workflow"):
+    for key in ("published_package", "depone_verifies", "witnessd_executes", "orro_exposes_workflow"):
         require_true(boundary, key)
 
     for key in ("not_proof", "not_verifier_truth", "not_package_publish"):
@@ -113,7 +118,8 @@ def check_docs() -> None:
     require_contains("packaging decision doc", text, "not package publish")
     require_contains("packaging decision doc", text, "witnessd-hosted")
     require_contains("packaging decision doc", text, "no engine code")
-    require_contains("packaging decision doc", text, "published ORRO package remains future work")
+    require_contains("packaging decision doc", text, "The `orro` package is published on PyPI")
+    require_contains("packaging decision doc", text, "witnessd>=2.3.2")
     require_contains("packaging decision doc", text, "proofrun")
     require_contains("packaging decision doc", text, "proofcheck")
 

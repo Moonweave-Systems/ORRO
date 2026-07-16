@@ -23,7 +23,7 @@
     "compatibility plan reviewed"
   ],
   "forbidden_this_phase": [
-    "publish package",
+    "publish a new package release",
     "move engine code into ORRO",
     "implement proofrun in ORRO",
     "implement proofcheck in ORRO",

@@ -46,10 +46,11 @@ the engine command the operator explicitly invoked. The wrapper only delegates.
 
 ## Relationship To Packaging
 
-This repository contains ORRO package metadata for local install and wheel
-smoke tests. Published ORRO package remains future work.
+This repository is the canonical source of the published `orro` package. PyPI
+has live 0.0.x releases; this repository sources 0.1.0 and declares
+`witnessd>=2.3.2`.
 
-Future package work must keep:
+Package work must keep:
 
 - pinned engine lock checks;
 - bootstrap setup/fallback policy;

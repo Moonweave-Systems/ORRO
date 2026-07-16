@@ -17,8 +17,8 @@ not redefine verifier or runtime semantics.
 `scripts/bootstrap_orro.py` can use the same engine lock to plan, check, or
 explicitly prepare local engine checkouts. The bootstrap is setup/distribution
 orchestration and setup metadata, not proof. It contains no engine code, does
-not verify evidence, and the current executable `orro` command remains
-witnessd-hosted.
+not verify evidence, and the ORRO-owned executable `orro` command delegates to
+the witnessd-hosted engine surface.
 
 Pinned engine fallback is fail-closed. If a pinned engine is unavailable or
 mismatched, do not silently use latest `main` or a nearby commit. Correct the

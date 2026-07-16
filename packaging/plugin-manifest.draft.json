@@ -5,11 +5,15 @@
   "display_name": "ORRO",
   "status": "draft",
   "entrypoint_plan": {
-    "current": "witnessd-hosted orro console script",
-    "future": "single user-facing ORRO install that pins witnessd and Depone"
+    "current": "ORRO-owned orro console script delegating to witnessd",
+    "compatibility_alias": "orro-wrapper",
+    "distribution": "orro 0.1.0 source package"
   },
   "engine_dependencies": {
-    "witnessd": "Moonweave-Systems/witnessd",
+    "witnessd": {
+      "repository": "Moonweave-Systems/witnessd",
+      "package_requirement": "witnessd>=2.3.2"
+    },
     "depone": "Moonweave-Systems/Depone"
   },
   "version_lock_placeholder": "engine-lock/orro-engine-lock.example.json",

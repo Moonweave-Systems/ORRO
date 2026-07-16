@@ -100,7 +100,7 @@ def check_docs() -> None:
     require_contains("fallback docs", text, "intentional engine-lock update PR")
     require_contains("fallback docs", text, "proofrun")
     require_contains("fallback docs", text, "proofcheck")
-    require_contains("fallback docs", text, "Published ORRO package remains future work")
+    require_contains("fallback docs", text, "The `orro` package is published on PyPI")
 
 
 def main() -> int:

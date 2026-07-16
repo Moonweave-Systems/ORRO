@@ -60,11 +60,12 @@ When a pinned engine is unavailable, the operator may:
 Bootstrap receipts are setup metadata, not proof. Engine-lock match is
 distribution readiness metadata, not verifier truth.
 
-## Relationship To Future Wrapper
+## Relationship To The Published Wrapper
 
-Any future thin wrapper must follow this policy. It may report missing or
+The published thin wrapper follows this policy. It may report missing or
 mismatched engines and point to bootstrap/setup commands, but it must not
 auto-select different engine commits or rewrite the engine lock outside an
 intentional update PR.
 
-Published ORRO package remains future work.
+The `orro` package is published on PyPI; 0.0.x is live and this repository now
+sources 0.1.0 with `witnessd>=2.3.2`.

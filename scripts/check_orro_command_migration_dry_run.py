@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dry-run a future ORRO-owned ``orro`` command without changing this repo."""
+"""Dry-run historical ORRO command-migration compatibility without changing this repo."""
 
 from __future__ import annotations
 
@@ -148,7 +148,7 @@ def add_simulated_orro_entry_point(source_dir: Path) -> bool:
 def build_wheel(python: Path, source_dir: Path, dist_dir: Path) -> Path:
     dist_dir.mkdir(parents=True, exist_ok=True)
     run_command([str(python), "-m", "pip", "wheel", "--no-deps", "--no-build-isolation", "-w", str(dist_dir), str(source_dir)])
-    wheels = sorted(dist_dir.glob("orro_product_wrapper-*.whl"))
+    wheels = sorted(dist_dir.glob("orro-*.whl"))
     if len(wheels) != 1:
         fail(
             "ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_WHEEL_NOT_FOUND",
@@ -374,7 +374,7 @@ def self_test() -> dict[str, Any]:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Dry-run a future ORRO-owned orro command in a temporary source copy.")
+    parser = argparse.ArgumentParser(description="Dry-run historical ORRO command-migration compatibility in a temporary source copy.")
     parser.add_argument("--workdir", help="Workspace for source copies, wheels, and venv. Defaults to a temporary directory.")
     parser.add_argument("--json", action="store_true", help="Emit JSON. JSON is the default output.")
     parser.add_argument("--self-test", action="store_true", help="Run offline shape checks without creating a venv.")

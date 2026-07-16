@@ -3,12 +3,12 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "orro-product-wrapper"
-version = "0.1.0rc1"
-description = "ORRO product/distribution wrapper skeleton for pinned Depone and witnessd engines."
+name = "orro"
+version = "0.1.0"
+description = "Published ORRO product/distribution wrapper for pinned Depone and witnessd engines."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["witnessd>=2.3.2"]
 
 [project.scripts]
 orro = "orro_wrapper.cli:main"
