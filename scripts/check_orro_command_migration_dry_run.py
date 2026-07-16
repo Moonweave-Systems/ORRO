@@ -10,10 +10,11 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import venv
 import zipfile
 from pathlib import Path
 from typing import Any
+
+from orro_build_backend import BuildBackendBootstrapError, build_isolated_wheel, prepare_build_venv
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,10 +81,6 @@ def command_path(bin_dir: Path, name: str) -> Path:
     return bin_dir / (f"{name}.exe" if os.name == "nt" else name)
 
 
-def create_venv(venv_dir: Path) -> None:
-    venv.EnvBuilder(with_pip=True, clear=True, system_site_packages=True).create(venv_dir)
-
-
 def prepare_workdir(workspace: Path | None) -> tuple[Path, bool]:
     if workspace is None:
         return Path(tempfile.mkdtemp(prefix="orro-command-migration-dry-run-")), True
@@ -143,19 +140,6 @@ def add_simulated_orro_entry_point(source_dir: Path) -> bool:
     pyproject.write_text(pyproject_text, encoding="utf-8")
     setup_cfg.write_text(setup_cfg_text, encoding="utf-8")
     return False
-
-
-def build_wheel(python: Path, source_dir: Path, dist_dir: Path) -> Path:
-    dist_dir.mkdir(parents=True, exist_ok=True)
-    run_command([str(python), "-m", "pip", "wheel", "--no-deps", "--no-build-isolation", "-w", str(dist_dir), str(source_dir)])
-    wheels = sorted(dist_dir.glob("orro-*.whl"))
-    if len(wheels) != 1:
-        fail(
-            "ERR_ORRO_COMMAND_MIGRATION_DRY_RUN_WHEEL_NOT_FOUND",
-            "expected exactly one ORRO wrapper wheel",
-            {"wheels": [str(path) for path in wheels]},
-        )
-    return wheels[0]
 
 
 def inspect_entry_points(wheel_path: Path) -> dict[str, bool]:
@@ -248,7 +232,7 @@ def smoke_installed_commands(label: str, commands: dict[str, bool], bin_dir: Pat
     return smoke
 
 
-def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
+def command_migration_dry_run(workspace: Path | None, *, allow_network: bool) -> dict[str, Any]:
     workdir, owns_workspace = prepare_workdir(workspace)
     venv_dir = workdir / "venv"
     current_source = workdir / "source-current"
@@ -257,17 +241,26 @@ def command_migration_dry_run(workspace: Path | None) -> dict[str, Any]:
         copy_source(current_source)
         copy_source(migrated_source)
         already_migrated = add_simulated_orro_entry_point(migrated_source)
-        create_venv(venv_dir)
+        python = prepare_build_venv(venv_dir)
         bin_dir = scripts_dir(venv_dir)
-        python = command_path(bin_dir, "python")
 
         # Once real ORRO command ownership has landed, the "current" copy already
         # carries the orro entry point too: that steady state is the valid target,
         # not a pre-migration baseline, so the expected shape shifts with it.
         expected_current_entry_points = {"orro-wrapper": True, "orro": already_migrated}
 
-        current_wheel = build_wheel(python, current_source, workdir / "dist-current")
-        migrated_wheel = build_wheel(python, migrated_source, workdir / "dist-migrated")
+        current_wheel = build_isolated_wheel(
+            python,
+            current_source,
+            workdir / "dist-current",
+            allow_network=allow_network,
+        )
+        migrated_wheel = build_isolated_wheel(
+            python,
+            migrated_source,
+            workdir / "dist-migrated",
+            allow_network=allow_network,
+        )
         current_entry_points = inspect_entry_points(current_wheel)
         migrated_entry_points = inspect_entry_points(migrated_wheel)
         if current_entry_points != expected_current_entry_points:
@@ -377,6 +370,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Dry-run historical ORRO command-migration compatibility in a temporary source copy.")
     parser.add_argument("--workdir", help="Workspace for source copies, wheels, and venv. Defaults to a temporary directory.")
     parser.add_argument("--json", action="store_true", help="Emit JSON. JSON is the default output.")
+    parser.add_argument(
+        "--allow-network",
+        action="store_true",
+        help="Allow pip build isolation to bootstrap the wrapper's declared build dependency.",
+    )
     parser.add_argument("--self-test", action="store_true", help="Run offline shape checks without creating a venv.")
     return parser.parse_args(argv)
 
@@ -384,10 +382,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        result = self_test() if args.self_test else command_migration_dry_run(Path(args.workdir) if args.workdir else None)
+        result = (
+            self_test()
+            if args.self_test
+            else command_migration_dry_run(Path(args.workdir) if args.workdir else None, allow_network=args.allow_network)
+        )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    except DryRunError as exc:
+    except (DryRunError, BuildBackendBootstrapError) as exc:
         print(
             json.dumps(
                 {

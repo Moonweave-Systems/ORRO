@@ -15,6 +15,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
+from orro_build_backend import BuildBackendBootstrapError, build_isolated_wheel, prepare_build_venv
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "0.1"
@@ -182,35 +184,6 @@ def check_boundary_payload(label: str, payload: dict[str, Any]) -> None:
             fail("ERR_ORRO_WRAPPER_DISTRIBUTION_BOUNDARY_INVALID", f"{label}.boundary.{key} must be false")
 
 
-def prepare_build_venv(venv_dir: Path) -> Path:
-    create_venv(venv_dir)
-    bin_dir = scripts_dir(venv_dir)
-    python = bin_dir / ("python.exe" if os.name == "nt" else "python")
-    run_command([str(python), "-m", "pip", "uninstall", "--yes", "setuptools"])
-    probe = run_command(
-        [
-            str(python),
-            "-c",
-            "import importlib.util; print(importlib.util.find_spec('setuptools') is not None)",
-        ]
-    )
-    if probe.stdout.strip() != "False":
-        fail(
-            "ERR_ORRO_WRAPPER_DISTRIBUTION_BUILD_ENV_INVALID",
-            "wrapper build venv must not contain setuptools before the isolated build",
-            {"stdout": probe.stdout, "stderr": probe.stderr},
-        )
-    return python
-
-
-def build_wheel(source_dir: Path, dist_dir: Path, python: Path) -> Path:
-    run_command([str(python), "-m", "pip", "wheel", "--no-deps", "-w", str(dist_dir), str(source_dir)])
-    wheels = sorted(dist_dir.glob("orro-*.whl"))
-    if len(wheels) != 1:
-        fail("ERR_ORRO_WRAPPER_DISTRIBUTION_WHEEL_NOT_FOUND", "expected exactly one ORRO wrapper wheel", {"wheels": [str(path) for path in wheels]})
-    return wheels[0]
-
-
 def distribution_check(workspace: Path | None, *, allow_network: bool) -> dict[str, Any]:
     owns_workspace = workspace is None
     workdir = Path(tempfile.mkdtemp(prefix="orro-wrapper-dist-")) if workspace is None else workspace
@@ -225,13 +198,12 @@ def distribution_check(workspace: Path | None, *, allow_network: bool) -> dict[s
         copy_source(source_dir)
         dist_dir.mkdir()
         build_python = prepare_build_venv(build_venv_dir)
-        if not allow_network:
-            fail(
-                "ERR_ORRO_WRAPPER_DISTRIBUTION_NETWORK_NOT_ALLOWED",
-                "isolated wrapper build dependency bootstrap requires --allow-network",
-                {"build_backend": "setuptools.build_meta", "build_requirement": "setuptools>=61"},
-            )
-        wheel_path = build_wheel(source_dir, dist_dir, build_python)
+        wheel_path = build_isolated_wheel(
+            build_python,
+            source_dir,
+            dist_dir,
+            allow_network=allow_network,
+        )
         package_contents = inspect_wheel(wheel_path)
         entry_points = inspect_entry_points(wheel_path)
 
@@ -352,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    except DistributionCheckError as exc:
+    except (DistributionCheckError, BuildBackendBootstrapError) as exc:
         print(
             json.dumps(
                 {
