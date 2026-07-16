@@ -92,8 +92,10 @@ that the installed metadata points to `orro_wrapper.cli:main`, `orro boundary`
 reports `contains_engine_logic: false`, `orro flowplan --help` delegates to
 witnessd, and both `orro-wrapper` and `python -m orro` remain usable.
 
-`orro` 0.1.0 is published on PyPI, this repository is its canonical source, and
-the package metadata declares `witnessd>=2.3.2`.
+The post-release target state is: `orro` 0.1.1 is published on PyPI. It becomes
+true only after `v0.1.1` is tagged and the Trusted-Publishing workflow completes;
+until then, PyPI contains the ORRO product line through 0.1.0. This repository is
+the canonical 0.1.1 source, whose metadata declares `witnessd>=2.3.2`.
 
 The wrapper distribution smoke is separate from bootstrap:
 

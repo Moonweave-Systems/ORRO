@@ -12,8 +12,15 @@ ORRO will remain product/distribution/wrapper only while Depone and witnessd
 stay separate engine repositories.
 
 Current command source is the ORRO-owned `orro` console script, which delegates
-to witnessd. `orro` 0.1.0 is published on PyPI, this repository is its canonical
-source, and its package metadata declares `witnessd>=2.3.2`.
+to witnessd. The post-release target state is: `orro` 0.1.1 is published on PyPI.
+It becomes true only after `v0.1.1` is tagged and the Trusted-Publishing workflow
+completes; until then, PyPI contains the ORRO product line through 0.1.0. This
+repository is the canonical 0.1.1 source, whose metadata declares
+`witnessd>=2.3.2`.
+
+`published_package: true` means the ORRO product line has published PyPI
+releases; `published_package_scope: product-line` makes that scope explicit. It
+does not assert that the 0.1.1 source candidate is already published.
 
 The package remains a thin wrapper that delegates to the existing engine
 command surface. It must contain no engine code.
@@ -50,9 +57,10 @@ The ORRO repository must not contain:
    The local wheel distribution smoke verifies that the built wheel exposes
    `orro` and `orro-wrapper`, and contains no engine packages or engine
    implementation files.
-3. Published package: current phase. `orro` 0.1.0 is published on PyPI from this
-   repository. Any new release still requires pinned-engine e2e, boundary
-   checks, bootstrap checks, and release metadata to remain green.
+3. Published package: current phase. The ORRO product line is published through
+   0.1.0, and source 0.1.1 is prepared for the tag-triggered Trusted-Publishing
+   workflow. Any new release still requires pinned-engine e2e, boundary checks,
+   bootstrap checks, and release metadata to remain green.
 
 4. Command ownership: current phase. `orro = orro_wrapper.cli:main` and
    `orro-wrapper = orro_wrapper.cli:main` are committed package metadata. Both

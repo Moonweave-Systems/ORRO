@@ -5,7 +5,10 @@ proof, not verifier truth, not approval, and not assurance. It does not replace
 Depone or witnessd engine tests, and it does not imply that unlisted future
 commits are compatible.
 
-`orro` 0.1.0 is published on PyPI, and this repository is its canonical source.
+The post-release target state is: `orro` 0.1.1 is published on PyPI. It becomes
+true only after `v0.1.1` is tagged and the Trusted-Publishing workflow completes;
+until then, PyPI contains the ORRO product line through 0.1.0. This repository is
+the canonical 0.1.1 source.
 
 ```text
 Depone verifies; witnessd executes; ORRO exposes the workflow.
