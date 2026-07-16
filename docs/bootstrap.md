@@ -70,7 +70,8 @@ does not run proofrun, proofcheck, handoff, or auto. Editable witnessd install i
 separate and requires the explicit `--install-witnessd` flag:
 
 ```bash
-python3 scripts/bootstrap_orro.py \
+/usr/bin/python3 -m venv ~/.local/share/orro/venv
+~/.local/share/orro/venv/bin/python scripts/bootstrap_orro.py \
   --execute \
   --workspace /tmp/orro-workspace \
   --engine-lock engine-lock/orro-e2e-engine-lock.json \
@@ -78,6 +79,18 @@ python3 scripts/bootstrap_orro.py \
   --install-witnessd \
   --json
 ```
+
+Bootstrap rejects `--install-witnessd` outside a virtual environment so it
+cannot rewrite a system interpreter's command directory.
+
+Both ORRO and witnessd publish an `orro` console script. After installing the
+pinned editable witnessd, bootstrap installs the ORRO wrapper last and
+explicitly links the invoking environment's `bin/orro` plus
+`~/.local/bin/orro` to `bin/orro-wrapper`. This makes the PATH-facing owner
+deterministic instead of depending on pip install order. Bootstrap then checks
+that the installed metadata points to `orro_wrapper.cli:main`, `orro boundary`
+reports `contains_engine_logic: false`, `orro flowplan --help` delegates to
+witnessd, and both `orro-wrapper` and `python -m orro` remain usable.
 
 `orro` 0.1.0 is published on PyPI, this repository is its canonical source, and
 the package metadata declares `witnessd>=2.3.2`.

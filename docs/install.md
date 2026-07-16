@@ -12,18 +12,30 @@ That command installs `orro` 0.1.0 and resolves its `witnessd>=2.3.2`
 dependency. Development dogfood may instead use the source checkout and pinned
 engine repositories directly.
 
-Current development layout uses the engine repositories directly:
+For the shared pinned-engine development layout, run bootstrap with the shared
+virtual environment's Python. Bootstrap prepares the pinned
+`Moonweave-Systems/witnessd` and `Moonweave-Systems/Depone` checkouts:
 
 ```bash
-git clone https://github.com/Moonweave-Systems/Depone.git
-git clone https://github.com/Moonweave-Systems/witnessd.git
-cd witnessd
-python3 -m pip install -e .
-orro init --home .witnessd --depone-root ../Depone
+/usr/bin/python3 -m venv ~/.local/share/orro/venv
+~/.local/share/orro/venv/bin/python scripts/bootstrap_orro.py \
+  --execute \
+  --workspace ~/.local/share/orro/engines \
+  --engine-lock engine-lock/orro-e2e-engine-lock.json \
+  --allow-network \
+  --install-witnessd \
+  --json
 ```
 
 The ORRO-owned `orro` command delegates to witnessd. This repository is the
 canonical source of the published product/distribution wrapper package.
+Both distributions install an `orro` console script, so bootstrap installs the
+ORRO wrapper after the pinned editable witnessd install and then explicitly
+links both the shared environment's `bin/orro` and `~/.local/bin/orro` to
+`bin/orro-wrapper`. Bootstrap verifies the `orro_wrapper.cli:main` entry-point
+metadata, the non-engine wrapper boundary, and real `flowplan --help`
+delegation before it succeeds. `orro-wrapper` remains available, and the pinned
+witnessd compatibility shim remains reachable with `python -m orro`.
 
 ## Bootstrap Planner
 
