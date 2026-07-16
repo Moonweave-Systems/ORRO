@@ -507,7 +507,7 @@ class SmokeRunner:
             )
         completed = subprocess.run(
             [str(wrapper), "delegate", "--", "--help"],
-            cwd=self.witnessd_root,
+            cwd=wrapper_root,
             text=True,
             capture_output=True,
             check=False,
