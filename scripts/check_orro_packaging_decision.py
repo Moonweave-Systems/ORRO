@@ -66,8 +66,8 @@ def check_plan() -> None:
         fail("wrapper package plan status must be release-candidate")
     if plan.get("distribution_name") != "orro":
         fail("wrapper package plan distribution_name must be orro")
-    if plan.get("source_version") != "0.1.1":
-        fail("wrapper package plan source_version must be 0.1.1")
+    if plan.get("source_version") != "0.2.0":
+        fail("wrapper package plan source_version must be 0.2.0")
     if plan.get("current_command_source") != "ORRO-owned orro console script":
         fail("current command source must be ORRO-owned")
 
@@ -76,8 +76,8 @@ def check_plan() -> None:
         fail("engine_dependencies must be an object")
     if engines.get("witnessd", {}).get("repository") != "Moonweave-Systems/witnessd":
         fail("witnessd engine dependency must reference Moonweave-Systems/witnessd")
-    if engines.get("witnessd", {}).get("package_requirement") != "witnessd>=2.3.2":
-        fail("witnessd engine dependency must require witnessd>=2.3.2")
+    if engines.get("witnessd", {}).get("package_requirement") != "witnessd>=2.4.0":
+        fail("witnessd engine dependency must require witnessd>=2.4.0")
     if engines.get("depone", {}).get("repository") != "Moonweave-Systems/Depone":
         fail("Depone engine dependency must reference Moonweave-Systems/Depone")
 
@@ -122,8 +122,8 @@ def check_docs() -> None:
     require_contains("packaging decision doc", text, "not package publish")
     require_contains("packaging decision doc", text, "witnessd-hosted")
     require_contains("packaging decision doc", text, "no engine code")
-    require_contains("packaging decision doc", text, "`orro` 0.1.1 is published on PyPI")
-    require_contains("packaging decision doc", text, "witnessd>=2.3.2")
+    require_contains("packaging decision doc", text, "`orro` 0.2.0 is published on PyPI")
+    require_contains("packaging decision doc", text, "witnessd>=2.4.0")
     require_contains("packaging decision doc", text, "proofrun")
     require_contains("packaging decision doc", text, "proofcheck")
 

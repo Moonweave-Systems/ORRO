@@ -612,6 +612,7 @@ class SmokeRunner:
             str(workflow_plan),
             "--role-lane-plan",
             str(role_lane_plan),
+            "--allow-reference-adapter",
             "--max-parallel",
             "1",
         ]
@@ -634,6 +635,12 @@ class SmokeRunner:
         summary = report.get("summary", {})
         handoff = report.get("handoff", {})
         self._assert(summary.get("state") == "complete" or summary.get("complete") is True, "report_reaches_complete", "report did not reach complete", summary=summary)
+        self._assert(
+            summary.get("not_real_ai_work") is True,
+            "report_labels_reference_adapter_not_real_ai_work",
+            "reference-adapter smoke must remain explicitly labeled as not real AI work",
+            summary=summary,
+        )
         self._assert(handoff.get("approves_merge") is False, "report_does_not_approve_merge", "report approved merge")
         self._assert(handoff.get("raises_assurance") is False, "report_does_not_raise_assurance", "report raised assurance")
 
