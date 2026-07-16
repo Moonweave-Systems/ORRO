@@ -9,8 +9,11 @@ implementation.
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -32,6 +35,23 @@ class BootstrapError(RuntimeError):
         self.code = code
         self.message = message
         self.details = details or {}
+
+
+@dataclass
+class CommandOwnershipClaim:
+    receipt: dict[str, Any]
+    backups: list[tuple[Path, Path | None]]
+
+    def commit(self) -> None:
+        for _link, backup in self.backups:
+            if backup is not None:
+                backup.unlink(missing_ok=True)
+
+    def rollback(self) -> None:
+        for link, backup in reversed(self.backups):
+            link.unlink(missing_ok=True)
+            if backup is not None:
+                backup.replace(link)
 
 
 def boundary() -> dict[str, Any]:
@@ -159,6 +179,27 @@ def bootstrap_plan(mode: str, workspace: Path, lock_path: Path, lock: dict[str, 
                 "executes_engine": False,
                 "verifies_evidence": False,
             },
+            {
+                "name": "install ORRO wrapper last",
+                "action": "python3 -m pip install --no-deps -e <ORRO-root>",
+                "requires_explicit_flag": "--install-witnessd",
+                "executes_engine": False,
+                "verifies_evidence": False,
+            },
+            {
+                "name": "claim ORRO command ownership",
+                "action": "link venv/bin/orro and ~/.local/bin/orro to venv/bin/orro-wrapper",
+                "requires_explicit_flag": "--install-witnessd",
+                "executes_engine": False,
+                "verifies_evidence": False,
+            },
+            {
+                "name": "verify shared-environment ORRO commands",
+                "action": "check wrapper metadata, boundary, delegation, and compatibility paths",
+                "requires_explicit_flag": "--install-witnessd",
+                "executes_engine": False,
+                "verifies_evidence": False,
+            },
         ],
         "not_proof": True,
         "not_verifier_truth": True,
@@ -223,8 +264,8 @@ def check_existing(witnessd_root: Path, depone_root: Path, lock_path: Path, lock
     return receipt
 
 
-def run_command(args: list[str], *, cwd: Path | None = None) -> dict[str, Any]:
-    completed = subprocess.run(args, cwd=cwd, text=True, capture_output=True, check=False)
+def run_command(args: list[str], *, cwd: Path | None = None, env: dict[str, str] | None = None) -> dict[str, Any]:
+    completed = subprocess.run(args, cwd=cwd, env=env, text=True, capture_output=True, check=False)
     step = {
         "command": args,
         "cwd": str(cwd) if cwd else None,
@@ -235,6 +276,163 @@ def run_command(args: list[str], *, cwd: Path | None = None) -> dict[str, Any]:
     if completed.returncode != 0:
         raise BootstrapError("ERR_ORRO_BOOTSTRAP_COMMAND_FAILED", f"command failed: {' '.join(args)}", step)
     return step
+
+
+def require_virtual_environment(prefix: Path, base_prefix: Path) -> None:
+    if prefix == base_prefix:
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_VENV_REQUIRED",
+            "--install-witnessd requires running bootstrap with the shared virtual environment's Python",
+            {"prefix": str(prefix), "base_prefix": str(base_prefix)},
+        )
+
+
+def replace_symlink(link: Path, target: Path | str) -> None:
+    link.parent.mkdir(parents=True, exist_ok=True)
+    temporary = link.with_name(f".{link.name}.orro-owner-tmp")
+    try:
+        temporary.unlink(missing_ok=True)
+        temporary.symlink_to(target)
+        temporary.replace(link)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_COMMAND_OWNER_FAILED",
+            f"could not set ORRO command owner: {link}",
+            {"path": str(link), "target": str(target), "error": str(exc)},
+        ) from exc
+
+
+def claim_orro_command_owner(scripts: Path, path_bin: Path) -> CommandOwnershipClaim:
+    wrapper = scripts / "orro-wrapper"
+    if not wrapper.is_file():
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_WRAPPER_MISSING",
+            "ORRO wrapper install did not create orro-wrapper",
+            {"path": str(wrapper)},
+        )
+    orro = scripts / "orro"
+    path_orro = path_bin / "orro"
+    backups: list[tuple[Path, Path | None]] = []
+    try:
+        for link, target in ((orro, wrapper.name), (path_orro, wrapper)):
+            backup = link.with_name(f".{link.name}.orro-owner-backup")
+            backup.unlink(missing_ok=True)
+            if os.path.lexists(link):
+                link.replace(backup)
+                backups.append((link, backup))
+            else:
+                backups.append((link, None))
+            replace_symlink(link, target)
+    except (OSError, BootstrapError) as exc:
+        claim = CommandOwnershipClaim(receipt={}, backups=backups)
+        claim.rollback()
+        if isinstance(exc, BootstrapError):
+            raise
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_COMMAND_OWNER_FAILED",
+            "could not preserve the previous ORRO command owner",
+            {"error": str(exc)},
+        ) from exc
+    receipt = {
+        "name": "claim ORRO command ownership",
+        "status": "pass",
+        "entry_point": "orro_wrapper.cli:main",
+        "orro": str(orro),
+        "orro_resolves_to": str(orro.resolve()),
+        "path_orro": str(path_orro),
+        "path_orro_resolves_to": str(path_orro.resolve()),
+        "executes_engine": False,
+        "verifies_evidence": False,
+    }
+    return CommandOwnershipClaim(receipt=receipt, backups=backups)
+
+
+def load_command_json(label: str, step: dict[str, Any]) -> dict[str, Any]:
+    try:
+        payload = json.loads(step["stdout"])
+    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED",
+            f"{label} did not emit JSON",
+            {"stdout": step.get("stdout"), "stderr": step.get("stderr")},
+        ) from exc
+    if not isinstance(payload, dict):
+        raise BootstrapError("ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED", f"{label} JSON must be an object")
+    return payload
+
+
+def verify_orro_install(python: Path, scripts: Path, path_bin: Path, witnessd_root: Path) -> dict[str, Any]:
+    wrapper = scripts / "orro-wrapper"
+    orro = scripts / "orro"
+    path_orro = path_bin / "orro"
+    for label, command in (("environment", orro), ("PATH-facing", path_orro)):
+        if not command.is_symlink() or command.resolve() != wrapper.resolve():
+            raise BootstrapError(
+                "ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED",
+                f"{label} orro does not resolve to the ORRO wrapper",
+                {"orro": str(command), "actual": str(command.resolve()), "expected": str(wrapper.resolve())},
+            )
+
+    metadata = run_command(
+        [
+            str(python),
+            "-c",
+            (
+                "import importlib.metadata as m; "
+                "eps=[e for e in m.distribution('orro').entry_points if e.group == 'console_scripts' and e.name == 'orro']; "
+                "print(eps[0].value)"
+            ),
+        ]
+    )["stdout"].strip()
+    if metadata != "orro_wrapper.cli:main":
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED",
+            "installed ORRO metadata has the wrong orro entry point",
+            {"expected": "orro_wrapper.cli:main", "actual": metadata},
+        )
+
+    path_env = os.environ.copy()
+    path_env["PATH"] = os.pathsep.join([str(path_bin), str(scripts), path_env.get("PATH", "")])
+    selected = shutil.which("orro", path=path_env["PATH"])
+    if selected is None or Path(selected) != path_orro:
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED",
+            "PATH lookup did not select the managed ORRO command",
+            {"expected": str(path_orro), "actual": selected, "path": path_env["PATH"]},
+        )
+    boundary_step = run_command(["orro", "boundary"], env=path_env)
+    boundary_payload = load_command_json("orro boundary", boundary_step)
+    if boundary_payload.get("kind") != "orro-wrapper-info" or boundary_payload.get("boundary", {}).get("contains_engine_logic") is not False:
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED",
+            "PATH-facing orro did not report the ORRO wrapper boundary",
+            {"payload": boundary_payload},
+        )
+
+    delegate_step = run_command(["orro", "flowplan", "--help"], cwd=witnessd_root, env=path_env)
+    if "usage: witnessd flowplan" not in delegate_step["stdout"]:
+        raise BootstrapError(
+            "ERR_ORRO_BOOTSTRAP_INSTALL_SMOKE_FAILED",
+            "PATH-facing orro flowplan --help did not reach witnessd",
+            {"stdout": delegate_step["stdout"], "stderr": delegate_step["stderr"]},
+        )
+    environment_step = run_command([str(orro), "boundary"])
+    wrapper_step = run_command([str(wrapper), "boundary"])
+    module_step = run_command([str(python), "-m", "orro", "--help"], cwd=witnessd_root)
+    return {
+        "name": "verify shared-environment ORRO commands",
+        "status": "pass",
+        "entry_point": metadata,
+        "path_command": str(path_orro),
+        "path_command_resolves_to": str(path_orro.resolve()),
+        "boundary_kind": boundary_payload["kind"],
+        "contains_engine_logic": False,
+        "delegated_command": delegate_step["command"],
+        "compatibility_commands": [environment_step["command"], wrapper_step["command"], module_step["command"]],
+        "executes_engine": False,
+        "verifies_evidence": False,
+    }
 
 
 def clone_or_verify(repo: str, commit: str, root: Path, *, allow_network: bool) -> dict[str, Any]:
@@ -278,8 +476,22 @@ def execute_bootstrap(workspace: Path, lock_path: Path, lock: dict[str, Any], *,
         clone_or_verify(lock["depone"]["repository"], lock["depone"]["commit"], depone_root, allow_network=allow_network),
     ]
     if install_witnessd:
+        require_virtual_environment(Path(sys.prefix), Path(sys.base_prefix))
         install_step = run_command([sys.executable, "-m", "pip", "install", "-e", str(witnessd_root)])
         steps.append({"name": "install witnessd editable", "status": "pass", "command": install_step, "executes_engine": False, "verifies_evidence": False})
+        wrapper_install = run_command([sys.executable, "-m", "pip", "install", "--no-deps", "-e", str(ROOT)])
+        steps.append({"name": "install ORRO wrapper last", "status": "pass", "command": wrapper_install, "executes_engine": False, "verifies_evidence": False})
+        scripts = Path(sys.executable).parent
+        path_bin = Path.home() / ".local/bin"
+        claim = claim_orro_command_owner(scripts, path_bin)
+        try:
+            verification = verify_orro_install(Path(sys.executable), scripts, path_bin, witnessd_root)
+        except BootstrapError:
+            claim.rollback()
+            raise
+        claim.commit()
+        steps.append(claim.receipt)
+        steps.append(verification)
     return {
         "kind": "orro-bootstrap-receipt",
         "schema_version": SCHEMA_VERSION,
@@ -331,6 +543,13 @@ def self_test() -> int:
 
         args = parse_args(["--dry-run", "--execute", "--workspace", str(tmp / "workspace")])
         expect_error("mode_conflict_fails", "ERR_ORRO_BOOTSTRAP_MODE_CONFLICT", lambda: resolve_mode(args), checks)
+        expect_error(
+            "shared_venv_required_for_install",
+            "ERR_ORRO_BOOTSTRAP_VENV_REQUIRED",
+            lambda: require_virtual_environment(Path("/usr"), Path("/usr")),
+            checks,
+        )
+        require_virtual_environment(Path("/tmp/orro-venv"), Path("/usr"))
 
         plan = bootstrap_plan("dry-run", tmp / "workspace", valid, lock)
         assert plan["kind"] == "orro-bootstrap-plan"
@@ -338,8 +557,29 @@ def self_test() -> int:
         planned_text = json.dumps(plan["planned_steps"], sort_keys=True)
         for forbidden in ("proofrun", "proofcheck", "handoff"):
             assert forbidden not in planned_text
+        assert "install ORRO wrapper last" in planned_text
+        assert "claim ORRO command ownership" in planned_text
+        assert "verify shared-environment ORRO commands" in planned_text
         checks.append({"name": "dry_run_output_shape", "status": "pass"})
         checks.append({"name": "dry_run_has_no_proof_commands", "status": "pass"})
+
+        scripts = tmp / "venv/bin"
+        path_bin = tmp / "home/.local/bin"
+        scripts.mkdir(parents=True)
+        write_text(scripts / "orro", "from orro.__main__ import main\n")
+        wrapper = write_text(scripts / "orro-wrapper", "from orro_wrapper.cli import main\n")
+        claim = claim_orro_command_owner(scripts, path_bin)
+        assert (scripts / "orro").resolve() == wrapper.resolve()
+        assert (path_bin / "orro").resolve() == wrapper.resolve()
+        assert claim.receipt["entry_point"] == "orro_wrapper.cli:main"
+        claim.rollback()
+        assert (scripts / "orro").read_text(encoding="utf-8") == "from orro.__main__ import main\n"
+        assert not (path_bin / "orro").exists()
+        claim = claim_orro_command_owner(scripts, path_bin)
+        claim.commit()
+        assert (scripts / "orro").resolve() == wrapper.resolve()
+        assert (path_bin / "orro").resolve() == wrapper.resolve()
+        checks.append({"name": "orro_command_owner_is_deterministic", "status": "pass"})
 
         witnessd_repo = tmp / "witnessd"
         depone_repo = tmp / "Depone"
