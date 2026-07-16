@@ -1,9 +1,9 @@
 # Thin Wrapper Plan
 
-The post-release target state is: `orro` 0.1.1 is published on PyPI. It becomes
-true only after `v0.1.1` is tagged and the Trusted-Publishing workflow completes;
-until then, PyPI contains the ORRO product line through 0.1.0. The ORRO repository
-is the canonical 0.1.1 source, whose metadata declares `witnessd>=2.3.2`.
+The post-release target state is: `orro` 0.2.0 is published on PyPI. It becomes
+true only after `v0.2.0` is tagged and the Trusted-Publishing workflow completes;
+until then, PyPI contains the ORRO product line through 0.1.1. The ORRO repository
+is the canonical 0.2.0 source, whose metadata declares `witnessd>=2.4.0`.
 
 ## Current State
 
@@ -57,7 +57,7 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 The packaging decision is recorded in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json`. It is product metadata, not package
 publish. It records the published package reality, the ORRO-owned command, the
-`witnessd>=2.3.2` dependency, and the requirement that the package contain no
+`witnessd>=2.4.0` dependency, and the requirement that the package contain no
 engine code.
 
 The pinned-engine fallback is recorded in `docs/pinned-engine-fallback.md` and

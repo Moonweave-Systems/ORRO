@@ -29,8 +29,8 @@ def require_contains(label: str, haystack: str, needle: str) -> None:
 def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
     require_contains("pyproject.toml", text, 'name = "orro"')
-    require_contains("pyproject.toml", text, 'version = "0.1.1"')
-    require_contains("pyproject.toml", text, 'dependencies = ["witnessd>=2.3.2"]')
+    require_contains("pyproject.toml", text, 'version = "0.2.0"')
+    require_contains("pyproject.toml", text, 'dependencies = ["witnessd>=2.4.0"]')
     require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
 
@@ -38,8 +38,8 @@ def check_pyproject() -> None:
 def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
     require_contains("setup.cfg", text, "name = orro")
-    require_contains("setup.cfg", text, "version = 0.1.1")
-    require_contains("setup.cfg", text, "witnessd>=2.3.2")
+    require_contains("setup.cfg", text, "version = 0.2.0")
+    require_contains("setup.cfg", text, "witnessd>=2.4.0")
     require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
 
