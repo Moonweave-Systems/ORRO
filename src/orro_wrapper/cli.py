@@ -121,7 +121,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="ORRO product command.",
         epilog="""Evidence workflow (delegated to the pinned witnessd engine):
-  init, scout, flowplan, proofrun, proofcheck, handoff, team
+  init, scout, flow, flowplan, proofrun, proofcheck, handoff, team
+
+Run the guided workflow end-to-end (init -> scout -> flowplan -> proofrun -> proofcheck) with:
+  orro flow <goal>
 
 Run a workflow command through the engine with:
   orro delegate -- <command>

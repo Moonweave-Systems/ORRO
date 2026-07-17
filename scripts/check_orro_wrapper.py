@@ -106,7 +106,8 @@ def check_help_discoverability() -> None:
             fail("wrapper --help did not exit")
 
     help_text = stdout.getvalue()
-    require_contains("wrapper help", help_text, "init, scout, flowplan, proofrun, proofcheck, handoff, team")
+    require_contains("wrapper help", help_text, "init, scout, flow, flowplan, proofrun, proofcheck, handoff, team")
+    require_contains("wrapper help", help_text, "orro flow <goal>")
     require_contains("wrapper help", help_text, "orro delegate -- <command>")
     require_contains("wrapper help", help_text, "orro delegate -- --help")
 
