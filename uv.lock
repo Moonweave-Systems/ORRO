@@ -1,0 +1,23 @@
+version = 1
+revision = 3
+requires-python = ">=3.10"
+
+[[package]]
+name = "orro"
+version = "0.2.3"
+source = { editable = "." }
+dependencies = [
+    { name = "witnessd" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "witnessd", specifier = ">=2.4.0,<3.0.0" }]
+
+[[package]]
+name = "witnessd"
+version = "2.4.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/0a/46b2d527099bfa4775549660b5282c8da0651b0e25bd41d72d5503929b09/witnessd-2.4.3.tar.gz", hash = "sha256:5a9e7793ced1f32209d9a9f460c9a3d1aa785393c5374606cd0dcffd9ca865e6", size = 387379, upload-time = "2026-07-17T13:03:05.737Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/f9/6437687c93b1ca15f916b19ccd8cd5010cfdf80aad3a4fbeb54927b5c765/witnessd-2.4.3-py3-none-any.whl", hash = "sha256:b87499ca2f3c087b2efcb63a1d336085058aae7fd6f1c0524fc270b0d6cca8de", size = 245148, upload-time = "2026-07-17T13:03:04.375Z" },
+]

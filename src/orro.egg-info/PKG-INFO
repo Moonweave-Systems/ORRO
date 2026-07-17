@@ -1,3 +1,13 @@
+Metadata-Version: 2.4
+Name: orro
+Version: 0.2.3
+Summary: Published ORRO product/distribution wrapper for pinned Depone and witnessd engines.
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: witnessd<3.0.0,>=2.4.0
+Dynamic: license-file
+
 # ORRO
 
 ORRO = Observed Run & Review Orchestrator.

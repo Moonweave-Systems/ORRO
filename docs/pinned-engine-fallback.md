@@ -67,8 +67,8 @@ mismatched engines and point to bootstrap/setup commands, but it must not
 auto-select different engine commits or rewrite the engine lock outside an
 intentional update PR.
 
-The post-release target state is: `orro` 0.2.2 is published on PyPI. It becomes
-true only after `v0.2.2` is tagged and the Trusted-Publishing workflow completes;
-until then, PyPI contains the ORRO product line through 0.2.1. This repository is
-the canonical 0.2.2 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`. The current
-engine lock pins witnessd 2.4.2 at tag `v2.4.2`, satisfying that dependency.
+The post-release target state is: `orro` 0.2.3 is published on PyPI. It becomes
+true only after `v0.2.3` is tagged and the Trusted-Publishing workflow completes;
+until then, PyPI contains the ORRO product line through 0.2.2. This repository is
+the canonical 0.2.3 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`. The current
+engine lock pins witnessd 2.4.3 at tag `v2.4.3`, satisfying that dependency.
