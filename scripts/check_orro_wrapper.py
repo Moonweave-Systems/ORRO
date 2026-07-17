@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -89,6 +91,26 @@ def check_delegation_environment() -> None:
         fail("wrapper delegation must set ORRO_WRAPPER_DELEGATION=1 in the child environment")
 
 
+def check_help_discoverability() -> None:
+    sys.path.insert(0, str(ROOT / "src"))
+    from orro_wrapper.cli import parse_args
+
+    stdout = io.StringIO()
+    with contextlib.redirect_stdout(stdout):
+        try:
+            parse_args(["--help"])
+        except SystemExit as exc:
+            if exc.code != 0:
+                fail("wrapper --help returned a non-zero status")
+        else:
+            fail("wrapper --help did not exit")
+
+    help_text = stdout.getvalue()
+    require_contains("wrapper help", help_text, "init, scout, flowplan, proofrun, proofcheck, handoff, team")
+    require_contains("wrapper help", help_text, "orro delegate -- <command>")
+    require_contains("wrapper help", help_text, "orro delegate -- --help")
+
+
 def check_docs() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
     require_contains("thin wrapper doc", text, INVARIANT)
@@ -113,6 +135,7 @@ def main() -> int:
     check_setup_cfg()
     check_package_files()
     check_delegation_environment()
+    check_help_discoverability()
     check_docs()
     print("ORRO wrapper: pass")
     return 0
