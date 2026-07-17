@@ -14,6 +14,7 @@ SETUP_CFG = ROOT / "setup.cfg"
 PACKAGE_DIR = ROOT / "src/orro_wrapper"
 DOC_PATH = ROOT / "docs/thin-wrapper.md"
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
+WITNESSD_REQUIREMENT = "witnessd>=2.4.0,<3.0.0"
 
 
 def fail(message: str) -> None:
@@ -30,7 +31,7 @@ def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
     require_contains("pyproject.toml", text, 'name = "orro"')
     require_contains("pyproject.toml", text, 'version = "0.2.0"')
-    require_contains("pyproject.toml", text, 'dependencies = ["witnessd>=2.4.0"]')
+    require_contains("pyproject.toml", text, f'dependencies = ["{WITNESSD_REQUIREMENT}"]')
     require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
 
@@ -39,7 +40,7 @@ def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
     require_contains("setup.cfg", text, "name = orro")
     require_contains("setup.cfg", text, "version = 0.2.0")
-    require_contains("setup.cfg", text, "witnessd>=2.4.0")
+    require_contains("setup.cfg", text, WITNESSD_REQUIREMENT)
     require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
 

@@ -12,7 +12,7 @@
   "engine_dependencies": {
     "witnessd": {
       "repository": "Moonweave-Systems/witnessd",
-      "package_requirement": "witnessd>=2.4.0"
+      "package_requirement": "witnessd>=2.4.0,<3.0.0"
     },
     "depone": "Moonweave-Systems/Depone"
   },

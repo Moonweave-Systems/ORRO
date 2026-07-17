@@ -3,7 +3,7 @@
 The ORRO product line is published on PyPI through 0.1.1, while this repository
 packages 0.2.0. The post-release target state is: `orro` 0.2.0 is published on
 PyPI. It becomes true only after `v0.2.0` is tagged and the Trusted-Publishing
-workflow completes. The 0.2.0 package metadata declares `witnessd>=2.4.0`, and
+workflow completes. The 0.2.0 package metadata declares `witnessd>=2.4.0,<3.0.0`, and
 the package exposes `orro` plus the `orro-wrapper` compatibility alias.
 
 ```bash
@@ -88,7 +88,7 @@ The smoke runner is an orchestration harness only. It calls the current engine
 commands and does not implement proofrun, proofcheck, or runtime logic.
 
 The source package provides one user-facing ORRO install and declares
-`witnessd>=2.4.0`; pinned-engine e2e metadata continues to govern repository
+`witnessd>=2.4.0,<3.0.0`; pinned-engine e2e metadata continues to govern repository
 compatibility validation.
 
 ## Packaging Decision
