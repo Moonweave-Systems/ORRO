@@ -118,7 +118,20 @@ def self_test() -> int:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="ORRO product command.")
+    parser = argparse.ArgumentParser(
+        description="ORRO product command.",
+        epilog="""Evidence workflow (delegated to the pinned witnessd engine):
+  init, scout, flowplan, proofrun, proofcheck, handoff, team
+
+Run a workflow command through the engine with:
+  orro delegate -- <command>
+
+Show the authoritative engine command list with:
+  orro delegate -- --help
+
+The wrapper delegates execution; it does not implement these workflow commands.""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--engine-command", help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m orro.")
     parser.add_argument("--json", action="store_true", help="Emit JSON for wrapper-owned commands. JSON is the default for boundary/self-test.")
     parser.add_argument("--version", action="store_true", help="Print wrapper version and exit.")
