@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.ruff_cache/
+.coverage
+
+# Python build/editable-install artifacts
+*.egg-info/
+build/
+dist/
+uv.lock
