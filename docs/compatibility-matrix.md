@@ -22,7 +22,7 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 | orro-rc-locked-triplet | `a58e2957eb026411cb8160370c8a4fbf53072fb4` | `d6827a25ae72f5a6b5d9c0eb8f899753095c0cf9` | `75caf978b34fce28a53b23426e5df58582527c5a` | pass | Matches witnessd v2.4.0, `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |
 
 The locked witnessd revision is release `v2.4.0` (source version 2.4.0). It
-satisfies the ORRO 0.2.0 package requirement `witnessd>=2.4.0`.
+satisfies the ORRO 0.2.0 package requirement `witnessd>=2.4.0,<3.0.0`.
 
 Related files:
 

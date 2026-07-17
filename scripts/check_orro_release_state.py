@@ -21,6 +21,7 @@ WRAPPER_PATH = ROOT / "src" / "orro_wrapper" / "cli.py"
 ENGINE_LOCK_PATH = ROOT / "engine-lock" / "orro-e2e-engine-lock.json"
 RELEASE_MANIFEST_PATH = ROOT / "release" / "orro-release-manifest.v0.json"
 PACKAGE_PLAN_PATH = ROOT / "packaging" / "wrapper-package-plan.v0.json"
+PLUGIN_MANIFEST_PATH = ROOT / "packaging" / "plugin-manifest.draft.json"
 DOC_PATHS = (
     Path("README.md"),
     Path("docs/install.md"),
@@ -34,7 +35,7 @@ DOC_PATHS = (
     Path("docs/thin-wrapper.md"),
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-WITNESSD_REQUIREMENT_RE = re.compile(r"^witnessd>=(\d+\.\d+\.\d+)$")
+WITNESSD_REQUIREMENT_RE = re.compile(r"^witnessd>=(\d+\.\d+\.\d+),<(\d+\.\d+\.\d+)$")
 STALE_RELEASE_PHRASES = (
     "0.0.x is live",
     "Until 0.1.0 is published",
@@ -146,12 +147,19 @@ def repository_state() -> dict[str, Any]:
     engine_lock = read_json(ENGINE_LOCK_PATH)
     manifest = read_json(RELEASE_MANIFEST_PATH)
     package_plan = read_json(PACKAGE_PLAN_PATH)
+    plugin_manifest = read_json(PLUGIN_MANIFEST_PATH)
     witnessd_lock = engine_lock.get("witnessd")
     manifest_engines = manifest.get("engines")
     if not isinstance(witnessd_lock, dict):
         fail("engine-lock witnessd must be an object")
     if not isinstance(manifest_engines, dict) or not isinstance(manifest_engines.get("witnessd"), dict):
         fail("release manifest witnessd engine must be an object")
+    package_plan_engines = package_plan.get("engine_dependencies")
+    plugin_manifest_engines = plugin_manifest.get("engine_dependencies")
+    if not isinstance(package_plan_engines, dict) or not isinstance(package_plan_engines.get("witnessd"), dict):
+        fail("wrapper package plan witnessd engine must be an object")
+    if not isinstance(plugin_manifest_engines, dict) or not isinstance(plugin_manifest_engines.get("witnessd"), dict):
+        fail("plugin manifest witnessd engine must be an object")
     witnessd_manifest = manifest_engines["witnessd"]
     published_package, published_package_scope = wrapper_publication_claim(read_text(WRAPPER_PATH))
     return {
@@ -159,6 +167,8 @@ def repository_state() -> dict[str, Any]:
         "setup_cfg_version": setup_cfg_version,
         "pyproject_requirement": pyproject_requirement,
         "setup_cfg_requirement": setup_cfg_requirement,
+        "package_plan_requirement": package_plan_engines["witnessd"].get("package_requirement"),
+        "plugin_manifest_requirement": plugin_manifest_engines["witnessd"].get("package_requirement"),
         "published_package": published_package,
         "published_package_scope": published_package_scope,
         "engine_lock_witnessd_version": witnessd_lock.get("version"),
@@ -180,13 +190,19 @@ def version_tuple(label: str, value: Any) -> tuple[int, int, int]:
     return int(major), int(minor), int(patch)
 
 
-def minimum_witnessd_version(label: str, requirement: Any) -> tuple[int, int, int]:
+def witnessd_version_bounds(
+    label: str, requirement: Any
+) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     if not isinstance(requirement, str):
         fail(f"{label} must be a string")
     match = WITNESSD_REQUIREMENT_RE.fullmatch(requirement)
     if match is None:
-        fail(f"{label} must be an exact witnessd>=X.Y.Z requirement")
-    return version_tuple(label, match.group(1))
+        fail(f"{label} must be an exact witnessd>=X.Y.Z,<A.B.C requirement")
+    minimum = version_tuple(f"{label} minimum", match.group(1))
+    maximum = version_tuple(f"{label} upper bound", match.group(2))
+    if maximum <= minimum:
+        fail(f"{label} upper bound must be greater than its minimum")
+    return minimum, maximum
 
 
 def validate_release_state(state: dict[str, Any]) -> None:
@@ -199,14 +215,29 @@ def validate_release_state(state: dict[str, Any]) -> None:
     if state.get("published_package_scope") != "product-line":
         fail("wrapper_info published_package must be scoped to the product line")
 
-    pyproject_minimum = minimum_witnessd_version("pyproject.toml witnessd requirement", state.get("pyproject_requirement"))
-    setup_cfg_minimum = minimum_witnessd_version("setup.cfg witnessd requirement", state.get("setup_cfg_requirement"))
-    if setup_cfg_minimum != pyproject_minimum:
-        fail("setup.cfg witnessd requirement must match pyproject.toml")
+    requirement_keys = (
+        ("pyproject.toml", "pyproject_requirement"),
+        ("setup.cfg", "setup_cfg_requirement"),
+        ("wrapper package plan", "package_plan_requirement"),
+        ("plugin manifest", "plugin_manifest_requirement"),
+    )
+    requirements: dict[str, str] = {}
+    bounds: dict[str, tuple[tuple[int, int, int], tuple[int, int, int]]] = {}
+    for label, key in requirement_keys:
+        requirement = state.get(key)
+        if not isinstance(requirement, str):
+            fail(f"{label} witnessd requirement must be a string")
+        requirements[label] = requirement
+        bounds[label] = witnessd_version_bounds(f"{label} witnessd requirement", requirement)
+    pyproject_requirement = requirements["pyproject.toml"]
+    for label, requirement in requirements.items():
+        if requirement != pyproject_requirement:
+            fail(f"{label} witnessd requirement must match pyproject.toml")
+    pyproject_minimum, pyproject_maximum = bounds["pyproject.toml"]
 
     witnessd_version = state.get("engine_lock_witnessd_version")
     locked_witnessd = version_tuple("engine-lock witnessd version", witnessd_version)
-    if locked_witnessd < pyproject_minimum:
+    if not pyproject_minimum <= locked_witnessd < pyproject_maximum:
         fail("engine-lock witnessd version must satisfy the package requirement")
     if state.get("engine_lock_witnessd_ref") != f"v{witnessd_version}":
         fail("engine-lock witnessd ref_name must match its version tag")
@@ -252,15 +283,17 @@ def validate_release_state(state: dict[str, Any]) -> None:
 
 def self_test() -> int:
     parsed_version, parsed_requirement = parse_pyproject(
-        '[project]\nversion = "0.1.0"\ndependencies = [\n  "example>=1",\n  "witnessd>=2.4.0",\n]\n'
+        '[project]\nversion = "0.1.0"\ndependencies = [\n  "example>=1",\n  "witnessd>=2.4.0,<3.0.0",\n]\n'
     )
     assert parsed_version == "0.1.0"
-    assert parsed_requirement == "witnessd>=2.4.0"
+    assert parsed_requirement == "witnessd>=2.4.0,<3.0.0"
     base: dict[str, Any] = {
         "pyproject_version": "0.2.0",
         "setup_cfg_version": "0.2.0",
-        "pyproject_requirement": "witnessd>=2.4.0",
-        "setup_cfg_requirement": "witnessd>=2.4.0",
+        "pyproject_requirement": "witnessd>=2.4.0,<3.0.0",
+        "setup_cfg_requirement": "witnessd>=2.4.0,<3.0.0",
+        "package_plan_requirement": "witnessd>=2.4.0,<3.0.0",
+        "plugin_manifest_requirement": "witnessd>=2.4.0,<3.0.0",
         "published_package": True,
         "published_package_scope": "product-line",
         "engine_lock_witnessd_version": "2.4.0",
@@ -284,6 +317,18 @@ def self_test() -> int:
         ("unpublished wrapper claim", "published_package", False),
         ("ambiguous wrapper publication scope", "published_package_scope", "source-version"),
         ("unsatisfied witnessd lock", "engine_lock_witnessd_version", "2.3.3"),
+        ("witnessd lock at upper bound", "engine_lock_witnessd_version", "3.0.0"),
+        ("unbounded witnessd requirement", "pyproject_requirement", "witnessd>=2.4.0"),
+        (
+            "mismatched package-plan witnessd requirement",
+            "package_plan_requirement",
+            "witnessd>=2.5.0,<3.0.0",
+        ),
+        (
+            "mismatched plugin-manifest witnessd requirement",
+            "plugin_manifest_requirement",
+            "witnessd>=2.4.0,<4.0.0",
+        ),
         ("mutable witnessd ref", "engine_lock_witnessd_ref", "main"),
         ("manifest version mismatch", "manifest_witnessd_version", "2.3.2"),
         ("published package-plan status", "package_plan_status", "published"),

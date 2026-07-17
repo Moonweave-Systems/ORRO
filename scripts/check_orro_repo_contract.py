@@ -643,7 +643,7 @@ def check_packaging_decision() -> None:
     require_contains("packaging decision docs", text, "packaging decision")
     require_contains("packaging decision docs", text, "not package publish")
     require_contains("packaging decision docs", text, "`orro` 0.2.0 is published on PyPI")
-    require_contains("packaging decision docs", text, "witnessd>=2.4.0")
+    require_contains("packaging decision docs", text, "witnessd>=2.4.0,<3.0.0")
     require_contains("packaging decision docs", text, "no engine code")
     require_contains("packaging decision docs", text, "witnessd-hosted")
     require_contains("packaging decision docs", text, INVARIANT)

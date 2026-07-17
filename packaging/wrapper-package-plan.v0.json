@@ -45,7 +45,7 @@
     "witnessd": {
       "repository": "Moonweave-Systems/witnessd",
       "role": "execution engine",
-      "package_requirement": "witnessd>=2.4.0"
+      "package_requirement": "witnessd>=2.4.0,<3.0.0"
     },
     "depone": {
       "repository": "Moonweave-Systems/Depone",

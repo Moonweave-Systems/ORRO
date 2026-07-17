@@ -39,7 +39,7 @@ product line through 0.1.1. This repository is the canonical 0.2.0 source.
 The packaging decision in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json` is also product metadata, not package
 publish. It keeps the current command source ORRO-owned and subprocess-delegated
-to witnessd, declares `witnessd>=2.4.0`, and requires the wrapper to contain no
+to witnessd, declares `witnessd>=2.4.0,<3.0.0`, and requires the wrapper to contain no
 engine code.
 
 The wrapper distribution smoke builds and installs a local wheel to verify

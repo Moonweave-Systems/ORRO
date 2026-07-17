@@ -74,7 +74,7 @@ migration.
 Current command source: the `orro` command is exposed by this ORRO package and
 delegates to `python -m orro`.
 
-The 0.2.0 package metadata declares `witnessd>=2.4.0` while keeping Depone and
+The 0.2.0 package metadata declares `witnessd>=2.4.0,<3.0.0` while keeping Depone and
 witnessd as separate engine repositories.
 
 ## Pinned Engine E2E
@@ -137,7 +137,7 @@ not assurance.
 
 The current command source is the ORRO-owned `orro` console script. The ORRO
 product line is published on PyPI through 0.1.1, and this repository prepares
-source version 0.2.0 with a `witnessd>=2.4.0` dependency. The wrapper contains no
+source version 0.2.0 with a `witnessd>=2.4.0,<3.0.0` dependency. The wrapper contains no
 engine code and must not
 implement proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, or
 verifier logic.

@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN_PATH = ROOT / "packaging/wrapper-package-plan.v0.json"
 DOC_PATH = ROOT / "docs/packaging-decision.md"
 INVARIANT = "Depone verifies; witnessd executes; ORRO exposes the workflow"
+WITNESSD_REQUIREMENT = "witnessd>=2.4.0,<3.0.0"
 
 
 def fail(message: str) -> None:
@@ -76,8 +77,8 @@ def check_plan() -> None:
         fail("engine_dependencies must be an object")
     if engines.get("witnessd", {}).get("repository") != "Moonweave-Systems/witnessd":
         fail("witnessd engine dependency must reference Moonweave-Systems/witnessd")
-    if engines.get("witnessd", {}).get("package_requirement") != "witnessd>=2.4.0":
-        fail("witnessd engine dependency must require witnessd>=2.4.0")
+    if engines.get("witnessd", {}).get("package_requirement") != WITNESSD_REQUIREMENT:
+        fail(f"witnessd engine dependency must require {WITNESSD_REQUIREMENT}")
     if engines.get("depone", {}).get("repository") != "Moonweave-Systems/Depone":
         fail("Depone engine dependency must reference Moonweave-Systems/Depone")
 
@@ -123,7 +124,7 @@ def check_docs() -> None:
     require_contains("packaging decision doc", text, "witnessd-hosted")
     require_contains("packaging decision doc", text, "no engine code")
     require_contains("packaging decision doc", text, "`orro` 0.2.0 is published on PyPI")
-    require_contains("packaging decision doc", text, "witnessd>=2.4.0")
+    require_contains("packaging decision doc", text, WITNESSD_REQUIREMENT)
     require_contains("packaging decision doc", text, "proofrun")
     require_contains("packaging decision doc", text, "proofcheck")
 
