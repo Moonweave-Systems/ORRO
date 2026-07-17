@@ -621,6 +621,23 @@ class SmokeRunner:
         self._assert(run_dir.is_dir(), "proofrun_creates_run_dir", "proofrun did not create run dir", run_dir=str(run_dir))
         self._assert((run_dir / "team-ledger.json").is_file(), "proofrun_creates_team_ledger", "team-ledger.json missing")
 
+        evidence_contracts = sorted(run_dir.glob("*/evidence-contract.json"))
+        self._assert(
+            bool(evidence_contracts),
+            "docs_change_emits_evidence_contract",
+            "docs-change proofrun did not emit a lane evidence contract",
+            run_dir=str(run_dir),
+        )
+        evidence_contract = _load_json_file(evidence_contracts[0], "ERR_ORRO_E2E_EVIDENCE_CONTRACT_INVALID")
+        self._assert(
+            evidence_contract.get("schema_version") == "v109.role_capability_write_scope"
+            and isinstance(evidence_contract.get("role_capability_write_scope"), dict)
+            and bool(evidence_contract.get("allowed_touched_files")),
+            "docs_change_emits_v109_role_capability_write_scope",
+            "docs-change lane evidence must carry the region-scoped v109 write-scope contract",
+            evidence_contract=evidence_contract,
+        )
+
         _code, next_payload, _stdout, _stderr = self._orro(["next", str(run_dir), "--home", str(home), "--json"])
         self._assert(next_payload.get("decision") != "complete", "next_before_auto_not_complete", "next was complete before proofcheck/handoff")
 
