@@ -1,3 +1,0 @@
-[console_scripts]
-orro = orro_wrapper.cli:main
-orro-wrapper = orro_wrapper.cli:main
