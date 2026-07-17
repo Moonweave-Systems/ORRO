@@ -4,7 +4,7 @@
   "status": "release-candidate",
   "package_goal": "single user-facing ORRO install that prepares and invokes pinned Depone and witnessd engines",
   "distribution_name": "orro",
-  "source_version": "0.2.2",
+  "source_version": "0.2.3",
   "published_pypi_versions": [
     "0.0.1",
     "0.0.2",
@@ -12,7 +12,8 @@
     "0.1.0",
     "0.1.1",
     "0.2.0",
-    "0.2.1"
+    "0.2.1",
+    "0.2.2"
   ],
   "current_command_source": "ORRO-owned orro console script",
   "published_package": true,
@@ -39,7 +40,7 @@
     {
       "phase": "published-package",
       "status": "current",
-      "description": "Track the published ORRO product line through 0.2.1 and prepare source 0.2.2 for the tag-triggered Trusted-Publishing workflow.",
+      "description": "Track the published ORRO product line through 0.2.2 and prepare source 0.2.3 for the tag-triggered Trusted-Publishing workflow.",
       "contains_engine_logic": false
     }
   ],
