@@ -5,13 +5,13 @@
     "name": "ORRO",
     "full_name": "Observed Run & Review Orchestrator",
     "repository": "Moonweave-Systems/ORRO",
-    "commit": "00fd989b5c948812418a993afb7a17673b58a136"
+    "commit": "c25079146f541526917d65ae6472eec70736ef6a"
   },
   "engines": {
     "witnessd": {
       "repository": "Moonweave-Systems/witnessd",
-      "commit": "960b1558f5d0b68f61ad81ba7e500bb5c874494e",
-      "version": "2.9.1",
+      "commit": "2eee111befc1ee9553be81dd8b4d203f5de91907",
+      "version": "2.10.0",
       "role": "execution engine"
     },
     "depone": {
