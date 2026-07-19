@@ -1,17 +1,17 @@
 # Install
 
-The ORRO product line is published on PyPI through 0.2.12, while this repository
-packages 0.2.13. The post-release target state is: `orro` 0.2.13 is published on
-PyPI. It becomes true only after `v0.2.13` is tagged and the Trusted-Publishing
-workflow completes. The 0.2.13 package metadata declares `witnessd>=2.4.0,<3.0.0`, and
+The ORRO product line is published on PyPI through 0.2.13, while this repository
+packages 0.2.14. The post-release target state is: `orro` 0.2.14 is published on
+PyPI. It becomes true only after `v0.2.14` is tagged and the Trusted-Publishing
+workflow completes. The 0.2.14 package metadata declares `witnessd>=2.4.0,<3.0.0`, and
 the package exposes `orro` plus the `orro-wrapper` compatibility alias.
 
 ```bash
 python3 -m pip install orro
 ```
 
-Until the `v0.2.13` workflow completes, that command installs `orro` 0.2.12.
-Development dogfood may instead use the 0.2.13 source checkout and pinned engine
+Until the `v0.2.14` workflow completes, that command installs `orro` 0.2.13.
+Development dogfood may instead use the 0.2.14 source checkout and pinned engine
 repositories directly.
 
 For the shared pinned-engine development layout, run bootstrap with the shared
@@ -98,7 +98,7 @@ The v0 packaging decision is documented in `docs/packaging-decision.md` and
 verifier truth, and not package publish.
 
 Current installs use the ORRO-owned thin `orro` command. The ORRO product line is
-published on PyPI through 0.2.12, this repository prepares source 0.2.13 for the
+published on PyPI through 0.2.13, this repository prepares source 0.2.14 for the
 tag-triggered workflow, and the wrapper continues to contain no engine code.
 
 ## Wrapper Distribution Smoke
