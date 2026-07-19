@@ -118,10 +118,11 @@ def self_test() -> int:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
+    # This list mirrors the engine's ORRO_COMMAND_MAP public keys; keep it in sync.
     parser = argparse.ArgumentParser(
         description="ORRO product command.",
         epilog="""Evidence workflow (delegated to the pinned witnessd engine):
-  init, scout, flow, flowplan, proofrun, proofcheck, handoff, team
+  setup, init, advise, scout, sketch, trace, flow, flowplan, proofrun, proofcheck, advisory-provenance-check, handoff, next, report, review, check, auto, team, doctor, engine-lock
 
 Run the guided workflow end-to-end (init -> scout -> flowplan -> proofrun -> proofcheck) with:
   orro flow <goal>

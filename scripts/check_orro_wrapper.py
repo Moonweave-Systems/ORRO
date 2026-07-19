@@ -32,7 +32,7 @@ def require_contains(label: str, haystack: str, needle: str) -> None:
 def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
     require_contains("pyproject.toml", text, 'name = "orro"')
-    require_contains("pyproject.toml", text, 'version = "0.2.10"')
+    require_contains("pyproject.toml", text, 'version = "0.2.11"')
     require_contains("pyproject.toml", text, f'dependencies = ["{WITNESSD_REQUIREMENT}"]')
     require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
@@ -41,7 +41,7 @@ def check_pyproject() -> None:
 def check_setup_cfg() -> None:
     text = SETUP_CFG.read_text(encoding="utf-8")
     require_contains("setup.cfg", text, "name = orro")
-    require_contains("setup.cfg", text, "version = 0.2.10")
+    require_contains("setup.cfg", text, "version = 0.2.11")
     require_contains("setup.cfg", text, WITNESSD_REQUIREMENT)
     require_contains("setup.cfg", text, "orro = orro_wrapper.cli:main")
     require_contains("setup.cfg", text, "orro-wrapper = orro_wrapper.cli:main")
@@ -106,7 +106,7 @@ def check_help_discoverability() -> None:
             fail("wrapper --help did not exit")
 
     help_text = stdout.getvalue()
-    require_contains("wrapper help", help_text, "init, scout, flow, flowplan, proofrun, proofcheck, handoff, team")
+    require_contains("wrapper help", help_text, "setup, init, advise, scout, sketch, trace, flow, flowplan, proofrun, proofcheck, advisory-provenance-check, handoff, next, report, review, check, auto, team, doctor, engine-lock")
     require_contains("wrapper help", help_text, "orro flow <goal>")
     require_contains("wrapper help", help_text, "orro delegate -- <command>")
     require_contains("wrapper help", help_text, "orro delegate -- --help")

@@ -46,10 +46,10 @@ the engine command the operator explicitly invoked. The wrapper only delegates.
 
 ## Relationship To Packaging
 
-The post-release target state is: `orro` 0.2.10 is published on PyPI. It becomes
-true only after `v0.2.10` is tagged and the Trusted-Publishing workflow completes;
-until then, PyPI contains the ORRO product line through 0.2.9. This repository is
-the canonical 0.2.10 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`.
+The post-release target state is: `orro` 0.2.11 is published on PyPI. It becomes
+true only after `v0.2.11` is tagged and the Trusted-Publishing workflow completes;
+until then, PyPI contains the ORRO product line through 0.2.10. This repository is
+the canonical 0.2.11 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`.
 
 Package work must keep:
 
