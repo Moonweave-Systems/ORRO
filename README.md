@@ -18,10 +18,10 @@ Today:
 - This repository keeps ORRO docs, product boundary, locks, thin wrapper package metadata, assurance contract checks, and integration-surface policy.
 - The runnable `orro` command is ORRO-owned and delegates to witnessd.
 - The ORRO product line is published on PyPI through 0.2.4, while this repository
-  packages the 0.2.9 release candidate. The post-release target state is: `orro`
-  0.2.9 is published on PyPI. It becomes true only after `v0.2.9` is tagged and
+  packages the 0.2.10 release candidate. The post-release target state is: `orro`
+  0.2.10 is published on PyPI. It becomes true only after `v0.2.10` is tagged and
   the Trusted-Publishing workflow completes. Until then, a normal
-  `pip install orro` installs 0.2.8.
+  `pip install orro` installs 0.2.9.
 - The local wrapper package exposes both `orro` and `orro-wrapper`.
 
 Current focus:
@@ -33,7 +33,7 @@ Current focus:
 ## Can I use ORRO today?
 
 Yes. The published ORRO product line is installable from PyPI at 0.2.1, and
-development dogfood can run the 0.2.9 source directly against pinned Depone and
+development dogfood can run the 0.2.10 source directly against pinned Depone and
 witnessd checkouts.
 
 Current split:
@@ -74,7 +74,7 @@ migration.
 Current command source: the `orro` command is exposed by this ORRO package and
 delegates to `python -m orro`.
 
-The 0.2.9 package metadata declares `witnessd>=2.4.0,<3.0.0` while keeping Depone and
+The 0.2.10 package metadata declares `witnessd>=2.4.0,<3.0.0` while keeping Depone and
 witnessd as separate engine repositories.
 
 ## Pinned Engine E2E
@@ -98,9 +98,9 @@ Engine-lock update discipline is documented in
 [`docs/engine-lock-update-process.md`](docs/engine-lock-update-process.md), and
 validated engine pairs are listed in
 [`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). The `orro`
-product line is published on PyPI through 0.2.8; this repository sources 0.2.9,
+product line is published on PyPI through 0.2.9; this repository sources 0.2.10,
 whose publication will be completed as a separate release step after the
-`v0.2.9` tag triggers the
+`v0.2.10` tag triggers the
 Trusted-Publishing workflow. Repository metadata changes do not publish or
 rewrite an artifact.
 
@@ -137,7 +137,7 @@ not assurance.
 
 The current command source is the ORRO-owned `orro` console script. The ORRO
 product line is published on PyPI through 0.2.7, and this repository prepares
-source version 0.2.9 with a `witnessd>=2.4.0,<3.0.0` dependency. The wrapper contains no
+source version 0.2.10 with a `witnessd>=2.4.0,<3.0.0` dependency. The wrapper contains no
 engine code and must not
 implement proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, or
 verifier logic.
