@@ -67,8 +67,8 @@ def check_plan() -> None:
         fail("wrapper package plan status must be release-candidate")
     if plan.get("distribution_name") != "orro":
         fail("wrapper package plan distribution_name must be orro")
-    if plan.get("source_version") != "0.2.11":
-        fail("wrapper package plan source_version must be 0.2.11")
+    if plan.get("source_version") != "0.2.12":
+        fail("wrapper package plan source_version must be 0.2.12")
     if plan.get("current_command_source") != "ORRO-owned orro console script":
         fail("current command source must be ORRO-owned")
 
@@ -123,7 +123,7 @@ def check_docs() -> None:
     require_contains("packaging decision doc", text, "not package publish")
     require_contains("packaging decision doc", text, "witnessd-hosted")
     require_contains("packaging decision doc", text, "no engine code")
-    require_contains("packaging decision doc", text, "`orro` 0.2.11 is published on PyPI")
+    require_contains("packaging decision doc", text, "`orro` 0.2.12 is published on PyPI")
     require_contains("packaging decision doc", text, WITNESSD_REQUIREMENT)
     require_contains("packaging decision doc", text, "proofrun")
     require_contains("packaging decision doc", text, "proofcheck")
