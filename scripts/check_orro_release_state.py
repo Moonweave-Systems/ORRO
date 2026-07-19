@@ -75,8 +75,12 @@ STALE_RELEASE_PHRASES = (
     "publishing 0.2.7 is a separate",
     "Publishing 0.2.7 is a separate",
     "installs 0.2.6",
+    "Until 0.2.8 is published",
+    "publishing 0.2.8 is a separate",
+    "Publishing 0.2.8 is a separate",
+    "installs 0.2.7",
 )
-PUBLISHED_PYPI_VERSIONS = ("0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7")
+PUBLISHED_PYPI_VERSIONS = ("0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8")
 
 
 class ReleaseStateError(RuntimeError):
@@ -319,25 +323,25 @@ def self_test() -> int:
     assert parsed_version == "0.1.0"
     assert parsed_requirement == "witnessd>=2.4.0,<3.0.0"
     base: dict[str, Any] = {
-        "pyproject_version": "0.2.8",
-        "setup_cfg_version": "0.2.8",
+        "pyproject_version": "0.2.9",
+        "setup_cfg_version": "0.2.9",
         "pyproject_requirement": "witnessd>=2.4.0,<3.0.0",
         "setup_cfg_requirement": "witnessd>=2.4.0,<3.0.0",
         "package_plan_requirement": "witnessd>=2.4.0,<3.0.0",
         "plugin_manifest_requirement": "witnessd>=2.4.0,<3.0.0",
         "published_package": True,
         "published_package_scope": "product-line",
-        "engine_lock_witnessd_version": "2.6.0",
-        "engine_lock_witnessd_ref": "v2.6.0",
-        "manifest_witnessd_version": "2.6.0",
-        "package_plan_version": "0.2.8",
+        "engine_lock_witnessd_version": "2.7.0",
+        "engine_lock_witnessd_ref": "v2.7.0",
+        "manifest_witnessd_version": "2.7.0",
+        "package_plan_version": "0.2.9",
         "package_plan_status": "release-candidate",
-        "package_plan_published_versions": ["0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7"],
+        "package_plan_published_versions": ["0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8"],
         "package_plan_published_package": True,
         "package_plan_published_package_scope": "product-line",
         "docs": {
             "README.md": (
-                "The post-release target state is: `orro` 0.2.8 is published on PyPI. "
+                "The post-release target state is: `orro` 0.2.9 is published on PyPI. "
                 "It becomes true only after Trusted Publishing completes."
             )
         },
@@ -377,7 +381,7 @@ def self_test() -> int:
         (
             "unreleased source listed as published",
             "package_plan_published_versions",
-            ["0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8"],
+            ["0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8", "0.2.9"],
         ),
         (
             "ambiguous package-plan publication scope",
@@ -393,7 +397,7 @@ def self_test() -> int:
             continue
         fail(f"self-test accepted forgery: {label}")
     forged_docs = copy.deepcopy(base)
-    forged_docs["docs"]["README.md"] = "`orro` 0.2.8 is published on PyPI."
+    forged_docs["docs"]["README.md"] = "`orro` 0.2.9 is published on PyPI."
     try:
         validate_release_state(forged_docs)
     except ReleaseStateError:
