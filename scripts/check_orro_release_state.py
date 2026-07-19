@@ -80,7 +80,22 @@ STALE_RELEASE_PHRASES = (
     "Publishing 0.2.8 is a separate",
     "installs 0.2.7",
 )
-PUBLISHED_PYPI_VERSIONS = ("0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8")
+PUBLISHED_PYPI_VERSIONS = (
+    "0.0.1",
+    "0.0.2",
+    "0.0.3",
+    "0.1.0",
+    "0.1.1",
+    "0.2.0",
+    "0.2.1",
+    "0.2.2",
+    "0.2.3",
+    "0.2.4",
+    "0.2.5",
+    "0.2.6",
+    "0.2.7",
+    "0.2.8",
+)
 
 
 class ReleaseStateError(RuntimeError):
@@ -124,21 +139,30 @@ def wrapper_publication_claim(text: str) -> tuple[bool, str]:
         if not isinstance(node, ast.FunctionDef) or node.name != "wrapper_info":
             continue
         for child in ast.walk(node):
-            if not isinstance(child, ast.Return) or not isinstance(child.value, ast.Dict):
+            if not isinstance(child, ast.Return) or not isinstance(
+                child.value, ast.Dict
+            ):
                 continue
             published_package: bool | None = None
             published_package_scope: str | None = None
             for key, value in zip(child.value.keys, child.value.values):
                 if isinstance(key, ast.Constant) and key.value == "published_package":
-                    if isinstance(value, ast.Constant) and isinstance(value.value, bool):
+                    if isinstance(value, ast.Constant) and isinstance(
+                        value.value, bool
+                    ):
                         published_package = value.value
                         continue
                     fail("wrapper_info published_package must be a literal boolean")
-                if isinstance(key, ast.Constant) and key.value == "published_package_scope":
+                if (
+                    isinstance(key, ast.Constant)
+                    and key.value == "published_package_scope"
+                ):
                     if isinstance(value, ast.Constant) and isinstance(value.value, str):
                         published_package_scope = value.value
                         continue
-                    fail("wrapper_info published_package_scope must be a literal string")
+                    fail(
+                        "wrapper_info published_package_scope must be a literal string"
+                    )
             if published_package is not None and published_package_scope is not None:
                 return published_package, published_package_scope
     fail("wrapper_info must declare published_package and published_package_scope")
@@ -149,17 +173,25 @@ def parse_setup_cfg(text: str) -> tuple[str, str]:
     try:
         parser.read_string(text)
         version = parser["metadata"]["version"].strip()
-        requirements = [line.strip() for line in parser["options"]["install_requires"].splitlines() if line.strip()]
+        requirements = [
+            line.strip()
+            for line in parser["options"]["install_requires"].splitlines()
+            if line.strip()
+        ]
     except (configparser.Error, KeyError) as exc:
         fail(f"could not parse setup.cfg release metadata: {exc}")
-    witnessd_requirements = [item for item in requirements if item.startswith("witnessd")]
+    witnessd_requirements = [
+        item for item in requirements if item.startswith("witnessd")
+    ]
     if len(witnessd_requirements) != 1:
         fail("setup.cfg must declare exactly one witnessd requirement")
     return version, witnessd_requirements[0]
 
 
 def parse_pyproject(text: str) -> tuple[str, str]:
-    version = require_match("pyproject.toml project version", r'^version\s*=\s*"([^"]+)"$', text)
+    version = require_match(
+        "pyproject.toml project version", r'^version\s*=\s*"([^"]+)"$', text
+    )
     match = re.search(r"^dependencies\s*=\s*(\[[\s\S]*?\])", text, flags=re.MULTILINE)
     if match is None:
         fail("pyproject.toml project dependencies are missing")
@@ -167,9 +199,13 @@ def parse_pyproject(text: str) -> tuple[str, str]:
         dependencies = ast.literal_eval(match.group(1))
     except (SyntaxError, ValueError) as exc:
         fail(f"could not parse pyproject.toml project dependencies: {exc}")
-    if not isinstance(dependencies, list) or not all(isinstance(item, str) for item in dependencies):
+    if not isinstance(dependencies, list) or not all(
+        isinstance(item, str) for item in dependencies
+    ):
         fail("pyproject.toml project dependencies must be a list of strings")
-    witnessd_requirements = [item for item in dependencies if item.startswith("witnessd")]
+    witnessd_requirements = [
+        item for item in dependencies if item.startswith("witnessd")
+    ]
     if len(witnessd_requirements) != 1:
         fail("pyproject.toml must declare exactly one witnessd requirement")
     return version, witnessd_requirements[0]
@@ -178,7 +214,9 @@ def parse_pyproject(text: str) -> tuple[str, str]:
 def repository_state() -> dict[str, Any]:
     pyproject = read_text(PYPROJECT_PATH)
     pyproject_version, pyproject_requirement = parse_pyproject(pyproject)
-    setup_cfg_version, setup_cfg_requirement = parse_setup_cfg(read_text(SETUP_CFG_PATH))
+    setup_cfg_version, setup_cfg_requirement = parse_setup_cfg(
+        read_text(SETUP_CFG_PATH)
+    )
     engine_lock = read_json(ENGINE_LOCK_PATH)
     manifest = read_json(RELEASE_MANIFEST_PATH)
     package_plan = read_json(PACKAGE_PLAN_PATH)
@@ -187,23 +225,35 @@ def repository_state() -> dict[str, Any]:
     manifest_engines = manifest.get("engines")
     if not isinstance(witnessd_lock, dict):
         fail("engine-lock witnessd must be an object")
-    if not isinstance(manifest_engines, dict) or not isinstance(manifest_engines.get("witnessd"), dict):
+    if not isinstance(manifest_engines, dict) or not isinstance(
+        manifest_engines.get("witnessd"), dict
+    ):
         fail("release manifest witnessd engine must be an object")
     package_plan_engines = package_plan.get("engine_dependencies")
     plugin_manifest_engines = plugin_manifest.get("engine_dependencies")
-    if not isinstance(package_plan_engines, dict) or not isinstance(package_plan_engines.get("witnessd"), dict):
+    if not isinstance(package_plan_engines, dict) or not isinstance(
+        package_plan_engines.get("witnessd"), dict
+    ):
         fail("wrapper package plan witnessd engine must be an object")
-    if not isinstance(plugin_manifest_engines, dict) or not isinstance(plugin_manifest_engines.get("witnessd"), dict):
+    if not isinstance(plugin_manifest_engines, dict) or not isinstance(
+        plugin_manifest_engines.get("witnessd"), dict
+    ):
         fail("plugin manifest witnessd engine must be an object")
     witnessd_manifest = manifest_engines["witnessd"]
-    published_package, published_package_scope = wrapper_publication_claim(read_text(WRAPPER_PATH))
+    published_package, published_package_scope = wrapper_publication_claim(
+        read_text(WRAPPER_PATH)
+    )
     return {
         "pyproject_version": pyproject_version,
         "setup_cfg_version": setup_cfg_version,
         "pyproject_requirement": pyproject_requirement,
         "setup_cfg_requirement": setup_cfg_requirement,
-        "package_plan_requirement": package_plan_engines["witnessd"].get("package_requirement"),
-        "plugin_manifest_requirement": plugin_manifest_engines["witnessd"].get("package_requirement"),
+        "package_plan_requirement": package_plan_engines["witnessd"].get(
+            "package_requirement"
+        ),
+        "plugin_manifest_requirement": plugin_manifest_engines["witnessd"].get(
+            "package_requirement"
+        ),
         "published_package": published_package,
         "published_package_scope": published_package_scope,
         "engine_lock_witnessd_version": witnessd_lock.get("version"),
@@ -213,7 +263,9 @@ def repository_state() -> dict[str, Any]:
         "package_plan_status": package_plan.get("status"),
         "package_plan_published_versions": package_plan.get("published_pypi_versions"),
         "package_plan_published_package": package_plan.get("published_package"),
-        "package_plan_published_package_scope": package_plan.get("published_package_scope"),
+        "package_plan_published_package_scope": package_plan.get(
+            "published_package_scope"
+        ),
         "docs": {str(path): read_text(ROOT / path) for path in DOC_PATHS},
     }
 
@@ -263,7 +315,9 @@ def validate_release_state(state: dict[str, Any]) -> None:
         if not isinstance(requirement, str):
             fail(f"{label} witnessd requirement must be a string")
         requirements[label] = requirement
-        bounds[label] = witnessd_version_bounds(f"{label} witnessd requirement", requirement)
+        bounds[label] = witnessd_version_bounds(
+            f"{label} witnessd requirement", requirement
+        )
     pyproject_requirement = requirements["pyproject.toml"]
     for label, requirement in requirements.items():
         if requirement != pyproject_requirement:
@@ -290,16 +344,24 @@ def validate_release_state(state: dict[str, Any]) -> None:
         version_tuple("wrapper package plan published PyPI version", published_version)
     if len(published_versions) != len(set(published_versions)):
         fail("wrapper package plan published_pypi_versions must not contain duplicates")
-    if published_versions != sorted(published_versions, key=lambda value: version_tuple("published version", value)):
+    if published_versions != sorted(
+        published_versions, key=lambda value: version_tuple("published version", value)
+    ):
         fail("wrapper package plan published_pypi_versions must be ordered by version")
     if package_version in published_versions:
-        fail("wrapper package plan must not claim the unreleased source version is published")
+        fail(
+            "wrapper package plan must not claim the unreleased source version is published"
+        )
     if published_versions != list(PUBLISHED_PYPI_VERSIONS):
-        fail("wrapper package plan published_pypi_versions must match the known PyPI release history")
+        fail(
+            "wrapper package plan published_pypi_versions must match the known PyPI release history"
+        )
     if state.get("package_plan_published_package") is not True:
         fail("wrapper package plan must record published_package true")
     if state.get("package_plan_published_package_scope") != "product-line":
-        fail("wrapper package plan published_package must be scoped to the product line")
+        fail(
+            "wrapper package plan published_package must be scoped to the product line"
+        )
 
     docs = state.get("docs")
     if not isinstance(docs, dict) or not docs:
@@ -310,7 +372,9 @@ def validate_release_state(state: dict[str, Any]) -> None:
             fail("release-state docs must map path strings to text")
         normalized_text = " ".join(text.split())
         if release_target_sentence not in normalized_text:
-            fail(f"{path} must state the post-release target {release_target_sentence!r}")
+            fail(
+                f"{path} must state the post-release target {release_target_sentence!r}"
+            )
         for phrase in STALE_RELEASE_PHRASES:
             if phrase in text:
                 fail(f"{path} contains stale release claim {phrase!r}")
@@ -336,7 +400,22 @@ def self_test() -> int:
         "manifest_witnessd_version": "2.7.0",
         "package_plan_version": "0.2.9",
         "package_plan_status": "release-candidate",
-        "package_plan_published_versions": ["0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7"],
+        "package_plan_published_versions": [
+            "0.0.1",
+            "0.0.2",
+            "0.0.3",
+            "0.1.0",
+            "0.1.1",
+            "0.2.0",
+            "0.2.1",
+            "0.2.2",
+            "0.2.3",
+            "0.2.4",
+            "0.2.5",
+            "0.2.6",
+            "0.2.7",
+            "0.2.8",
+        ],
         "package_plan_published_package": True,
         "package_plan_published_package_scope": "product-line",
         "docs": {
@@ -350,7 +429,11 @@ def self_test() -> int:
     for label, key, value in (
         ("package version mismatch", "setup_cfg_version", "0.1.2"),
         ("unpublished wrapper claim", "published_package", False),
-        ("ambiguous wrapper publication scope", "published_package_scope", "source-version"),
+        (
+            "ambiguous wrapper publication scope",
+            "published_package_scope",
+            "source-version",
+        ),
         ("unsatisfied witnessd lock", "engine_lock_witnessd_version", "2.3.3"),
         ("witnessd lock at upper bound", "engine_lock_witnessd_version", "3.0.0"),
         ("unbounded witnessd requirement", "pyproject_requirement", "witnessd>=2.4.0"),
@@ -381,7 +464,23 @@ def self_test() -> int:
         (
             "unreleased source listed as published",
             "package_plan_published_versions",
-            ["0.0.1", "0.0.2", "0.0.3", "0.1.0", "0.1.1", "0.2.0", "0.2.1", "0.2.2", "0.2.3", "0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8", "0.2.9"],
+            [
+                "0.0.1",
+                "0.0.2",
+                "0.0.3",
+                "0.1.0",
+                "0.1.1",
+                "0.2.0",
+                "0.2.1",
+                "0.2.2",
+                "0.2.3",
+                "0.2.4",
+                "0.2.5",
+                "0.2.6",
+                "0.2.7",
+                "0.2.8",
+                "0.2.9",
+            ],
         ),
         (
             "ambiguous package-plan publication scope",
@@ -418,7 +517,11 @@ def self_test() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--self-test", action="store_true", help="run built-in inconsistency rejection checks")
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="run built-in inconsistency rejection checks",
+    )
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
         if args.self_test:
