@@ -7,7 +7,7 @@
   "entrypoint_plan": {
     "current": "ORRO-owned orro console script delegating to witnessd",
     "compatibility_alias": "orro-wrapper",
-    "distribution": "orro 0.2.16 source package"
+    "distribution": "orro 0.2.17 source package"
   },
   "engine_dependencies": {
     "witnessd": {
