@@ -32,9 +32,9 @@ The release manifest and compatibility matrix are product/distribution
 metadata. They record which pinned engine pair has passed ORRO e2e CI, but they
 are not proof, not verifier truth, not approval, and not assurance. Engine-lock
 update process is intentional and PR-reviewed. The post-release target state is:
-`orro` 0.2.15 is published on PyPI. It becomes true only after `v0.2.15` is tagged
+`orro` 0.2.16 is published on PyPI. It becomes true only after `v0.2.16` is tagged
 and the Trusted-Publishing workflow completes; until then, PyPI contains the ORRO
-product line through 0.2.14. This repository is the canonical 0.2.15 source.
+product line through 0.2.15. This repository is the canonical 0.2.16 source.
 
 The packaging decision in `docs/packaging-decision.md` and
 `packaging/wrapper-package-plan.v0.json` is also product metadata, not package
