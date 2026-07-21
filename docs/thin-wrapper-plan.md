@@ -1,9 +1,9 @@
 # Thin Wrapper Plan
 
-The post-release target state is: `orro` 0.2.19 is published on PyPI. It becomes
-true only after `v0.2.19` is tagged and the Trusted-Publishing workflow completes;
+The post-release target state is: `orro` 0.2.20 is published on PyPI. It becomes
+true only after `v0.2.20` is tagged and the Trusted-Publishing workflow completes;
 until then, PyPI contains the ORRO product line through 0.2.15. The ORRO repository
-is the canonical 0.2.19 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`.
+is the canonical 0.2.20 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`.
 
 ## Current State
 

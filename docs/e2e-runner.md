@@ -78,4 +78,4 @@ separate pinned-engine e2e CI checks out the pinned witnessd and Depone commits
 from the e2e lock, then runs the full smoke.
 
 The ORRO product line is published on PyPI through 0.2.6. This pinned-engine
-smoke validates the 0.2.19 source package without publishing a new release.
+smoke validates the 0.2.20 source package without publishing a new release.
