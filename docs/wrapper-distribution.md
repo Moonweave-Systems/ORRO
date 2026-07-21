@@ -57,7 +57,7 @@ This is local distribution smoke only. It builds and installs a local wheel, but
 it does not publish a package, upload artifacts, create a marketplace release,
 or claim verifier truth.
 
-The post-release target state is: `orro` 0.2.17 is published on PyPI. It becomes
-true only after `v0.2.17` is tagged and the Trusted-Publishing workflow completes;
+The post-release target state is: `orro` 0.2.18 is published on PyPI. It becomes
+true only after `v0.2.18` is tagged and the Trusted-Publishing workflow completes;
 until then, PyPI contains the ORRO product line through 0.2.15. This repository is
-the canonical 0.2.17 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`.
+the canonical 0.2.18 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`.
