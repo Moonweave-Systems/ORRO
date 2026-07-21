@@ -12,15 +12,15 @@ ORRO will remain product/distribution/wrapper only while Depone and witnessd
 stay separate engine repositories.
 
 Current command source is the ORRO-owned `orro` console script, which delegates
-to witnessd. The post-release target state is: `orro` 0.2.18 is published on PyPI.
-It becomes true only after `v0.2.18` is tagged and the Trusted-Publishing workflow
+to witnessd. The post-release target state is: `orro` 0.2.19 is published on PyPI.
+It becomes true only after `v0.2.19` is tagged and the Trusted-Publishing workflow
 completes; until then, PyPI contains the ORRO product line through 0.2.15. This
-repository is the canonical 0.2.18 source, whose metadata declares
+repository is the canonical 0.2.19 source, whose metadata declares
 `witnessd>=2.4.0,<3.0.0`.
 
 `published_package: true` means the ORRO product line has published PyPI
 releases; `published_package_scope: product-line` makes that scope explicit. It
-does not assert that the 0.2.18 source candidate is already published.
+does not assert that the 0.2.19 source candidate is already published.
 
 The package remains a thin wrapper that delegates to the existing engine
 command surface. It must contain no engine code.
@@ -58,7 +58,7 @@ The ORRO repository must not contain:
    `orro` and `orro-wrapper`, and contains no engine packages or engine
    implementation files.
 3. Published package: current phase. The ORRO product line is published through
-   0.2.1, and source 0.2.18 is prepared for the tag-triggered Trusted-Publishing
+   0.2.1, and source 0.2.19 is prepared for the tag-triggered Trusted-Publishing
    workflow. Any new release still requires pinned-engine e2e, boundary checks,
    bootstrap checks, and release metadata to remain green.
 

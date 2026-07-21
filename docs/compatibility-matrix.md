@@ -5,10 +5,10 @@ proof, not verifier truth, not approval, and not assurance. It does not replace
 Depone or witnessd engine tests, and it does not imply that unlisted future
 commits are compatible.
 
-The post-release target state is: `orro` 0.2.18 is published on PyPI. It becomes
-true only after `v0.2.18` is tagged and the Trusted-Publishing workflow completes;
+The post-release target state is: `orro` 0.2.19 is published on PyPI. It becomes
+true only after `v0.2.19` is tagged and the Trusted-Publishing workflow completes;
 until then, PyPI contains the ORRO product line through 0.2.15. This repository is
-the canonical 0.2.18 source.
+the canonical 0.2.19 source.
 
 ```text
 Depone verifies; witnessd executes; ORRO exposes the workflow.
@@ -16,13 +16,13 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 
 | Matrix entry | ORRO repo commit | witnessd commit | Depone commit | e2e status | notes |
 | --- | --- | --- | --- | --- | --- |
-| depone-n-witnessd-n | n/a | `c93210f9ad337fe8a0e5bef932f91357499979cf` | `81ff04132ca0682c5fd829b3efb7b604453ab245` | pass | Current locally validated engine pair; witnessd v2.11.4. |
+| depone-n-witnessd-n | n/a | `d7710f45c330fa1fdcd32adfa27b67571aac6438` | `81ff04132ca0682c5fd829b3efb7b604453ab245` | pass | Current locally validated engine pair; witnessd v2.11.5. |
 | depone-n-witnessd-n-1 | n/a | `d601fa86fd8b658e8f4a2cf7fa4b35bde26c554d` | `0e86a55ad10c464d35308a7b6315860a47bcf8a5` | warn | Declared downgrade row, not a release lock. |
 | depone-n-1-witnessd-n | n/a | `90d4bc77b71cecf464f1f8a820d9fe17b308211f` | `b203130b5720c6ef6fc9b7492f085ac5ee733786` | warn | Declared downgrade row, not a release lock. |
-| orro-rc-locked-triplet | `5a6e799dffe0b3c37223c4078f304b374e2b2fe1` | `c93210f9ad337fe8a0e5bef932f91357499979cf` | `81ff04132ca0682c5fd829b3efb7b604453ab245` | pass | Matches witnessd v2.11.4, `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |
+| orro-rc-locked-triplet | `5a6e799dffe0b3c37223c4078f304b374e2b2fe1` | `d7710f45c330fa1fdcd32adfa27b67571aac6438` | `81ff04132ca0682c5fd829b3efb7b604453ab245` | pass | Matches witnessd v2.11.5, `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |
 
-The locked witnessd revision is release `v2.11.4` (source version 2.11.4). It
-satisfies the ORRO 0.2.18 package requirement `witnessd>=2.4.0,<3.0.0`.
+The locked witnessd revision is release `v2.11.5` (source version 2.11.5). It
+satisfies the ORRO 0.2.19 package requirement `witnessd>=2.4.0,<3.0.0`.
 
 Related files:
 
