@@ -568,7 +568,7 @@ def check_release_discipline() -> None:
     require_contains("release docs", lower_text, "engine-lock update")
     require_contains("release docs", text, "not proof")
     require_contains("release docs", text, "not verifier truth")
-    require_contains("release docs", lower_text, "`orro` 0.2.19 is published on pypi")
+    require_contains("release docs", lower_text, "`orro` 0.2.20 is published on pypi")
 
 
 def check_os_support_matrix() -> None:
@@ -642,7 +642,7 @@ def check_packaging_decision() -> None:
     )
     require_contains("packaging decision docs", text, "packaging decision")
     require_contains("packaging decision docs", text, "not package publish")
-    require_contains("packaging decision docs", text, "`orro` 0.2.19 is published on PyPI")
+    require_contains("packaging decision docs", text, "`orro` 0.2.20 is published on PyPI")
     require_contains("packaging decision docs", text, "witnessd>=2.4.0,<3.0.0")
     require_contains("packaging decision docs", text, "no engine code")
     require_contains("packaging decision docs", text, "witnessd-hosted")
