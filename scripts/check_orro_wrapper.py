@@ -33,7 +33,9 @@ def check_pyproject() -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
     require_contains("pyproject.toml", text, 'name = "orro"')
     require_contains("pyproject.toml", text, 'version = "0.2.21"')
-    require_contains("pyproject.toml", text, f'dependencies = ["{WITNESSD_REQUIREMENT}"]')
+    require_contains(
+        "pyproject.toml", text, f'dependencies = ["{WITNESSD_REQUIREMENT}"]'
+    )
     require_contains("pyproject.toml", text, 'orro = "orro_wrapper.cli:main"')
     require_contains("pyproject.toml", text, 'orro-wrapper = "orro_wrapper.cli:main"')
 
@@ -53,7 +55,9 @@ def check_package_files() -> None:
         path = PACKAGE_DIR / name
         if not path.is_file():
             fail(f"missing wrapper package file: src/orro_wrapper/{name}")
-    text = "\n".join((PACKAGE_DIR / name).read_text(encoding="utf-8") for name in required)
+    text = "\n".join(
+        (PACKAGE_DIR / name).read_text(encoding="utf-8") for name in required
+    )
     require_contains("wrapper package", text, "contains_engine_logic")
     require_contains("wrapper package", text, "implements_proofrun")
     require_contains("wrapper package", text, "implements_proofcheck")
@@ -87,8 +91,13 @@ def check_delegation_environment() -> None:
     if run.call_args is None:
         fail("wrapper delegation did not invoke subprocess.run")
     environment = run.call_args.kwargs.get("env")
-    if not isinstance(environment, dict) or environment.get("ORRO_WRAPPER_DELEGATION") != "1":
-        fail("wrapper delegation must set ORRO_WRAPPER_DELEGATION=1 in the child environment")
+    if (
+        not isinstance(environment, dict)
+        or environment.get("ORRO_WRAPPER_DELEGATION") != "1"
+    ):
+        fail(
+            "wrapper delegation must set ORRO_WRAPPER_DELEGATION=1 in the child environment"
+        )
 
 
 def check_help_discoverability() -> None:
@@ -106,7 +115,36 @@ def check_help_discoverability() -> None:
             fail("wrapper --help did not exit")
 
     help_text = stdout.getvalue()
-    require_contains("wrapper help", help_text, "setup, init, advise, scout, sketch, trace, flow, flowplan, proofrun, proofcheck, advisory-provenance-check, handoff, next, report, review, check, auto, team, doctor, engine-lock")
+    # The help must surface every authoritative workflow command (drift => red),
+    # tiered so the product is discoverable rather than hidden behind `delegate`.
+    authoritative_commands = [
+        "setup",
+        "init",
+        "advise",
+        "scout",
+        "sketch",
+        "trace",
+        "flow",
+        "flowplan",
+        "proofrun",
+        "proofcheck",
+        "advisory-provenance-check",
+        "handoff",
+        "next",
+        "report",
+        "review",
+        "check",
+        "demo",
+        "lock",
+        "auto",
+        "team",
+        "doctor",
+        "engine-lock",
+    ]
+    for command in authoritative_commands:
+        require_contains("wrapper help", help_text, command)
+    require_contains("wrapper help", help_text, "Start here:")
+    require_contains("wrapper help", help_text, "orro demo")
     require_contains("wrapper help", help_text, "orro flow <goal>")
     require_contains("wrapper help", help_text, "orro delegate -- <command>")
     require_contains("wrapper help", help_text, "orro delegate -- --help")
