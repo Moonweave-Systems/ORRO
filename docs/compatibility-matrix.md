@@ -16,12 +16,12 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 
 | Matrix entry | ORRO repo commit | witnessd commit | Depone commit | e2e status | notes |
 | --- | --- | --- | --- | --- | --- |
-| depone-n-witnessd-n | n/a | `47212467ee25181aba6faa6e78729740fee95a6e` | `5f7ccc35174f92ec1d7565c3066cd903e605442d` | pass | Current locally validated engine pair; witnessd v2.14.0. |
+| depone-n-witnessd-n | n/a | `09296cf3d8c136339c159fda562c9c9fc0f6a2f1` | `ea1055f756d580784be8448c470ac068518f7568` | pass | Current locally validated engine pair; witnessd v2.15.0. |
 | depone-n-witnessd-n-1 | n/a | `d601fa86fd8b658e8f4a2cf7fa4b35bde26c554d` | `0e86a55ad10c464d35308a7b6315860a47bcf8a5` | warn | Declared downgrade row, not a release lock. |
 | depone-n-1-witnessd-n | n/a | `90d4bc77b71cecf464f1f8a820d9fe17b308211f` | `b203130b5720c6ef6fc9b7492f085ac5ee733786` | warn | Declared downgrade row, not a release lock. |
-| orro-rc-locked-triplet | `50e4f5fdb6b129afc6871e993b1fc48e2e99fa37` | `47212467ee25181aba6faa6e78729740fee95a6e` | `5f7ccc35174f92ec1d7565c3066cd903e605442d` | pass | Matches witnessd v2.14.0, `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |
+| orro-rc-locked-triplet | `657ffcbef31049e7f560eb51a2a805c9a1da08e9` | `09296cf3d8c136339c159fda562c9c9fc0f6a2f1` | `ea1055f756d580784be8448c470ac068518f7568` | pass | Matches witnessd v2.15.0, `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |
 
-The locked witnessd revision is release `v2.14.0` (source version 2.14.0). It
+The locked witnessd revision is release `v2.15.0` (source version 2.15.0). It
 satisfies the ORRO 0.2.22 package requirement `witnessd>=2.4.0,<3.0.0`.
 
 Related files:
