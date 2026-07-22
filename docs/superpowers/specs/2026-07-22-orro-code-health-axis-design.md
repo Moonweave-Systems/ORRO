@@ -363,6 +363,65 @@ advisory). Duplication detection is included only where the tool is already
 adopted; if the duplication tooling proves fiddly it is deferred to v2.1 (the
 mechanism supports it without further schema change).
 
+### v3 — Bootstrap (`orro check --health --init` / `--promote`)
+
+**Problem it closes:** v1/v2 only fire on repos that already adopted the tools.
+The target user (AI-native, messy AI-generated code, unsure they even use ruff)
+has NO tool config → `--health` returns `ERR_ORRO_HEALTH_NO_GATES_DETECTED`. The
+bootstrap seeds a sensible default toolchain so the health check has gates to
+enforce. witnessd-only (Depone unchanged; reuses the v2 tier machinery).
+
+**Consensus-grounded tiers (researched 2026-07-22, sourced).** Introducing gates
+to an existing/legacy repo splits by tool class:
+- **Formatters (black/prettier/gofmt) → block**, because the fix is mechanical
+  and total: reformat once, then enforce 100%. black itself recommends a one-shot
+  reformat commit + `.git-blame-ignore-revs`
+  (<https://black.readthedocs.io/en/stable/guides/introducing_black_to_your_project.html>);
+  prettier "Option Philosophy" (<https://prettier.io/docs/en/option-philosophy>);
+  gofmt single canonical style (<https://go.dev/blog/gofmt>).
+- **Lint + complexity → advisory (grandfather existing)**, because hard-failing a
+  legacy tree on day one is the recognized anti-pattern. SonarQube "Clean as You
+  Code" gates only new/changed code — "prevents legacy noise from blocking teams"
+  (<https://docs.sonarsource.com/sonarqube-server/user-guide/about-new-code.md>);
+  betterer ratchet (<https://phenomnomnominal.github.io/betterer/docs/introduction/>);
+  ruff `--add-noqa` grandfathers on migration
+  (<https://docs.astral.sh/ruff/linter/>); PEP 8 "A Foolish Consistency…" —
+  pre-existing style/complexity needs human judgment
+  (<https://peps.python.org/pep-0008/>).
+
+**`orro check --health --init`:**
+1. Scan the repo. For each **missing** deterministic tool, **append** a default
+   config block to `pyproject.toml` (create it if absent) — `[tool.black]`,
+   `[tool.ruff]` + a starter ruleset, `[tool.ruff.lint.mccabe] max-complexity`.
+   **Non-clobber, stdlib-only**: only append a `[tool.X]` section when its header
+   is absent (the presence-scan already exists); NEVER modify or overwrite an
+   existing section (respects a repo that "used ruff before and stopped"). No TOML
+   parser (Python 3.10 floor) — append text blocks, gated on section absence.
+2. Write a persisted health profile `.orro/health.json` (stdlib json) recording
+   each seeded gate + its bootstrap **enforcement tier** (format=`block`,
+   lint=`advisory`, complexity=`advisory`). This file is the explicit,
+   user-authored tier state — not inferred safety config; it exists precisely so
+   `--promote` can ratchet. `health_detect` reads `.orro/health.json` when present
+   (its gate list + tiers win over the auto-detect defaults); absent → v2
+   auto-detect behavior unchanged.
+3. Report what was written vs already present, then run the health check so the
+   user sees the verdict immediately.
+4. `--init` writes config only (safe/appendable). The consensus "reformat once"
+   step is the existing `--fix --apply` path (scope-verified), documented — not an
+   implicit tree mutation inside `--init`.
+
+**`orro check --health --promote <gate>`:** flip a gate's enforcement
+`advisory → block` in `.orro/health.json` (the ratchet: promote once the baseline
+is clean). Editing a JSON value is stdlib-trivial (unlike a TOML section).
+
+**Bootstrap out of scope (YAGNI):** architecture/import-linter bootstrap (a
+layering contract needs the repo's architecture intent — cannot be auto-generated
+meaningfully; stays manual/advanced); the full diff-scoped baseline ratchet
+(block **new/changed** lines only while grandfathering the rest) — the gold
+standard, deferred to bootstrap-v3.1; auto-installing tools into the user's env
+(witnessd never manages the user's Python env — `--health` already reports
+"configured but not installed" honestly).
+
 ## Build location & release
 
 - **v1:** all witnessd (`cli/companion.py` gains `--health/--fix/--health-plan`
