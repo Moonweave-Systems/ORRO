@@ -22,7 +22,9 @@ DEFAULT_ENGINE_COMMAND = f"{sys.executable} -m orro"
 
 
 class WrapperError(RuntimeError):
-    def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, code: str, message: str, details: dict[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
@@ -78,9 +80,16 @@ def resolve_engine_command(raw: str | None) -> list[str]:
     try:
         parts = shlex.split(command)
     except ValueError as exc:
-        raise WrapperError("ERR_ORRO_WRAPPER_ENGINE_COMMAND_INVALID", "engine command could not be parsed", {"command": command}) from exc
+        raise WrapperError(
+            "ERR_ORRO_WRAPPER_ENGINE_COMMAND_INVALID",
+            "engine command could not be parsed",
+            {"command": command},
+        ) from exc
     if not parts:
-        raise WrapperError("ERR_ORRO_WRAPPER_ENGINE_COMMAND_INVALID", "engine command must not be empty")
+        raise WrapperError(
+            "ERR_ORRO_WRAPPER_ENGINE_COMMAND_INVALID",
+            "engine command must not be empty",
+        )
     return parts
 
 
@@ -88,7 +97,10 @@ def delegate(engine_command: str | None, delegate_args: list[str]) -> int:
     if delegate_args and delegate_args[0] == "--":
         delegate_args = delegate_args[1:]
     if not delegate_args:
-        raise WrapperError("ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED", "delegate requires engine command arguments after --")
+        raise WrapperError(
+            "ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED",
+            "delegate requires engine command arguments after --",
+        )
     command = [*resolve_engine_command(engine_command), *delegate_args]
     child_env = os.environ.copy()
     child_env["ORRO_WRAPPER_DELEGATION"] = "1"
@@ -113,7 +125,18 @@ def self_test() -> int:
         assert exc.code == "ERR_ORRO_WRAPPER_DELEGATE_ARGS_REQUIRED"
     else:
         raise AssertionError("empty delegate args did not fail")
-    print(json.dumps({"kind": "orro-wrapper-self-test-result", "schema_version": SCHEMA_VERSION, "decision": "pass", "boundary": boundary()}, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "kind": "orro-wrapper-self-test-result",
+                "schema_version": SCHEMA_VERSION,
+                "decision": "pass",
+                "boundary": boundary(),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 
@@ -121,13 +144,28 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     # This list mirrors the engine's ORRO_COMMAND_MAP public keys; keep it in sync.
     parser = argparse.ArgumentParser(
         description="ORRO product command.",
-        epilog="""Evidence workflow (delegated to the pinned witnessd engine):
-  setup, init, advise, scout, sketch, trace, flow, flowplan, proofrun, proofcheck, advisory-provenance-check, handoff, next, report, review, check, auto, team, doctor, engine-lock
+        epilog="""Workflow commands run directly (e.g. `orro demo`, `orro flow <goal>`);
+they are delegated to the pinned witnessd engine, not implemented here.
+
+Start here:
+  demo         AI-free 30s guardrail demo: Depone scope-conformance PASS/FAIL
+  flow         guided init -> scout -> flowplan -> proofrun -> proofcheck
+  check        verify already-driven work (Depone verdict) + read-only review
+  doctor       engine/verifier/adapter readiness
+
+Workflow:
+  scout, sketch, trace, flowplan, proofrun, proofcheck, handoff, next, report, review
+
+Setup / advanced:
+  setup, init, advise, auto, team, engine-lock, lock, advisory-provenance-check
+
+Try it in 30s (no AI adapter):
+  orro demo
 
 Run the guided workflow end-to-end (init -> scout -> flowplan -> proofrun -> proofcheck) with:
   orro flow <goal>
 
-Run a workflow command through the engine with:
+Any workflow command can also be run explicitly through the engine with:
   orro delegate -- <command>
 
 Show the authoritative engine command list with:
@@ -136,14 +174,27 @@ Show the authoritative engine command list with:
 The wrapper delegates execution; it does not implement these workflow commands.""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--engine-command", help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m orro.")
-    parser.add_argument("--json", action="store_true", help="Emit JSON for wrapper-owned commands. JSON is the default for boundary/self-test.")
-    parser.add_argument("--version", action="store_true", help="Print wrapper version and exit.")
+    parser.add_argument(
+        "--engine-command",
+        help="Pinned witnessd ORRO command to delegate to. Defaults to current Python -m orro.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON for wrapper-owned commands. JSON is the default for boundary/self-test.",
+    )
+    parser.add_argument(
+        "--version", action="store_true", help="Print wrapper version and exit."
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     subparsers.add_parser("boundary", help="Print wrapper boundary metadata.")
-    subparsers.add_parser("self-test", help="Run wrapper self-test without calling engines.")
-    delegate_parser = subparsers.add_parser("delegate", help="Delegate explicitly to the witnessd-hosted ORRO command.")
+    subparsers.add_parser(
+        "self-test", help="Run wrapper self-test without calling engines."
+    )
+    delegate_parser = subparsers.add_parser(
+        "delegate", help="Delegate explicitly to the witnessd-hosted ORRO command."
+    )
     delegate_parser.add_argument("delegate_args", nargs=argparse.REMAINDER)
     return parser.parse_args(argv)
 
@@ -151,7 +202,11 @@ The wrapper delegates execution; it does not implement these workflow commands."
 def main(argv: list[str] | None = None) -> int:
     raw_args = sys.argv[1:] if argv is None else argv
     local_commands = {"boundary", "self-test", "delegate"}
-    if raw_args and raw_args[0] not in local_commands and not raw_args[0].startswith("-"):
+    if (
+        raw_args
+        and raw_args[0] not in local_commands
+        and not raw_args[0].startswith("-")
+    ):
         return delegate(None, raw_args)
     args = parse_args(raw_args)
     try:
@@ -165,7 +220,11 @@ def main(argv: list[str] | None = None) -> int:
             return self_test()
         if args.command == "delegate":
             return delegate(args.engine_command, args.delegate_args)
-        raise WrapperError("ERR_ORRO_WRAPPER_COMMAND_UNKNOWN", "unknown wrapper command", {"command": args.command})
+        raise WrapperError(
+            "ERR_ORRO_WRAPPER_COMMAND_UNKNOWN",
+            "unknown wrapper command",
+            {"command": args.command},
+        )
     except WrapperError as exc:
         print(json.dumps(error_payload(exc), indent=2, sort_keys=True), file=sys.stderr)
         return 2
@@ -175,7 +234,9 @@ def main(argv: list[str] | None = None) -> int:
             "package metadata for ORRO wrapper is not installed",
             {"distribution": exc.distribution},
         )
-        print(json.dumps(error_payload(error), indent=2, sort_keys=True), file=sys.stderr)
+        print(
+            json.dumps(error_payload(error), indent=2, sort_keys=True), file=sys.stderr
+        )
         return 2
 
 
