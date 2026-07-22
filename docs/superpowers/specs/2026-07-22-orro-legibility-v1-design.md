@@ -140,6 +140,55 @@ tests, and at re-pin time the ORRO wrapper help epilog
 (`src/orro_wrapper/cli.py`) + `scripts/check_orro_wrapper.py`
 `authoritative_commands` (else the contract tests go red).
 
+## v1.1 — item `steps` (chain legibility, Phase A: non-executing)
+
+**Gap:** an item is usually a SEQUENCE of runs (design→implement→verify), but the
+ledger cannot declare it; run chaining lives in the operator's head. Phase A adds
+declared step sequences + evidence-derived progress + next-step recommendation.
+**Zero new trust surface**: nothing executes; `orro auto`'s
+`executes_proofrun:False` boundary is untouched (Phase B, separate decision).
+
+**Schema** — roadmap item gains optional `steps` (ordered):
+
+```json
+{"id": "my-feature", "title": "feature work", "steps": [
+  {"id": "implement", "profile": "code-change", "write_scope": ["src/**"], "adapter": "codex"},
+  {"id": "verify", "profile": "verification-only", "checks": ["pytest -q", "ruff check ."]}
+]}
+```
+
+- Step keys: `id` (required, kebab, unique within the item), `title?`,
+  `profile` (required, one of the 5 existing envelopes — steps do NOT invent
+  workflow shapes, they sequence existing ones), `write_scope?` (list),
+  `checks?` (list), `commands?` (list), `adapter?` (str). Validation mirrors the
+  existing item strictness (`_ITEM_KEYS` idiom, `orro_roadmap.py:23,143-156`);
+  unknown keys / wrong types → malformed-ledger error. `status:"done"` and
+  `steps` are mutually exclusive on one item (a hand-mark cannot shadow a
+  declared sequence).
+
+**Binding** — `--roadmap-step <id>` (requires `--roadmap-item`), threaded
+exactly where `--roadmap-item` already is (proofrun/flow/team go/check).
+Unknown step → fail-closed `ERR_ORRO_ROADMAP_STEP_UNKNOWN` (early, top-level,
+like the item guard). `roadmap-binding.json` gains `step_id`.
+
+**Status derivation (evidence-only, no stored pointer):** a step is
+`done (verified)` iff a run bound to (item, step) has verified passing evidence
+(same rules as items: decide_next complete/pass, or companion manifest
+verdict_ref re-hash pass). Item with steps: `done (verified)` iff ALL steps
+verified; else `in-progress (k/n steps)`; `not-started` if none. The **next
+step** = first step in declared order without verified pass. State is always
+recomputed from evidence — there is no mutable "current step" field anywhere.
+
+**Next-step recommendation (non-executing):** status prints the exact command
+for the next step, built from its profile+inputs:
+- `verification-only` + checks → `orro check --check '<c>' ... --roadmap-item <i> --roadmap-step <s> --repo <repo>`
+- `code-change` → `orro flow "<item title>: <step id>" --write-scope '<g>' --adapter <a> --roadmap-item <i> --roadmap-step <s> --repo <repo>`
+- other profiles / missing inputs → show the step + an honest
+  `construct the command manually (profile: <p>)` note. Never guessed inputs.
+The recommendation is advice, not approval; running it is the operator's act.
+
+**Compat:** items without `steps` behave byte-identically to v1.
+
 ## Out of scope (YAGNI, v1)
 
 - "Wrong document" detection (observed reads vs declared spec) — needs a
