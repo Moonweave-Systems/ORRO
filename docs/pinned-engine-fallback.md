@@ -71,4 +71,4 @@ The post-release target state is: `orro` 0.2.22 is published on PyPI. It becomes
 true only after `v0.2.22` is tagged and the Trusted-Publishing workflow completes;
 until then, PyPI contains the ORRO product line through 0.2.15. This repository is
 the canonical 0.2.22 source, whose metadata declares `witnessd>=2.4.0,<3.0.0`. The current
-engine lock pins witnessd 2.12.0 at tag `v2.12.0`, satisfying that dependency.
+engine lock pins witnessd 2.13.0 at tag `v2.13.0`, satisfying that dependency.
