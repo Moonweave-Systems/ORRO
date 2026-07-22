@@ -189,6 +189,46 @@ The recommendation is advice, not approval; running it is the operator's act.
 
 **Compat:** items without `steps` behave byte-identically to v1.
 
+## Phase B — bounded chain execution (`orro auto --run-item`) — APPROVED 2026-07-22
+
+**Trust change (stated plainly):** until now `orro auto` never launched proofrun
+(`executes_proofrun:False`). Phase B adds ONE new, explicitly invoked mode that
+does: it executes the same command `orro status` recommends for the next step —
+equivalent trust to the operator copy-pasting the recommendation, extended for
+up to `--max-steps` steps without per-step confirmation, always behind evidence
+gates. The existing `--dry-run/--once/--until-complete` modes are UNCHANGED and
+keep their `executes_proofrun:False` receipts.
+
+**Surface:** `orro auto --run-item <item-id> --repo <repo> --home <home>
+--max-steps N [--json]`. `--max-steps` REQUIRED (like `--until-complete`).
+Mutually exclusive with the other auto modes and with `run_dir`.
+
+**Loop (per step, at most N iterations):**
+1. Recompute item state from evidence (the status derivation — never a stored
+   pointer). If all steps verified → stop `complete`.
+2. Next step = first without verified pass. Build its command via THE SAME
+   builder status uses (`_suggested_step_command`, single source of truth —
+   never a second implementation). If the step's inputs are insufficient for a
+   full command (the "construct manually" case) → stop fail-closed
+   `ERR_ORRO_AUTO_STEP_NOT_EXECUTABLE` (never guess inputs).
+3. Execute that command as a subprocess (this is the trust step). Capture exit
+   code + the run dir it produced.
+4. Evidence gate: re-derive the step's state from evidence. Verified pass →
+   continue to next iteration; anything else → stop with the step's actual
+   state + the run's blockers surfaced (reuse #103's blocked_reason surfacing).
+   Never proceed past a non-verified step.
+5. Write an auto-session receipt with HONEST flags for this mode:
+   `mode:"run-item"`, `executes_proofrun:true`, `launches_workers:true`,
+   `max_steps_enforced:true`, per-step records (command, run_dir, resulting
+   state). The receipt is orchestration metadata, not proof — each step's proof
+   is its own run evidence.
+
+**Boundaries:** stops at first non-pass; never skips proofcheck (the executed
+commands are `orro flow`/`orro check`, which embed it); never repairs/retries a
+failed step; never invents inputs; does not approve merge or raise assurance.
+Docs statements about `--once`/`--until-complete` never launching proofrun stay
+true for those modes; the new mode is documented separately and honestly.
+
 ## Out of scope (YAGNI, v1)
 
 - "Wrong document" detection (observed reads vs declared spec) — needs a
