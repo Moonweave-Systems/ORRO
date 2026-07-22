@@ -5,10 +5,10 @@ proof, not verifier truth, not approval, and not assurance. It does not replace
 Depone or witnessd engine tests, and it does not imply that unlisted future
 commits are compatible.
 
-The post-release target state is: `orro` 0.2.21 is published on PyPI. It becomes
-true only after `v0.2.21` is tagged and the Trusted-Publishing workflow completes;
+The post-release target state is: `orro` 0.2.22 is published on PyPI. It becomes
+true only after `v0.2.22` is tagged and the Trusted-Publishing workflow completes;
 until then, PyPI contains the ORRO product line through 0.2.15. This repository is
-the canonical 0.2.21 source.
+the canonical 0.2.22 source.
 
 ```text
 Depone verifies; witnessd executes; ORRO exposes the workflow.
@@ -22,7 +22,7 @@ Depone verifies; witnessd executes; ORRO exposes the workflow.
 | orro-rc-locked-triplet | `5a6e799dffe0b3c37223c4078f304b374e2b2fe1` | `d28defd9b6d6c912cef9cea0813279c7b3954e9c` | `f6f60a3168ec4aaee5ec0b7434157d6f3791dc9e` | pass | Matches witnessd v2.11.7, `engine-lock/orro-e2e-engine-lock.json`, `release/orro-release-manifest.v0.json`, and `release/compatibility-matrix.v0.json`. |
 
 The locked witnessd revision is release `v2.11.7` (source version 2.11.7). It
-satisfies the ORRO 0.2.21 package requirement `witnessd>=2.4.0,<3.0.0`.
+satisfies the ORRO 0.2.22 package requirement `witnessd>=2.4.0,<3.0.0`.
 
 Related files:
 
