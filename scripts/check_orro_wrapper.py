@@ -135,6 +135,8 @@ def check_help_discoverability() -> None:
         "review",
         "check",
         "demo",
+        "status",
+        "tidy",
         "lock",
         "auto",
         "team",

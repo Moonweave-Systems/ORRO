@@ -156,6 +156,10 @@ Start here:
 Workflow:
   scout, sketch, trace, flowplan, proofrun, proofcheck, handoff, next, report, review
 
+Project legibility:
+  status       roadmap items with evidence-bound state + off-plan runs + workspace summary
+  tidy         inventory (default) and safe cleanup of run worktrees (--apply)
+
 Setup / advanced:
   setup, init, advise, auto, team, engine-lock, lock, advisory-provenance-check
 
