@@ -10,10 +10,10 @@
       "id": "depone-n-witnessd-n",
       "type": "engine-pair",
       "depone_commit": "f6f60a3168ec4aaee5ec0b7434157d6f3791dc9e",
-      "witnessd_commit": "d28defd9b6d6c912cef9cea0813279c7b3954e9c",
+      "witnessd_commit": "ab0276f8c030700b9c4f5fe0f0c4de6baba94ad2",
       "status": "pass",
       "notes": "Current locally validated engine pair; witnessd commit is published on the configured remote.",
-      "witnessd_version": "2.11.7"
+      "witnessd_version": "2.12.0"
     },
     {
       "id": "depone-n-witnessd-n-1",
@@ -34,14 +34,14 @@
     {
       "id": "orro-rc-locked-triplet",
       "type": "product-triplet",
-      "orro_commit": "5a6e799dffe0b3c37223c4078f304b374e2b2fe1",
+      "orro_commit": "95f5babf139b421566ae3c1e8c55e45b50448693",
       "depone_commit": "f6f60a3168ec4aaee5ec0b7434157d6f3791dc9e",
-      "witnessd_commit": "d28defd9b6d6c912cef9cea0813279c7b3954e9c",
+      "witnessd_commit": "ab0276f8c030700b9c4f5fe0f0c4de6baba94ad2",
       "status": "pass",
       "engine_lock": "engine-lock/orro-e2e-engine-lock.json",
       "release_manifest": "release/orro-release-manifest.v0.json",
       "notes": "ORRO release-candidate base with the updated immutable engine triplet.",
-      "witnessd_version": "2.11.7"
+      "witnessd_version": "2.12.0"
     }
   ],
   "boundary": {
