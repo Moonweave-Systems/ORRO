@@ -282,26 +282,86 @@ orro check — evidence & review for work you already drove
 - An advisory review raising concerns does **not** change the exit code (an AI
   review must not move a deterministic gate) — unchanged from companion §6.
 
-### v2 — Depone `code_health` rollup (documented, not built in v1)
+### v2 — Depone `code_health` tiered rollup (BUILD NOW; mirrors the skill_routing axis)
 
-When v1 proves the surface, add the tiered verdict:
+v2 adds a per-gate **enforcement tier** so advisory gates (complexity,
+duplication) and structural gates (architecture fitness) can be **surfaced
+without silently blocking** — the exact honest seam `skill_routing` advisory
+already ships. It is a clean mirror of how the `v110.role_capability_skill_routing`
+axis was added. **Depone-first** (contract + tests before witnessd consumes).
 
-1. **Depone first:** `v111.code_health` schema constant + feature gate
-   (`evidence_contract.py:26-33, 222+`); a `code_health` contract directive
-   declaring per-gate `enforcement:"block"|"advisory"`; new `ERR_HEALTH_*`
-   codes; `HealthConformance`/`HealthAxisConformance` dataclasses +
-   `_health_conformance()` mirroring `_policy_conformance` (`engine.py:314-359`)
-   attached to `VerificationReport`; tests + a committed fixture + a revalidator.
-2. **witnessd second:** emit the `v111` contract from the health lane so
-   complexity (`radon`/cognitive) and duplication (`jscpd`/clone %) gates can run
-   as **advisory** axes (`status:"fail"`, `blocks_handoff:false`) — surfaced,
-   never silently gating — exactly like advisory `skill_routing` today.
-3. **Architecture fitness** (import-layering / dependency rules, the strongest
-   answer to "different ego" structural drift) enters here as a declarable
-   blocking-or-advisory gate, not in v1.
+**Mirror template (verified anchors, Depone `depone/verify/`):** the newest axis
+`role_capability_skill_routing` is the exact copy source —
+`_ROLE_CAPABILITY_SKILL_ROUTING_CONTRACT_SCHEMA_VERSION` (`evidence_contract.py:34`),
+`_ERR_ROLE_CAPABILITY_SKILL_ROUTING_VIOLATION` (`:67`), accept-set/feature gate
+(`:219,295-301`), `_has_enforcement_directive` (`:194`),
+`_validate_role_capability_skill_routing` (`:693-749`), wiring (`:1753`);
+rollup `_policy_conformance` (`engine.py:314-359`) with its advisory seam
+(`_is_advisory_skill_routing_entry` `:189`, `_blocking_evidence_contract_entries`
+`:201`). witnessd emission `substrate.py:339-344`
+(`contract["role_capability_skill_routing"] = {...}`) +
+`skill_routing_declaration.py`.
 
-This ordering respects the invariant "do not add a witnessd-facing schema field
-unless the Depone contract and tests define it first."
+**1. Depone (first) — `depone/verify/evidence_contract.py` + `engine.py`:**
+- Schema: `_CODE_HEALTH_CONTRACT_SCHEMA_VERSION = "v111.code_health"`; add to the
+  accept-set + a feature gate ("code_health requires schema_version v111").
+- Contract directive shape (mirrors skill_routing):
+  ```json
+  "code_health": {
+    "gates": [
+      {"gate":"format","tool":"black","enforcement":"block","expected_exit_code":0,"exit_code_path":"health/format.exit","log_path":"health/format.log"},
+      {"gate":"complexity","tool":"ruff-c901","enforcement":"advisory","expected_exit_code":0,"exit_code_path":"health/complexity.exit","log_path":"health/complexity.log"},
+      {"gate":"architecture","tool":"import-linter","enforcement":"block","expected_exit_code":0,"exit_code_path":"health/arch.exit","log_path":"health/arch.log"}
+    ]
+  }
+  ```
+- `_validate_code_health(contract, evidence_dir)` mirrors
+  `_validate_role_capability_skill_routing`: per gate, read the recorded exit code
+  (reuse the exit-code primitive: `_read_exit_code`); if it != `expected_exit_code`,
+  emit `_ERR_HEALTH_GATE_VIOLATION` (`"ERR_HEALTH_GATE_VIOLATION"`) carrying the
+  gate id + enforcement in the message/detail. Wire it into `run_verification`'s
+  validator loop next to the skill_routing one.
+- Advisory seam: extend `_has_enforcement_directive` to accept code_health; add an
+  `_is_advisory_health_entry(contract, entry)` (an `ERR_HEALTH_GATE_VIOLATION` whose
+  gate's declared `enforcement=="advisory"`) and include it in
+  `_blocking_evidence_contract_entries` filtering, so **advisory gate failures do
+  NOT set `any_refuted`** (decision stays pass) while block gate failures do.
+- Rollup: `HealthAxisConformance{gate, tool, status, enforcement, blocks_handoff,
+  error_code, evidence_path}` + `HealthConformance{overall, axes}` on
+  `VerificationReport`; `_health_conformance(contract, evidence_contract)` mirrors
+  `_policy_conformance`: `blocks_handoff = status=="fail" and enforcement=="block"`;
+  `overall = "fail" if any axis status=="fail" else "pass"` (a purely-advisory fail
+  yields `overall:"fail"` but every advisory axis `blocks_handoff:false` and the
+  top-level `decision` stays `pass` — the honest "reported, not gated" seam).
+- Tests + a committed fixture (a code_health contract with one block-pass, one
+  advisory-fail, one block-fail gate) + a revalidator Depone re-derives.
+
+**2. witnessd (second) — `witnessd/substrate.py` + a `health_declaration.py`:**
+- Emit `contract["code_health"] = {gates:[…]}` (mirror the `role_capability_*`
+  emission at `substrate.py:339-344`); bump the emitted contract schema to
+  `v111.code_health` when health gates are declared.
+- The health lane records each gate's exit code + log at the declared paths
+  (reuse the verification-only shell run's captured exit codes).
+- Gate tiers (default; a repo may override per gate): **block** = format, lint,
+  type (v1's gates, now formally tiered); **advisory** = complexity
+  (`ruff check --select C901` when ruff + a complexity config is adopted),
+  duplication (`pylint --enable=duplicate-code` / `jscpd` when adopted);
+  **architecture fitness** = `import-linter` (`lint-imports`) when
+  `.importlinter`/`[tool.importlinter]` is adopted — **the strongest answer to
+  "each part looks like a different self wrote it"**, default `block`.
+- `orro check --health` surfaces the tiered `HealthConformance` in the manifest;
+  advisory-fail gates print as `⚠ advisory` and never change the exit code.
+
+**3. Release (3-repo, since Depone changes):** Depone bump+tag+PyPI → witnessd
+re-pin(DEFAULT_DEPONE_REF)+bump+PyPI → ORRO re-pin+release. Depone-first ordering
+respects "do not add a witnessd-facing schema field unless the Depone contract and
+tests define it first."
+
+**v2 scope (YAGNI):** build the mechanism + tier v1 gates + **architecture
+fitness** (the structural-consistency verdict) + **complexity** (ruff C901,
+advisory). Duplication detection is included only where the tool is already
+adopted; if the duplication tooling proves fiddly it is deferred to v2.1 (the
+mechanism supports it without further schema change).
 
 ## Build location & release
 
