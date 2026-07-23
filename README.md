@@ -17,11 +17,11 @@ Today:
 - ORRO is the product and workflow surface for observed run and review.
 - This repository keeps ORRO docs, product boundary, locks, thin wrapper package metadata, assurance contract checks, and integration-surface policy.
 - The runnable `orro` command is ORRO-owned and delegates to witnessd.
-- The ORRO product line is published on PyPI through 0.2.4, while this repository
+- The ORRO product line is published on PyPI through 0.2.21, while this repository
   packages the 0.2.22 release candidate. The post-release target state is: `orro`
   0.2.22 is published on PyPI. It becomes true only after `v0.2.22` is tagged and
   the Trusted-Publishing workflow completes. Until then, a normal
-  `pip install orro` installs 0.2.14.
+  `pip install orro` installs the latest published product-line release.
 - The local wrapper package exposes both `orro` and `orro-wrapper`.
 
 Current focus:
@@ -32,9 +32,9 @@ Current focus:
 
 ## Can I use ORRO today?
 
-Yes. The published ORRO product line is installable from PyPI at 0.2.1, and
-development dogfood can run the 0.2.22 source directly against pinned Depone and
-witnessd checkouts.
+Yes. The published ORRO product line is installable from PyPI; see Current Status
+for the latest published version. Development dogfood can run the 0.2.22 source
+directly against pinned Depone and witnessd checkouts.
 
 Current split:
 
@@ -97,8 +97,8 @@ approval, and not assurance. This manifest does not publish a package.
 Engine-lock update discipline is documented in
 [`docs/engine-lock-update-process.md`](docs/engine-lock-update-process.md), and
 validated engine pairs are listed in
-[`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). The `orro`
-product line is published on PyPI through 0.2.15; this repository sources 0.2.22,
+[`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). The published PyPI
+version is documented in Current Status; this repository sources 0.2.22,
 whose publication will be completed as a separate release step after the
 `v0.2.22` tag triggers the
 Trusted-Publishing workflow. Repository metadata changes do not publish or
@@ -135,9 +135,9 @@ record the v0 wrapper packaging decision. The packaging decision is product
 metadata, not proof, not verifier truth, not package publish, not approval, and
 not assurance.
 
-The current command source is the ORRO-owned `orro` console script. The ORRO
-product line is published on PyPI through 0.2.7, and this repository prepares
-source version 0.2.22 with a `witnessd>=2.4.0,<3.0.0` dependency. The wrapper contains no
+The current command source is the ORRO-owned `orro` console script. The published
+PyPI version is documented in Current Status, and this repository prepares source
+version 0.2.22 with a `witnessd>=2.4.0,<3.0.0` dependency. The wrapper contains no
 engine code and must not
 implement proofrun, proofcheck, scheduler, observer, fan-in, team-ledger, or
 verifier logic.
