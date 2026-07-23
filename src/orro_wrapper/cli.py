@@ -159,6 +159,7 @@ Workflow:
 Project legibility:
   status       roadmap items with evidence-bound state + off-plan runs + workspace summary
   tidy         inventory (default) and safe cleanup of run worktrees (--apply)
+  task         persistent per-item task worktree lifecycle (begin + optional open hook)
 
 Setup / advanced:
   setup, init, advise, auto, team, engine-lock, lock, advisory-provenance-check

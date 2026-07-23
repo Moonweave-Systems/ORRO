@@ -137,6 +137,7 @@ def check_help_discoverability() -> None:
         "demo",
         "status",
         "tidy",
+        "task",
         "lock",
         "auto",
         "team",
