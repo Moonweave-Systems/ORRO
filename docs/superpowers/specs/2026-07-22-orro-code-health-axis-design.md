@@ -463,6 +463,21 @@ by Pearce et al. 2021, ~40% of Copilot outputs vulnerable,
   plus one honest line. **No threshold, no verdict, never gates** — a signal
   surfaced, exactly as far as the evidence goes.
 
+### v4.1 — security rules in the starter (approved 2026-07-23)
+
+The highest-stakes AI-code failure mode is security (Pearce et al. 2021, ~40%
+of Copilot outputs vulnerable — already cited above). The bootstrap starter
+ruleset gains **`"S"`** (flake8-bandit via ruff — hardcoded passwords S105-107,
+injection patterns, insecure temp files, etc.): bandit is the PyCQA-standard
+Python SAST (<https://github.com/PyCQA/bandit>,
+<https://docs.astral.sh/ruff/rules/#flake8-bandit-s>). Rides the existing lint
+gate at its existing **advisory** tier (SAST false positives are real — the
+"is it justified?" human step applies; consensus shape). Zero new tool
+dependency; non-clobber seeding unchanged. Starter select becomes
+`["E", "F", "I", "ERA", "S"]`. Correctness itself remains explicitly ungated —
+no deterministic gate can prove logic correctness, and claiming one would be an
+overclaim; the declared test checks + advisory review own that space.
+
 **Dropped as not consensus-grounded (recorded so they are not re-proposed):**
 pylint numeric limits (statements 50 / branches 12 / args 5 — tool convention,
 no empirical citation; CC ≤ 10 subsumes); any specific function-length number
