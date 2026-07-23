@@ -422,6 +422,54 @@ standard, deferred to bootstrap-v3.1; auto-installing tools into the user's env
 (witnessd never manages the user's Python env — `--health` already reports
 "configured but not installed" honestly).
 
+## v4 — bloat gates (consensus-grounded; researched 2026-07-23)
+
+Target pain: vibe-coder code bloat (dead code, ever-growing files, no
+optimization pass). Principle held: **only consensus-backed gates ship; the
+LLM's prompt carries zero of these rules** (post-hoc deterministic gates — the
+architecture itself is vendor-endorsed: Anthropic best practices recommend
+deterministic external gates over prompt-rule bloat,
+<https://code.claude.com/docs/en/best-practices>; post-hoc necessity evidenced
+by Pearce et al. 2021, ~40% of Copilot outputs vulnerable,
+<https://arxiv.org/abs/2108.09293>).
+
+**Consensus verdicts (sources verified 2026-07-23):**
+- Cyclomatic ≤ 10 — CONSENSUS: McCabe 1976 ("reasonable, but not magical,
+  upper limit", case-statement exemption,
+  <http://www.literateprogramming.com/mccabe.pdf>); NIST SP 500-235 (10 backed,
+  up to 15 with compensating practices,
+  <http://www.mccabe.com/pdf/mccabe-nist235r.pdf>). Already shipped (v3
+  bootstrap, mccabe=10 **advisory** — advisory IS the consensus shape: no hard
+  cap). Note: Sonar Cognitive Complexity defaults to 15 and is a different
+  metric — never apply 10 to a cognitive-complexity tool.
+- Commented-out/dead code — CONSENSUS: SonarSource S125 ("should be deleted and
+  can be retrieved from source control history"), ruff ERA001, Fowler "Remove
+  Dead Code" (<https://refactoring.com/catalog/removeDeadCode.html>). →
+  **bootstrap starter ruleset gains ERA, advisory tier** (ruff documents ERA
+  false positives — advisory is honest).
+- Duplication — consensus gate is **3% on NEW code, ≥20 lines** (Sonar way
+  quality gate); a retroactive whole-repo gate has NO backing → stays
+  "only if the repo adopted a duplication tool", unchanged. New-code-scoped
+  duplication needs the diff-scoped baseline machinery (bootstrap-v3.1, still
+  deferred).
+- Growth/churn — NO numeric threshold exists in the literature; validated only
+  as a **warning signal** (GitClear 2024: 8× duplicated blocks, copy-paste >
+  moved code for the first time [secondary source
+  <https://leaddev.com/software-quality/how-ai-generated-code-accelerates-technical-debt>;
+  primary bot-blocked]; CodeScene hotspots as prioritization,
+  <https://codescene.io/docs/guides/technical/hotspots.html>). →
+  **growth receipt**: `orro check` adds an advisory `growth` block — diff vs
+  the auto-detected base: `{lines_added, lines_deleted, net, top_grown_files}`
+  plus one honest line. **No threshold, no verdict, never gates** — a signal
+  surfaced, exactly as far as the evidence goes.
+
+**Dropped as not consensus-grounded (recorded so they are not re-proposed):**
+pylint numeric limits (statements 50 / branches 12 / args 5 — tool convention,
+no empirical citation; CC ≤ 10 subsumes); any specific function-length number
+(Code Red validates "long methods predict defects" as a composite only,
+<https://arxiv.org/abs/2203.04374>); whole-repo duplication %; numeric
+growth/churn thresholds.
+
 ## Build location & release
 
 - **v1:** all witnessd (`cli/companion.py` gains `--health/--fix/--health-plan`
