@@ -240,7 +240,21 @@ The wrapper is product/distribution metadata and a thin delegation surface. It
 is not proof, not verifier truth, not package publish, not approval, and not
 assurance.
 
-## Normal ORRO Loop
+## Golden path
+
+```bash
+orro setup --home .witnessd --json
+orro flow "<goal>" --write-scope "<glob>" --adapter codex --json
+orro check --home .witnessd --json
+```
+
+`orro demo` shows the whole guardrail idea in 30 seconds with no AI adapter.
+Use `orro status` for roadmap/evidence-bound progress.
+
+## Advanced: manual composition
+
+For explicit composition, use `orro flow` or `orro team go`; proofrun and
+proofcheck must share one run directory.
 
 ```bash
 orro advise "fix parser bug" --repo . --home .witnessd --json
