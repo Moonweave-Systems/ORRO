@@ -3,9 +3,9 @@
   "schema_version": "1.0",
   "witnessd": {
     "repository": "Moonweave-Systems/witnessd",
-    "commit": "6d9e4be58297e292bd6e6306f93d432857eaecf1",
-    "version": "2.21.0",
-    "ref_name": "v2.21.0"
+    "commit": "9ab3f7ca86e6b93df08ab63314c86e38f0ece352",
+    "version": "2.21.1",
+    "ref_name": "v2.21.1"
   },
   "depone": {
     "repository": "Moonweave-Systems/Depone",
