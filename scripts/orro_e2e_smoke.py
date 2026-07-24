@@ -638,7 +638,7 @@ class SmokeRunner:
             evidence_contract=evidence_contract,
         )
 
-        _code, next_payload, _stdout, _stderr = self._orro(["next", str(run_dir), "--home", str(home), "--json"])
+        _code, next_payload, _stdout, _stderr = self._orro(["auto", "--dry-run", str(run_dir), "--home", str(home), "--json"])
         self._assert(next_payload.get("decision") != "complete", "next_before_auto_not_complete", "next was complete before proofcheck/handoff")
 
         _code, auto_session, _stdout, _stderr = self._orro(
@@ -648,7 +648,7 @@ class SmokeRunner:
         self._assert((run_dir / "orro-handoff.json").is_file(), "auto_creates_handoff", "handoff missing")
         self._assert(auto_session.get("boundary", {}).get("executes_proofrun") is False, "auto_does_not_execute_proofrun", "auto boundary allowed proofrun")
 
-        _code, report, _stdout, _stderr = self._orro(["report", str(run_dir), "--home", str(home), "--json"])
+        _code, report, _stdout, _stderr = self._orro(["status", str(run_dir), "--home", str(home), "--json"])
         summary = report.get("summary", {})
         handoff = report.get("handoff", {})
         self._assert(summary.get("state") == "complete" or summary.get("complete") is True, "report_reaches_complete", "report did not reach complete", summary=summary)
