@@ -157,8 +157,7 @@ Workflow:
   scout, flowplan, proofrun, proofcheck, handoff, review
   advise       routes the goal itself: bug-shaped -> trace advisory, new work -> sketch advisory (--mode overrides)
 
-Deprecated aliases (one release; use the consolidated forms):
-  sketch, trace (-> advise --mode ...), next (-> auto --dry-run), report (-> status <run-dir> | --latest)
+Removed aliases (2.27.0): sketch/trace -> advise --mode ..., next -> auto --dry-run, report -> status <run-dir> | --latest
 
 Project legibility:
   status       roadmap items with evidence-bound state + off-plan runs + workspace summary
