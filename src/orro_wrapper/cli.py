@@ -156,6 +156,7 @@ Start here:
 Workflow:
   scout, flowplan, proofrun, proofcheck, handoff, review
   advise       routes the goal itself: bug-shaped -> trace advisory, new work -> sketch advisory (--mode overrides)
+  ship         push a ship-ready branch and optionally open a PR (evidence-gated); merge approval stays human
 
 Removed aliases (2.27.0): sketch/trace -> advise --mode ..., next -> auto --dry-run, report -> status <run-dir> | --latest
 

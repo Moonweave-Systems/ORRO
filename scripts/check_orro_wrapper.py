@@ -128,6 +128,7 @@ def check_help_discoverability() -> None:
         "proofcheck",
         "advisory-provenance-check",
         "handoff",
+        "ship",
         "review",
         "check",
         "demo",
